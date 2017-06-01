@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+function getJSON(url, callback) {
+    let xhr = new XMLHttpRequest();
+    xhr.onload = function () { callback(this.responseText); };
+    xhr.open('GET', url, true);
+    xhr.send();
+}
+function getContent(url, callback) {
+    getJSON(url, data => callback(JSON.parse(data)));
+}
+exports.getContent = getContent;
+//# sourceMappingURL=FileLoader.js.map

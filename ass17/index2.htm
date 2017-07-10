@@ -1,0 +1,247 @@
+<html>
+<head>
+    <style>
+        body {
+            background: #000000;
+            color: #ffffff;
+            font-family: "Lato";
+        }
+        body.error {
+            background: #FF0000;
+        }
+        body.error .errormessage {
+            display: block;
+        }
+        body.succesZ {
+            background: #28c61f;
+        }
+        body.succesZ .successmessage {
+            display: block;
+        }
+        .errormessage, .successmessage {
+            color: white;
+            margin: auto;
+            width: 100%;
+            top: 150px;
+            background: black;
+            position: fixed;
+            text-align: center;
+            font-size: 100px;
+            font-weight: bolder;
+            display: none;
+        }
+        a {
+            color: #ffffff;
+        }
+        .columns {
+            display: flex;
+            justify-content: space-between;
+        }
+        .columns > div {
+            /*flex-basis: 50%;*/
+        }
+        .lock {
+            margin: 10px;
+        }
+        #camera2content {
+            display: none;
+        }
+        .mirror {
+            transform: scaleX(-1);
+        }
+        #ziggy {
+            padding-top: 210px;
+            /*position: absolute;*/
+        }
+        #ziggyContainer {
+            width: 468px;
+            overflow: hidden;
+            height: 350px;
+            position: absolute;
+            text-align: left;
+        }
+        #lock1 {
+            background: #b2caff;
+        }
+        #lock2 {
+            background: #fff18e;
+        }
+        #lock3 {
+            background: #9df5aa;
+        }
+        .success {
+            display: none;
+        }
+        .right {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="errormessage">
+    ERROR
+</div>
+<div class="successmessage">
+    SUCCESS
+</div>
+<h1>Surveillance system</h1>
+
+<div class="columns">
+    <div class="left">
+        Enter passwords to free Ziggy
+        <div class="lock">
+            <label>6 letters</label>
+            <input type="text" id="lock1">
+            <input type="button" id="submit1" onclick="submit(1);" value="submit">
+            <img src="success.png" id="success1" class="success">
+        </div>
+
+        <div class="lock">
+            <label>5 letters</label>
+            <input type="text" id="lock2">
+            <input type="button" id="submit2" onclick="submit(2);" value="submit">
+            <img src="success.png" id="success2" class="success">
+        </div>
+
+        <div class="lock">
+            <label>3 letters</label>
+            <input type="text" id="lock3">
+            <input type="button" id="submit3" onclick="submit(3);" value="submit">
+            <img src="success.png" id="success3" class="success">
+        </div>
+    </div>
+    <div class="right">
+        <div class="cameraswitchers">
+            <a id="camera1" href="#">Cam zone 1</a>
+            <a id="camera2" href="#">Cam zone 2</a>
+        </div>
+        <div class="cameracontents">
+            <div id="camera1content">
+                <div id="ziggyContainer">
+                    <img src="ziggy.gif" id="ziggy" class="mirror" width="160">
+                </div>
+                <img src="darkprison.png" height="350" id="darkprison">
+            </div>
+            <div id="camera2content">
+                <img src="farm-silo.png" height="350">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="jquery.js"></script>
+<script>
+    function submit(i) {
+        var lockValue = $('#lock' + i).val().toLowerCase();
+
+        if (i === 1) {
+            if (lockValue === locateClue('rfehvbnretd')) {
+                success(i);
+            } else {
+                failure();
+            }
+        } else if (i === 2) {
+            if (lockValue === locateClue('easqsjukdy')) {
+                success(i);
+            } else {
+                failure();
+            }
+        } else if (i === 3) {
+            if (lockValue === locateClue('eannop')) {
+                success(i);
+            } else {
+                failure();
+            }
+        }
+    }
+
+    $('#camera1').click(function () {
+        $('#camera1content').show();
+        $('#camera2content').hide();
+    });
+
+    $('#camera2').click(function () {
+        $('#camera1content').hide();
+        $('#camera2content').show();
+    });
+
+    function success(i) {
+        $('#lock' + i).attr('disabled', 'disabled');
+        $('#submit' + i).attr('disabled', 'disabled');
+        $('#success' + i).show();
+
+        if ($('#success1').is(':visible') && $('#success2').is(':visible') && $('#success3').is(':visible')) {
+            bigSuccess();
+        }
+    }
+
+    function failure(i) {
+        $('#lock' + i).val('');
+        var repeat = 1000;
+        $('body').addClass('error');
+        window.setTimeout(function () {
+            $('body').removeClass('error');
+        }, 2000);
+    }
+
+    function bigSuccess() {
+        var repeat = 1000;
+        $('body').addClass('succesZ');
+        window.setTimeout(function () {
+            $('body').removeClass('succesZ');
+        }, 2000);
+        isSuccess = true;
+        $('#camera2content img').attr('src', 'farm-silo2.png');
+        sens = true;
+        $('#ziggy').addClass('mirror');
+        $('.left').html('').css('width', '100px');
+    }
+
+    var isSuccess = false;
+    var sens = true;
+    var speed = 3;
+    window.setInterval(function () {
+        var paddingLeft = parseInt($('#ziggy').css('padding-left'));
+        if (paddingLeft <= 50) {
+            sens = true;
+            $('#ziggy').addClass('mirror');
+        } else if (paddingLeft >= 250) {
+            if (isSuccess === false) {
+                sens = false;
+                $('#ziggy').removeClass('mirror');
+            }
+            if (paddingLeft >= 500) {
+                $('#camera1content').hide();
+                $('#camera2content').show();
+            }
+        }
+        if (sens) {
+            $('#ziggy').css({
+                "padding-left": paddingLeft + speed,
+                "padding-right": paddingLeft + speed
+            });
+        }
+        else {
+            $('#ziggy').css({
+                "padding-left": paddingLeft - speed,
+                "padding-right": paddingLeft - speed
+            });
+        }
+    }, 100);
+
+    function locateClue(toto) {
+        result = '';
+        a = Array.from(toto);
+        for (i = a.length - 1; i >= 0; i--) {
+            if (i % 2 === 0) {
+                result += a[i];
+            }
+        }
+
+        return result;
+    }
+
+    locateClue('TPIVXQEN TYMCXNEEDGURREMMPE');
+</script>
+</body>
+</html>

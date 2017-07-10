@@ -1,0 +1,328 @@
+<html>
+<head>
+    <style>
+        @font-face {
+            font-family: '3dventuremedium';
+            src: url('assets/3dventure-webfont.woff2') format('woff2'),
+            url('assets/3dventure-webfont.woff') format('woff');
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            background: black;
+            font-family: '3dventuremedium';
+            color: white;
+        }
+        #container {
+            width: 1000px;
+            height: 250px;
+            overflow: hidden;
+            position: absolute;
+            margin-left: calc((100% - 1000px) / 2);
+            margin-top: 100px;
+        }
+        #counter {
+            position: relative;
+            right: 0;
+            display: inline-block;
+            float: right;
+            margin: 20px 30px;
+            font-family: Lato;
+            font-size: 16px;
+        }
+        #main {
+            width: 1000px;
+            height: 250px;
+            background: url('images/background.png');
+        }
+        #player {
+            position: relative;
+            height: 100px;
+            width: 100px;
+            display: block;
+            background: red;
+            top: 100px;
+            background: url('images/player.png');
+        }
+        #player.penchLeft {
+            background: #FF5050;
+            background: url('images/player1-1.png');
+        }
+        #player.penchRight {
+            background: #FF9090;
+            background: url('images/player-1-2.png');
+        }
+        #player.top {
+            top: 70px;
+            background: url('images/player-jump.png');
+        }
+        #player.bottom {
+            background: url('images/player-slap.png');
+        }
+        .ennemy {
+            position: absolute;
+            height: 50px;
+            width: 50px;
+            display: block;
+            top: 150px;
+        }
+        .ennemy.inverse {
+            transform: scale(-1, 1);
+        }
+        #ennemyContainer {
+            display: flex;
+            position: absolute;
+            padding: 10px 50px 0 30px;
+            justify-content: space-between;
+            width: 80%;
+        }
+        .ennemyface {
+            width: 45px;
+            height: 50px;
+            display: block;
+            border: 3px solid black;
+            padding-left: 5px;
+        }
+        #ennemyCount7 {
+            border-color: red;
+        }
+        #finish {
+            position: absolute;
+            width: 1000px;
+            height: 40px;
+            background-color: #28c61f;
+            color: white;
+            margin-top: -30px;
+            text-align: center;
+            font-size: 40px;
+            display: none;
+        }
+        #title {
+            text-align: center;
+            font-size: 50px;
+            position: absolute;
+            width: 100%;
+            top: 30px;
+        }
+    </style>
+</head>
+<body>
+<div id="title">3 lives remaining</div>
+<div id="container">
+    <div id="main">
+        <div id="ennemyContainer"></div>
+        <div id="counter">0</div>
+        <div id="player"></div>
+        <div id="finish">Congrats!</div>
+    </div>
+</div>
+<script type="text/javascript" src="jquery.js"></script>
+<script>
+    speed = 1.5;
+    left = 0;
+    goLeft = false;
+    goRight = false;
+    goTop = false;
+    goBottom = false;
+    pench = false;
+    penchCounter = 0;
+    penchTime = 20;
+    originalTopRemaining = 30;
+    topRemaining = originalTopRemaining;
+    shouldRelease = false;
+    appearRandom = 0.01;
+    ennemies = [];
+    ennemySpeed = 1;
+    ennemyId = 0;
+    audioRunning = new Audio('sounds/running.mp3');
+    audioRunning.loop = true;
+    audioRunning.play();
+    audioRunning.pause();
+    audioJump = new Audio('sounds/jump.mp3');
+    audioHit = new Audio('sounds/hit.mp3');
+
+    document.onkeydown = function (e) {
+        e = e || window.event;
+        if (e.keyCode == '38') {
+            if (!shouldRelease && !goTop) {
+                audioJump.play();
+                goTop = true;
+                topRemaining = originalTopRemaining;
+            }
+        }
+        if (e.keyCode == '40') {
+            audioHit.play();
+            goBottom = true;
+            fight();
+        }
+        if (e.keyCode == '37') {
+            goLeft = true;
+            audioRunning.play();
+        }
+        if (e.keyCode == '39') {
+            goRight = true;
+            audioRunning.play();
+        }
+    };
+    document.onkeyup = function (e) {
+        if (e.keyCode == '38') {
+            goTop = false;
+            shouldRelease = false;
+        }
+        if (e.keyCode == '40') {
+            goBottom = false;
+        }
+        if (e.keyCode == '37') {
+            goLeft = false;
+            audioRunning.pause();
+        }
+        if (e.keyCode == '39') {
+            goRight = false;
+            audioRunning.pause();
+        }
+    };
+
+    interval = window.setInterval(function () {
+        penchCounter = (penchCounter + 1) % (2 * penchTime);
+        player = $('#player');
+
+        if (goTop) {
+            topRemaining--;
+            if (topRemaining <= 0) {
+                goTop = false;
+                shouldRelease = true;
+            }
+        }
+        if (goLeft) {
+            left -= speed;
+        }
+        if (goRight) {
+            left += speed;
+        }
+        if (goLeft || goRight) {
+
+        }
+        player.css('left', left);
+
+        if (goBottom) {
+            player.addClass('bottom').removeClass('penchLeft').removeClass('penchRight').removeClass('top');
+        } else if (goTop) {
+            player.addClass('top').removeClass('penchLeft').removeClass('penchRight').removeClass('bottom');
+        } else if (goLeft || goRight) {
+            if (penchCounter < penchTime) {
+                player.addClass('penchLeft').removeClass('penchRight').removeClass('top').removeClass('bottom');
+            } else {
+                player.addClass('penchRight').removeClass('penchLeft').removeClass('top').removeClass('bottom');
+            }
+        } else {
+            player.removeClass('penchLeft').removeClass('penchRight').removeClass('top').removeClass('bottom');
+        }
+
+
+        if (Math.random() < appearRandom) {
+            createNewLopez();
+        }
+
+        $.each(ennemies, function (i, ennemy) {
+            if (ennemy === '') {
+            }
+            else if (ennemy.die) {
+                yolo = parseFloat($('#ennemy' + ennemy.id).css('top'));
+                $('#ennemy' + ennemy.id)
+                    .attr('src', 'images/ennemy' + ennemy.tile + '-3.png');
+                $('#ennemy' + ennemy.id)
+                    .css('top', yolo + 0.1);
+                if (yolo > 250) {
+                    $('#ennemy' + ennemy.id).remove();
+                    ennemies[i] = '';
+                }
+            } else {
+                newLeft = ennemies[i].left + ennemy.speed;
+                if ((newLeft <= 0) || (newLeft >= 1000 - 50)) {
+                    ennemies[i].speed *= -1;
+                }
+                if (ennemy.speed > 0) {
+                    $('#ennemy' + ennemy.id).addClass('inverse');
+                } else {
+                    $('#ennemy' + ennemy.id).removeClass('inverse');
+                }
+
+                ennemies[i].left = newLeft;
+                $('#ennemy' + ennemy.id)
+                    .css('left', newLeft)
+                    .attr('src', 'images/ennemy' + ennemy.tile + '-' + ((penchCounter < penchTime) ? '1' : '2') + '.png');
+            }
+        })
+    }, 10);
+
+    function createNewLopez() {
+        side = Math.random() < 0.5;
+        tile = Math.floor(Math.random() * 7) + 1;
+        if (side) {
+            enleft = 0;
+            enspeed = ennemySpeed/2 + Math.random()/2;
+            enclass = '';
+        } else {
+            enleft = 1000 - 50;
+            enspeed = -ennemySpeed/2 - Math.random()/2;
+            enclass = 'inverse';
+        }
+        ennemies.push({
+            id: ennemyId,
+            left: enleft,
+            speed: enspeed,
+            die: false,
+            tile: tile
+        });
+        $('#main').append('<img class="ennemy ' + enclass + '" style="left: ' + left + 'px" id="ennemy' + ennemyId + '">');
+        ennemyId++;
+    }
+
+    function fight() {
+        $.each(ennemies, function (i, ennemy) {
+            if (Math.abs(((ennemy.left + 25) - (left + 50))) < 25) {
+                tile = ennemy.tile;
+                ennemies[i].die = true;
+                counter = parseInt($('#counter').html());
+                if (tile !== 7) {
+                    counter += 100;
+                }
+                else {
+                    counter -= 1000;
+                }
+                $('#counter').html(counter);
+                counter2 = parseInt($('#ennemyCount' + ennemy.tile).html());
+                if (tile === 7) {
+                    counter2 -= 1;
+                    if (counter2 === 0) {
+                        finish(counter);
+                    }
+                } else {
+                    counter2 += 1;
+                }
+                $('#ennemyCount' + ennemy.tile).html(counter2);
+            }
+        });
+    }
+
+    function finish(counter) {
+        window.clearInterval(interval);
+        $('#finish').show();
+        $('#finish').html('Congrats! You did ' + counter + ' points!');
+    }
+
+    for (i = 1; i <= 7; i++) {
+        $('#ennemyContainer').append('<div class="ennemyface" id="ennemyCount' + i + '" style="background:url(\'images\/ennemy' + i + '.png\')">' + (i === 7 ? 3 : 0) + '</div>');
+    }
+</script>
+<script type="text/javascript" src="beepbox_synth.js"></script>
+<script>
+    this.synth = new beepbox.Synth("5s0kbl00e01t9m0a7g0fj7i0r1w1111f0000d1111c0000h0000v0000o3210b4x4h4h4h4h4h4h4h4h4h4h4h4h4h4h4h4x4h4h4h4h4p21AFzM6IsBcrcs4szrV7bORBQORNg61GHwGbGrGMaoYgdc4eAdgqNRkM82CuJhht0QklwaoD1E3hhu6Ad0q0Q1Q1E3hhjjjjg6wd580");
+    this.synth.volume = 0.3;
+    this.synth.play();
+    this.playing = true;
+</script>
+</body>
+</html>

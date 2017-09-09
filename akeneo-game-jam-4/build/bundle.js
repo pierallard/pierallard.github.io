@@ -103,11 +103,11 @@ window.onload = () => {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const MoveAction_1 = __webpack_require__(2);
+const MoveAction_1 = __webpack_require__(3);
 const Verb_1 = __webpack_require__(9);
 const TalkAction_1 = __webpack_require__(4);
 const InteractiveObject_1 = __webpack_require__(22);
-const Translator_1 = __webpack_require__(3);
+const Translator_1 = __webpack_require__(2);
 class SceneObject extends InteractiveObject_1.InteractiveObject {
     constructor(play, identifier, x, y, key) {
         super(play);
@@ -202,6 +202,49 @@ exports.SceneObject = SceneObject;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+const FileLoader_1 = __webpack_require__(56);
+class Translator {
+    static setLocale(locale) {
+        this.locale = locale;
+    }
+    static initialize() {
+        this.translations = [];
+        FileLoader_1.getContent("translations/fr.json", data => {
+            this.translations['fr'] = data;
+        });
+        FileLoader_1.getContent("translations/en.json", data => {
+            this.translations['en'] = data;
+        });
+        FileLoader_1.getContent("translations/es.json", data => {
+            this.translations['es'] = data;
+        });
+    }
+    static t(key) {
+        key = this.locale + '.' + key;
+        let result = key;
+        try {
+            result = key.split('.').reduce((tree, key) => tree[key], this.translations);
+        }
+        catch (e) {
+            console.log('Missing translation: "' + result + '"');
+        }
+        if (undefined === result) {
+            return key;
+        }
+        return result;
+    }
+}
+Translator.locale = 'fr';
+exports.Translator = Translator;
+
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 const Action_1 = __webpack_require__(7);
 const app_1 = __webpack_require__(0);
 const Baby_1 = __webpack_require__(21);
@@ -249,46 +292,6 @@ class MoveAction extends Action_1.Action {
 MoveAction.leftBorder = -(612 + 20);
 MoveAction.rightBorder = -(1036 - 20);
 exports.MoveAction = MoveAction;
-
-
-/***/ }),
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const FileLoader_1 = __webpack_require__(56);
-class Translator {
-    static setLocale(locale) {
-        this.locale = locale;
-    }
-    static initialize() {
-        this.translations = [];
-        FileLoader_1.getContent("translations/fr.json", data => {
-            this.translations['fr'] = data;
-        });
-        FileLoader_1.getContent("translations/en.json", data => {
-            this.translations['en'] = data;
-        });
-    }
-    static t(key) {
-        key = this.locale + '.' + key;
-        let result = key;
-        try {
-            result = key.split('.').reduce((tree, key) => tree[key], this.translations);
-        }
-        catch (e) {
-            console.log('Missing translation: "' + result + '"');
-        }
-        if (undefined === result) {
-            return key;
-        }
-        return result;
-    }
-}
-Translator.locale = 'fr';
-exports.Translator = Translator;
 
 
 /***/ }),
@@ -363,7 +366,7 @@ exports.TalkAction = TalkAction;
 Object.defineProperty(exports, "__esModule", { value: true });
 const TalkAction_1 = __webpack_require__(4);
 const SceneObject_1 = __webpack_require__(1);
-const Translator_1 = __webpack_require__(3);
+const Translator_1 = __webpack_require__(2);
 class InventoryObject extends SceneObject_1.SceneObject {
     constructor(play, texture) {
         super(play, texture, 0, 0, texture);
@@ -498,7 +501,7 @@ exports.UpdateAction = UpdateAction;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Translator_1 = __webpack_require__(3);
+const Translator_1 = __webpack_require__(2);
 const WALK_TO = 'walk_to';
 const LOOK_AT = 'look_at';
 const PICK_UP = 'pick_up';
@@ -790,9 +793,9 @@ exports.Steak = Steak;
 Object.defineProperty(exports, "__esModule", { value: true });
 const SceneObject_1 = __webpack_require__(1);
 const TalkAction_1 = __webpack_require__(4);
-const MoveAction_1 = __webpack_require__(2);
+const MoveAction_1 = __webpack_require__(3);
 const app_1 = __webpack_require__(0);
-const Translator_1 = __webpack_require__(3);
+const Translator_1 = __webpack_require__(2);
 class BedroomDoor extends SceneObject_1.SceneObject {
     constructor(play) {
         super(play, BedroomDoor.IDENTIFIER, 441 * app_1.SimpleGame.SCALE, 11 * app_1.SimpleGame.SCALE, 'porteChambre');
@@ -851,10 +854,10 @@ exports.Dog = Dog;
 Object.defineProperty(exports, "__esModule", { value: true });
 const SceneObject_1 = __webpack_require__(1);
 const TalkAction_1 = __webpack_require__(4);
-const MoveAction_1 = __webpack_require__(2);
+const MoveAction_1 = __webpack_require__(3);
 const Dog_1 = __webpack_require__(19);
 const app_1 = __webpack_require__(0);
-const Translator_1 = __webpack_require__(3);
+const Translator_1 = __webpack_require__(2);
 class GarageDoor extends SceneObject_1.SceneObject {
     constructor(play) {
         super(play, GarageDoor.IDENTIFIER, 158 * app_1.SimpleGame.SCALE, 11 * app_1.SimpleGame.SCALE, 'porteGarage');
@@ -1275,12 +1278,12 @@ exports.FinalAnim = FinalAnim;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const SceneObject_1 = __webpack_require__(1);
-const MoveAction_1 = __webpack_require__(2);
+const MoveAction_1 = __webpack_require__(3);
 const RemoveInventoryAction_1 = __webpack_require__(6);
 const AddInventoryAction_1 = __webpack_require__(13);
 const TalkAction_1 = __webpack_require__(4);
 const app_1 = __webpack_require__(0);
-const Translator_1 = __webpack_require__(3);
+const Translator_1 = __webpack_require__(2);
 class Four extends SceneObject_1.SceneObject {
     constructor(play) {
         super(play, Four.IDENTIFIER, 233 * app_1.SimpleGame.SCALE, 44 * app_1.SimpleGame.SCALE, 'four');
@@ -1327,12 +1330,12 @@ exports.Four = Four;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const SceneObject_1 = __webpack_require__(1);
-const MoveAction_1 = __webpack_require__(2);
+const MoveAction_1 = __webpack_require__(3);
 const RemoveInventoryAction_1 = __webpack_require__(6);
 const UpdateAction_1 = __webpack_require__(8);
 const TalkAction_1 = __webpack_require__(4);
 const app_1 = __webpack_require__(0);
-const Translator_1 = __webpack_require__(3);
+const Translator_1 = __webpack_require__(2);
 class Mother extends SceneObject_1.SceneObject {
     constructor(play) {
         super(play, Mother.IDENTIFIER, 323 * app_1.SimpleGame.SCALE, 66 * app_1.SimpleGame.SCALE, 'mother');
@@ -1594,7 +1597,7 @@ exports.Inventory = Inventory;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Translator_1 = __webpack_require__(3);
+const Translator_1 = __webpack_require__(2);
 const app_1 = __webpack_require__(0);
 class LocaleSwitcher {
     constructor(play) {
@@ -1603,7 +1606,8 @@ class LocaleSwitcher {
     }
     create() {
         this.createFlag('en', 760, 12);
-        this.createFlag('fr', 720, 12);
+        this.createFlag('es', 710, 12);
+        this.createFlag('fr', 660, 12);
     }
     createFlag(locale, x, y) {
         let flag = this.play.game.add.sprite(x, y, locale);
@@ -1626,6 +1630,7 @@ exports.LocaleSwitcher = LocaleSwitcher;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const app_1 = __webpack_require__(0);
+const Translator_1 = __webpack_require__(2);
 class Sentence extends Phaser.Text {
     constructor(game) {
         let style = {
@@ -1662,7 +1667,7 @@ class Sentence extends Phaser.Text {
             if (null !== this.object) {
                 result = result + ' ' + this.object.getLabel();
                 if (null !== this.secondaryObject) {
-                    result = result + ' avec ' + this.secondaryObject.getLabel();
+                    result = result + ' ' + Translator_1.Translator.translations[Translator_1.Translator.locale]['conjunctions']['with'] + ' ' + this.secondaryObject.getLabel();
                 }
             }
         }
@@ -1689,7 +1694,7 @@ class SoundSwitcher {
         this.playing = true;
     }
     create() {
-        this.icon = this.play.game.add.sprite(650, 12, 'sound');
+        this.icon = this.play.game.add.sprite(600, 12, 'sound');
         this.icon.scale.setTo(app_1.SimpleGame.SCALE);
         this.icon.inputEnabled = true;
         this.icon.events.onInputDown.add(this.toggleSound, this);
@@ -1783,7 +1788,7 @@ exports.TakeAction = TakeAction;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const MoveAction_1 = __webpack_require__(2);
+const MoveAction_1 = __webpack_require__(3);
 const Fridge_1 = __webpack_require__(47);
 const Cupboard_1 = __webpack_require__(45);
 const Microwave_1 = __webpack_require__(48);
@@ -1906,13 +1911,13 @@ exports.Scene = Scene;
 Object.defineProperty(exports, "__esModule", { value: true });
 const SceneObject_1 = __webpack_require__(1);
 const TalkAction_1 = __webpack_require__(4);
-const MoveAction_1 = __webpack_require__(2);
+const MoveAction_1 = __webpack_require__(3);
 const Father_1 = __webpack_require__(12);
 const AddInventoryAction_1 = __webpack_require__(13);
 const BouteilleAlcool_1 = __webpack_require__(14);
 const DisappearAction_1 = __webpack_require__(11);
 const app_1 = __webpack_require__(0);
-const Translator_1 = __webpack_require__(3);
+const Translator_1 = __webpack_require__(2);
 class Bouteille extends SceneObject_1.SceneObject {
     constructor(play) {
         super(play, Bouteille.IDENTIFIER, 382 * app_1.SimpleGame.SCALE, 41 * app_1.SimpleGame.SCALE, 'bouteille');
@@ -1950,7 +1955,7 @@ exports.Bouteille = Bouteille;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const SceneObject_1 = __webpack_require__(1);
-const MoveAction_1 = __webpack_require__(2);
+const MoveAction_1 = __webpack_require__(3);
 const UpdateAction_1 = __webpack_require__(8);
 const TalkAction_1 = __webpack_require__(4);
 const RemoveInventoryAction_1 = __webpack_require__(6);
@@ -1958,7 +1963,7 @@ const GarageDoor_1 = __webpack_require__(20);
 const Steak_1 = __webpack_require__(17);
 const Dog_1 = __webpack_require__(19);
 const app_1 = __webpack_require__(0);
-const Translator_1 = __webpack_require__(3);
+const Translator_1 = __webpack_require__(2);
 class Bowl extends SceneObject_1.SceneObject {
     constructor(play) {
         super(play, Bowl.IDENTIFIER, 203 * app_1.SimpleGame.SCALE, 50 * app_1.SimpleGame.SCALE, 'gamelleVide');
@@ -2023,12 +2028,12 @@ exports.Bowl = Bowl;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const SceneObject_1 = __webpack_require__(1);
-const MoveAction_1 = __webpack_require__(2);
+const MoveAction_1 = __webpack_require__(3);
 const BedroomDoor_1 = __webpack_require__(18);
 const RemoveInventoryAction_1 = __webpack_require__(6);
 const TalkAction_1 = __webpack_require__(4);
 const app_1 = __webpack_require__(0);
-const Translator_1 = __webpack_require__(3);
+const Translator_1 = __webpack_require__(2);
 class Chain extends SceneObject_1.SceneObject {
     constructor(play) {
         super(play, Chain.IDENTIFIER, 438 * app_1.SimpleGame.SCALE, 19 * app_1.SimpleGame.SCALE, 'chaineClose');
@@ -2062,7 +2067,7 @@ exports.Chain = Chain;
 Object.defineProperty(exports, "__esModule", { value: true });
 const SceneObject_1 = __webpack_require__(1);
 const UpdateAction_1 = __webpack_require__(8);
-const MoveAction_1 = __webpack_require__(2);
+const MoveAction_1 = __webpack_require__(3);
 const AppearAction_1 = __webpack_require__(10);
 const app_1 = __webpack_require__(0);
 class Cupboard extends SceneObject_1.SceneObject {
@@ -2102,7 +2107,7 @@ exports.Cupboard = Cupboard;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const SceneObject_1 = __webpack_require__(1);
-const MoveAction_1 = __webpack_require__(2);
+const MoveAction_1 = __webpack_require__(3);
 const RemoveInventoryAction_1 = __webpack_require__(6);
 const Father_1 = __webpack_require__(12);
 const app_1 = __webpack_require__(0);
@@ -2139,11 +2144,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const SceneObject_1 = __webpack_require__(1);
 const UpdateAction_1 = __webpack_require__(8);
 const TalkAction_1 = __webpack_require__(4);
-const MoveAction_1 = __webpack_require__(2);
+const MoveAction_1 = __webpack_require__(3);
 const AppearAction_1 = __webpack_require__(10);
 const DisappearAction_1 = __webpack_require__(11);
 const app_1 = __webpack_require__(0);
-const Translator_1 = __webpack_require__(3);
+const Translator_1 = __webpack_require__(2);
 class Fridge extends SceneObject_1.SceneObject {
     constructor(play) {
         super(play, Fridge.IDENTIFIER, 294 * app_1.SimpleGame.SCALE, 42 * app_1.SimpleGame.SCALE, 'fridgeClose');
@@ -2193,11 +2198,11 @@ exports.Fridge = Fridge;
 Object.defineProperty(exports, "__esModule", { value: true });
 const SceneObject_1 = __webpack_require__(1);
 const TalkAction_1 = __webpack_require__(4);
-const MoveAction_1 = __webpack_require__(2);
+const MoveAction_1 = __webpack_require__(3);
 const AddInventoryAction_1 = __webpack_require__(13);
 const RemoveInventoryAction_1 = __webpack_require__(6);
 const app_1 = __webpack_require__(0);
-const Translator_1 = __webpack_require__(3);
+const Translator_1 = __webpack_require__(2);
 class Microwave extends SceneObject_1.SceneObject {
     constructor(play) {
         super(play, Microwave.IDENTIFIER, 251 * app_1.SimpleGame.SCALE, 44 * app_1.SimpleGame.SCALE, 'microOndes');
@@ -2235,13 +2240,13 @@ exports.Microwave = Microwave;
 Object.defineProperty(exports, "__esModule", { value: true });
 const SceneObject_1 = __webpack_require__(1);
 const TalkAction_1 = __webpack_require__(4);
-const MoveAction_1 = __webpack_require__(2);
+const MoveAction_1 = __webpack_require__(3);
 const UpdateAction_1 = __webpack_require__(8);
 const Father_1 = __webpack_require__(12);
 const Mother_1 = __webpack_require__(33);
 const RemoveInventoryAction_1 = __webpack_require__(6);
 const app_1 = __webpack_require__(0);
-const Translator_1 = __webpack_require__(3);
+const Translator_1 = __webpack_require__(2);
 const AppearAction_1 = __webpack_require__(10);
 const DisappearAction_1 = __webpack_require__(11);
 const FinalAnim_1 = __webpack_require__(31);
@@ -2271,7 +2276,7 @@ class OutDoor extends SceneObject_1.SceneObject {
         if (!this.open) {
             return [
                 new MoveAction_1.MoveAction(this.play, pointer.position.x),
-                new TalkAction_1.TalkAction(this.play, this.play.getBaby(), "C'est bloque")
+                new TalkAction_1.TalkAction(this.play, this.play.getBaby(), Translator_1.Translator.t('scene.porteSortie.is_closed'))
             ];
         }
         return super.use(origin, pointer);
@@ -2306,7 +2311,7 @@ exports.OutDoor = OutDoor;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const MoveAction_1 = __webpack_require__(2);
+const MoveAction_1 = __webpack_require__(3);
 const TakeAction_1 = __webpack_require__(40);
 const SceneObject_1 = __webpack_require__(1);
 class PickableObject extends SceneObject_1.SceneObject {
@@ -2338,14 +2343,14 @@ exports.PickableObject = PickableObject;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const SceneObject_1 = __webpack_require__(1);
-const MoveAction_1 = __webpack_require__(2);
+const MoveAction_1 = __webpack_require__(3);
 const RemoveInventoryAction_1 = __webpack_require__(6);
 const UpdateAction_1 = __webpack_require__(8);
 const AppearAction_1 = __webpack_require__(10);
 const DisappearAction_1 = __webpack_require__(11);
 const TalkAction_1 = __webpack_require__(4);
 const app_1 = __webpack_require__(0);
-const Translator_1 = __webpack_require__(3);
+const Translator_1 = __webpack_require__(2);
 class Pot extends SceneObject_1.SceneObject {
     constructor(play) {
         super(play, 'potvide', 218 * app_1.SimpleGame.SCALE, 36 * app_1.SimpleGame.SCALE, 'potvide');
@@ -2439,14 +2444,14 @@ exports.Pot = Pot;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const SceneObject_1 = __webpack_require__(1);
-const MoveAction_1 = __webpack_require__(2);
+const MoveAction_1 = __webpack_require__(3);
 const RemoveInventoryAction_1 = __webpack_require__(6);
 const TalkAction_1 = __webpack_require__(4);
 const Four_1 = __webpack_require__(32);
 const Rallonge_1 = __webpack_require__(16);
 const UpdateAction_1 = __webpack_require__(8);
 const app_1 = __webpack_require__(0);
-const Translator_1 = __webpack_require__(3);
+const Translator_1 = __webpack_require__(2);
 class Prise extends SceneObject_1.SceneObject {
     constructor(play) {
         super(play, Prise.IDENTIFIER, 175 * app_1.SimpleGame.SCALE, 57 * app_1.SimpleGame.SCALE, 'prisepetee');
@@ -2584,7 +2589,7 @@ exports.default = Play;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Translator_1 = __webpack_require__(3);
+const Translator_1 = __webpack_require__(2);
 class Preload extends Phaser.State {
     preload() {
         // Game
@@ -2600,6 +2605,7 @@ class Preload extends Phaser.State {
         this.game.load.spritesheet('caranim', 'assets/caranim.png', 23, 50);
         this.game.load.image('fr', 'assets/fr.png');
         this.game.load.image('en', 'assets/en.png');
+        this.game.load.image('es', 'assets/es.png');
         this.game.load.image('sound', 'assets/sound.png');
         this.game.load.image('sounddisabled', 'assets/sounddisabled.png');
         // Scene

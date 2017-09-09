@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const app_1 = require("../app");
+const Translator_1 = require("./translations/Translator");
 class Sentence extends Phaser.Text {
     constructor(game) {
         let style = {
@@ -37,7 +38,7 @@ class Sentence extends Phaser.Text {
             if (null !== this.object) {
                 result = result + ' ' + this.object.getLabel();
                 if (null !== this.secondaryObject) {
-                    result = result + ' avec ' + this.secondaryObject.getLabel();
+                    result = result + ' ' + Translator_1.Translator.translations[Translator_1.Translator.locale]['conjunctions']['with'] + ' ' + this.secondaryObject.getLabel();
                 }
             }
         }

@@ -38,7 +38,7 @@ class OutDoor extends SceneObject_1.SceneObject {
         if (!this.open) {
             return [
                 new MoveAction_1.MoveAction(this.play, pointer.position.x),
-                new TalkAction_1.TalkAction(this.play, this.play.getBaby(), "C'est bloque")
+                new TalkAction_1.TalkAction(this.play, this.play.getBaby(), Translator_1.Translator.t('scene.porteSortie.is_closed'))
             ];
         }
         return super.use(origin, pointer);

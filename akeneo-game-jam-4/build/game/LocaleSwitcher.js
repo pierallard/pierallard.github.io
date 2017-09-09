@@ -9,7 +9,8 @@ class LocaleSwitcher {
     }
     create() {
         this.createFlag('en', 760, 12);
-        this.createFlag('fr', 720, 12);
+        this.createFlag('es', 710, 12);
+        this.createFlag('fr', 660, 12);
     }
     createFlag(locale, x, y) {
         let flag = this.play.game.add.sprite(x, y, locale);

@@ -13,6 +13,9 @@ class Translator {
         FileLoader_1.getContent("translations/en.json", data => {
             this.translations['en'] = data;
         });
+        FileLoader_1.getContent("translations/es.json", data => {
+            this.translations['es'] = data;
+        });
     }
     static t(key) {
         key = this.locale + '.' + key;

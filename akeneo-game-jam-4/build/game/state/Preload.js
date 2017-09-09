@@ -16,6 +16,7 @@ class Preload extends Phaser.State {
         this.game.load.spritesheet('caranim', 'assets/caranim.png', 23, 50);
         this.game.load.image('fr', 'assets/fr.png');
         this.game.load.image('en', 'assets/en.png');
+        this.game.load.image('es', 'assets/es.png');
         this.game.load.image('sound', 'assets/sound.png');
         this.game.load.image('sounddisabled', 'assets/sounddisabled.png');
         // Scene

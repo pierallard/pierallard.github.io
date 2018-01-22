@@ -1,30 +1,30 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = require("../game_state/Play");
-const UnitSprite_1 = require("./UnitSprite");
+const Rotation_1 = require("../computing/Rotation");
 class Shoot extends Phaser.Sprite {
     static getStartFrame(rotation) {
         switch (rotation) {
-            case UnitSprite_1.Rotation.TOP: return 8;
-            case UnitSprite_1.Rotation.TOP_RIGHT: return 34;
-            case UnitSprite_1.Rotation.RIGHT: return 42;
-            case UnitSprite_1.Rotation.BOTTOM_RIGHT: return 0;
-            case UnitSprite_1.Rotation.BOTTOM: return 12;
-            case UnitSprite_1.Rotation.BOTTOM_LEFT: return 4;
-            case UnitSprite_1.Rotation.LEFT: return 38;
-            case UnitSprite_1.Rotation.TOP_LEFT: return 30;
+            case Rotation_1.ROTATION.TOP: return 8;
+            case Rotation_1.ROTATION.TOP_RIGHT: return 34;
+            case Rotation_1.ROTATION.RIGHT: return 42;
+            case Rotation_1.ROTATION.BOTTOM_RIGHT: return 0;
+            case Rotation_1.ROTATION.BOTTOM: return 12;
+            case Rotation_1.ROTATION.BOTTOM_LEFT: return 4;
+            case Rotation_1.ROTATION.LEFT: return 38;
+            case Rotation_1.ROTATION.TOP_LEFT: return 30;
         }
     }
     static getAnchor(rotation) {
         switch (rotation) {
-            case UnitSprite_1.Rotation.TOP: return [0, 1];
-            case UnitSprite_1.Rotation.TOP_RIGHT: return [0.7, 0.7];
-            case UnitSprite_1.Rotation.RIGHT: return [1, 0];
-            case UnitSprite_1.Rotation.BOTTOM_RIGHT: return [0.7, -0.7];
-            case UnitSprite_1.Rotation.BOTTOM: return [0, -1];
-            case UnitSprite_1.Rotation.BOTTOM_LEFT: return [-0.7, -0.7];
-            case UnitSprite_1.Rotation.LEFT: return [-1, 0];
-            case UnitSprite_1.Rotation.TOP_LEFT: return [-0.7, 0.7];
+            case Rotation_1.ROTATION.TOP: return [0, 1];
+            case Rotation_1.ROTATION.TOP_RIGHT: return [0.7, 0.7];
+            case Rotation_1.ROTATION.RIGHT: return [1, 0];
+            case Rotation_1.ROTATION.BOTTOM_RIGHT: return [0.7, -0.7];
+            case Rotation_1.ROTATION.BOTTOM: return [0, -1];
+            case Rotation_1.ROTATION.BOTTOM_LEFT: return [-0.7, -0.7];
+            case Rotation_1.ROTATION.LEFT: return [-1, 0];
+            case Rotation_1.ROTATION.TOP_LEFT: return [-0.7, 0.7];
         }
     }
     constructor(game, x, y, rotation) {

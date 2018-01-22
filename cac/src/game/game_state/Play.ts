@@ -1,16 +1,26 @@
-import {Player} from "../player/Player";
 import {WorldKnowledge} from "../map/WorldKnowledge";
 import {UserInterface} from "../interface/UserInterface";
 import {MCV} from "../unit/MCV";
 import {HumanPlayer} from "../player/HumanPlayer";
 import {ComputerPlayer} from "../player/ComputerPlayer";
+import {GROUND_HEIGHT, GROUND_WIDTH} from "../map/GeneratedGround";
+import {TiberiumSource} from "../building/TiberiumSource";
+import {AlternativePosition} from "../computing/AlternativePosition";
+import {Helipad} from "../building/Helipad";
 
+export const _DEBUG_FAST_CONSTRUCT = true;
 export const SCALE = 2;
 export const MOVE = 3 * SCALE;
 export const PANEL_WIDTH = 80;
+export enum GROUP {
+    UNIT,
+    EFFECTS,
+    AERIAL,
+    SHADOW,
+    GROUND
+}
 
 export default class Play extends Phaser.State {
-    private players: Player[];
     private upKey: Phaser.Key;
     private downKey: Phaser.Key;
     private leftKey: Phaser.Key;
@@ -21,21 +31,33 @@ export default class Play extends Phaser.State {
     private dKey: Phaser.Key;
     private worldKnowledge: WorldKnowledge;
     private userInterface: UserInterface;
+    private startPositions: PIXI.Point[];
+    private startTiberiums: PIXI.Point[];
 
     constructor() {
         super();
 
-        this.worldKnowledge = new WorldKnowledge();
-        this.players = [
-            new HumanPlayer(this.worldKnowledge, 0, 0x00ff00),
-            new ComputerPlayer(this.worldKnowledge, 1, 0xff00ff),
+        this.startPositions = [
+            new PIXI.Point(Math.round(GROUND_WIDTH / 5), Math.round(GROUND_HEIGHT / 5)),
+            new PIXI.Point(Math.round(GROUND_WIDTH * 4 / 5), Math.round(GROUND_HEIGHT * 4 / 5)),
+        ];
+        this.startTiberiums = [
+            new PIXI.Point(Math.round(GROUND_WIDTH * 2 / 5), Math.round(GROUND_HEIGHT / 5)),
+            new PIXI.Point(Math.round(GROUND_WIDTH * 3 / 5), Math.round(GROUND_HEIGHT * 4 / 5)),
         ];
 
-        this.userInterface = new UserInterface(this.worldKnowledge, this.players[0]);
+        this.worldKnowledge = new WorldKnowledge();
+        this.worldKnowledge.addPlayer(new HumanPlayer(this.worldKnowledge, 0, 0x00ff00));
+        this.worldKnowledge.addPlayer(new ComputerPlayer(this.worldKnowledge, 1, 0xff00ff));
+        this.userInterface = new UserInterface(this.worldKnowledge, this.worldKnowledge.getPlayers()[0]);
     }
 
     public create() {
-        this.worldKnowledge.create(this.game);
+        this.worldKnowledge.create(
+            this.game,
+            this.startPositions.concat(this.startTiberiums),
+            this.worldKnowledge.getPlayers()[0]
+        );
         this.userInterface.create(this.game);
 
         this.world.setBounds(0, 0, this.worldKnowledge.getGroundWidth(), this.worldKnowledge.getGroundHeight());
@@ -46,24 +68,35 @@ export default class Play extends Phaser.State {
             this.worldKnowledge.getGroundHeight()
         );
 
+        // this.game.stage.disableVisibilityChange = true;
+
         this.registerInputs();
 
         this.start();
     }
 
     public start() {
-        this.worldKnowledge.addUnit(new MCV(this.worldKnowledge, new PIXI.Point(5, 5), this.players[0]));
-        this.worldKnowledge.addUnit(new MCV(this.worldKnowledge, new PIXI.Point(35, 35), this.players[1]));
+        AlternativePosition.getZones(this.worldKnowledge.isGroundCellAccessible.bind(this.worldKnowledge));
 
-        this.players.filter((player) => {
-            if (player.constructor.name === 'ComputerPlayer') {
-                (<ComputerPlayer> player).getUnitCreator().create(this.game);
-                (<ComputerPlayer> player).getBuildingCreator().create(this.game);
-            }
+        this.worldKnowledge.addArmy(new MCV(
+            this.worldKnowledge,
+            this.startPositions[0],
+            this.worldKnowledge.getPlayers()[0]
+        ));
+        this.worldKnowledge.addArmy(new MCV(
+            this.worldKnowledge,
+            this.startPositions[1],
+            this.worldKnowledge.getPlayers()[1]
+        ));
+        this.startTiberiums.forEach((tiberiumPosition) => {
+            this.worldKnowledge.addArmy(new TiberiumSource(
+                this.worldKnowledge,
+                tiberiumPosition
+            ));
         });
 
         this.game.time.events.loop(5000, () => {
-            this.players.filter((player) => {
+            this.worldKnowledge.getPlayers().filter((player) => {
                 if (player.constructor.name === 'ComputerPlayer') {
                     (<ComputerPlayer> player).update();
                 }

@@ -8,9 +8,11 @@ class Stand {
         return this;
     }
     run() {
-        const shootable = this.unit.getClosestShootable();
-        if (shootable) {
-            this.unit.shoot(shootable);
+        if (this.unit.canShoot()) {
+            const shootable = this.unit.getClosestShootable();
+            if (shootable) {
+                this.unit.shoot(shootable);
+            }
         }
     }
 }

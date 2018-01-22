@@ -18,6 +18,7 @@ class LifeRectangle extends Phaser.Graphics {
             this.lineStyle(null);
             this.beginFill(0x00ff00, 1);
             this.drawRect(-this.unitWidth / 2 + 2, -this.unitHeight / 2 - HEIGHT, Math.round((this.unitWidth - 4 + 1) * this.percentage), HEIGHT - 1);
+            this.endFill();
         }
     }
     setVisible(value) {
@@ -27,6 +28,10 @@ class LifeRectangle extends Phaser.Graphics {
     updateLife(percentage) {
         this.percentage = percentage;
         this.render();
+    }
+    setAnchor(x, y) {
+        this.x = (0.5 - x) * this.unitWidth;
+        this.y = (0.5 - y) * this.unitHeight;
     }
 }
 exports.LifeRectangle = LifeRectangle;

@@ -1,32 +1,60 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const BuildingRepository_1 = require("../repository/BuildingRepository");
-const UnitRepository_1 = require("../repository/UnitRepository");
-const Appear_1 = require("../sprite/Appear");
+const Player_1 = require("../player/Player");
+const ArmyRepository_1 = require("../repository/ArmyRepository");
 const GeneratedGround_1 = require("./GeneratedGround");
 const MiniAppear_1 = require("../sprite/MiniAppear");
+const BuildingProperties_1 = require("../building/BuildingProperties");
+const Fog_1 = require("../Fog");
+const Appear_1 = require("../sprite/Appear");
+const Play_1 = require("../game_state/Play");
 class WorldKnowledge {
     constructor() {
         this.ground = new GeneratedGround_1.GeneratedGround();
-        this.unitRepository = new UnitRepository_1.UnitRepository();
-        this.buildingRepository = new BuildingRepository_1.BuildingRepository();
+        this.armyRepository = new ArmyRepository_1.ArmyRepository();
+        this.groundRepository = [];
+        this.unitCreators = [];
+        this.buildingCreators = [];
+        this.players = [];
+        this.fogs = [];
+        this.groups = [];
     }
-    create(game) {
+    create(game, startPositions, player) {
         this.game = game;
-        this.ground.create(this.game);
-        this.unitBuildingGroup = this.game.add.group();
-        this.unitBuildingGroup.fixedToCamera = false;
-    }
-    update() {
-        this.unitBuildingGroup.sort('y');
-        this.unitRepository.getUnits().forEach((unit) => {
-            unit.update();
+        this.ground.create(this.game, startPositions);
+        this.groups[Play_1.GROUP.GROUND] = this.game.add.group();
+        this.groups[Play_1.GROUP.UNIT] = this.game.add.group();
+        this.groups[Play_1.GROUP.SHADOW] = this.game.add.group();
+        this.groups[Play_1.GROUP.EFFECTS] = this.game.add.group();
+        this.groups[Play_1.GROUP.AERIAL] = this.game.add.group();
+        this.groups.forEach((group) => {
+            group.fixedToCamera = false;
+        });
+        this.unitCreators.forEach((unitCreator) => {
+            unitCreator.create(game);
+        });
+        this.buildingCreators.forEach((buildingCreator) => {
+            buildingCreator.create(game);
+        });
+        this.fogGroup = this.game.add.group();
+        this.fogs.forEach((fog) => {
+            fog.create(game, this.fogGroup, fog.getPlayer() === player);
         });
     }
-    isCellAccessible(position) {
-        return this.ground.isCellAccessible(position) &&
-            this.unitRepository.isCellNotOccupied(position) &&
-            this.buildingRepository.isCellNotOccupied(position);
+    update() {
+        this.groups[Play_1.GROUP.UNIT].sort('y');
+        this.armyRepository.getItems().forEach((army) => {
+            army.update();
+        });
+        this.fogs.forEach((fog) => {
+            fog.update();
+        });
+    }
+    isGroundCellAccessible(position) {
+        return this.ground.isCellAccessible(position) && this.armyRepository.isGroundCellAccessible(position);
+    }
+    isAerialCellAccessible(position) {
+        return this.armyRepository.isAerialCellAccessible(position);
     }
     getGroundWidth() {
         return this.ground.getGroundWidth();
@@ -34,93 +62,165 @@ class WorldKnowledge {
     getGroundHeight() {
         return this.ground.getGroundHeight();
     }
-    addBuilding(newBuilding, appear = false) {
-        this.buildingRepository.add(newBuilding);
-        newBuilding.create(this.game, this.unitBuildingGroup);
+    addArmy(army, appear = false, appearSize = 1) {
+        this.armyRepository.add(army);
+        army.create(this.game, this.groups);
         if (appear) {
-            newBuilding.setVisible(false);
-            let appearSprite = new Appear_1.Appear(newBuilding.getCellPositions()[0]);
-            appearSprite.create(this.game, this.unitBuildingGroup);
-            this.game.time.events.add(Phaser.Timer.SECOND * 1.5, () => {
-                newBuilding.setVisible(true);
+            army.setVisible(false);
+            let appearSprite = appearSize === 1 ?
+                new MiniAppear_1.MiniAppear(army.getCellPositions()[0]) :
+                new Appear_1.Appear(army.getCellPositions()[0]);
+            appearSprite.create(this.game, this.groups[Play_1.GROUP.UNIT]);
+            this.game.time.events.add(Phaser.Timer.SECOND * (appearSize === 1 ? 2 : 1.2), () => {
+                army.setVisible(true);
             }, this);
         }
     }
-    addUnit(newUnit, appear = false) {
-        this.unitRepository.add(newUnit);
-        newUnit.create(this.game, this.unitBuildingGroup);
-        if (appear) {
-            newUnit.setVisible(false);
-            let appearSprite = new MiniAppear_1.MiniAppear(newUnit.getCellPositions()[0]);
-            appearSprite.create(this.game, this.unitBuildingGroup);
-            this.game.time.events.add(Phaser.Timer.SECOND * 2, () => {
-                newUnit.setVisible(true);
-            }, this);
-        }
-    }
-    removeUnit(unit, delay = 0) {
+    removeArmy(army, delay = 0) {
         if (delay === 0) {
-            this.unitRepository.removeUnit(unit);
+            this.armyRepository.removeArmy(army);
         }
         else {
             this.game.time.events.add(delay, () => {
-                this.unitRepository.removeUnit(unit);
+                this.armyRepository.removeArmy(army);
             });
         }
     }
-    getUnitAt(cell) {
-        return this.unitRepository.unitAt(cell);
+    getArmyAt(cell) {
+        const aerial = this.armyRepository.aerialItemAt(cell);
+        return aerial ? aerial : this.armyRepository.groundItemAt(cell);
     }
-    getBuildingAt(cell) {
-        return this.buildingRepository.buildingAt(cell);
+    getGroundArmyAt(cell) {
+        return this.armyRepository.groundItemAt(cell);
     }
-    getUnits() {
-        return this.unitRepository.getUnits();
+    getGroundAt(cell) {
+        for (let i = 0; i < this.groundRepository.length; i++) {
+            if (this.groundRepository[i].getCellPositions()[0].x === cell.x &&
+                this.groundRepository[i].getCellPositions()[0].y === cell.y) {
+                return this.groundRepository[i];
+            }
+        }
+        return null;
     }
-    getSelectedUnits() {
-        return this.unitRepository.getSelectedUnits();
+    getArmies() {
+        return this.armyRepository.getItems();
     }
-    getPlayerBuildings(player, type = null) {
-        return this.buildingRepository.getBuildings(type).filter((building) => {
-            return building.getPlayer() === player;
+    getSelectedArmies() {
+        return this.armyRepository.getSelectedArmies();
+    }
+    getPlayerArmies(player, type = null) {
+        return this.armyRepository.getItems(type).filter((army) => {
+            return army.getPlayer() === player;
         });
     }
-    getEnemyBuildings(player, type = null) {
-        return this.buildingRepository.getBuildings(type).filter((building) => {
-            return building.getPlayer() !== null && building.getPlayer() !== player;
-        });
-    }
-    getPlayerUnits(player, type = null) {
-        return this.unitRepository.getUnits(type).filter((unit) => {
-            return unit.getPlayer() === player;
-        });
-    }
-    getEnemyUnits(player, type = null) {
-        return this.unitRepository.getUnits(type).filter((unit) => {
-            return unit.getPlayer() !== null && unit.getPlayer() !== player;
+    getEnemyArmies(player, type = null) {
+        return this.armyRepository.getItems(type).filter((army) => {
+            return army.getPlayer() !== null && army.getPlayer() !== player;
         });
     }
     getCreatorOf(buildingName, player) {
-        const creators = this.buildingRepository.getCreatorOf(buildingName).filter((building) => {
+        const creators = this.armyRepository.getCreatorOf(buildingName).filter((building) => {
             return building.getPlayer() === player;
         });
         return creators.length > 0 ? creators[0] : null;
     }
-    getEnemies(player) {
-        let result = [];
-        this.getEnemyUnits(player).forEach((unit) => {
-            result.push(unit);
-        });
-        this.getEnemyBuildings(player).forEach((building) => {
-            result.push(building);
-        });
-        return result;
-    }
-    removeBuilding(building) {
-        this.buildingRepository.removeBuilding(building);
-    }
     getGroundCSV() {
         return this.ground.getCSV();
+    }
+    addGroundElement(newPlant) {
+        this.groups[Play_1.GROUP.GROUND].add(newPlant);
+        this.groundRepository.push(newPlant);
+    }
+    getGrounds() {
+        return this.groundRepository;
+    }
+    getPlayerNeededPower(player) {
+        return -this.getPlayerArmies(player).reduce((power, building) => {
+            return power + Math.min(0, BuildingProperties_1.BuildingProperties.getPower(building.constructor.name));
+        }, 0);
+    }
+    getPlayerProvidedPower(player) {
+        return Player_1.START_POWER + this.getPlayerArmies(player).reduce((power, building) => {
+            return power + Math.max(0, BuildingProperties_1.BuildingProperties.getPower(building.constructor.name));
+        }, 0);
+    }
+    addPlayer(player) {
+        this.players.push(player);
+        this.unitCreators.push(player.getUnitCreator());
+        this.buildingCreators.push(player.getBuildingCreator());
+        this.fogs.push(new Fog_1.Fog(this, player));
+    }
+    getPlayers() {
+        return this.players;
+    }
+    productUnit(player, unitName) {
+        this.getPlayerUnitCreator(player).orderProduction(unitName);
+    }
+    productBuilding(player, unitName) {
+        this.getPlayerBuildingCreator(player).orderProduction(unitName);
+    }
+    isBuildingProduced(player, buildingName) {
+        return this.getPlayerBuildingCreator(player).isProduced(buildingName);
+    }
+    runBuildingCreation(player, buildingName, cell) {
+        this.getPlayerBuildingCreator(player).runCreation(buildingName, cell);
+    }
+    getPlayerAllowedBuildings(player) {
+        return this.getPlayerBuildingCreator(player).getAllowedBuildings();
+    }
+    getPlayerAllowedUnits(player) {
+        return this.getPlayerUnitCreator(player).getAllowedUnits();
+    }
+    getBuildingProductionStatus(player) {
+        return this.getPlayerBuildingCreator(player).getProductionStatus();
+    }
+    canProductBuilding(player, buildingName) {
+        return this.getPlayerBuildingCreator(player).canProduct(buildingName);
+    }
+    getUnitProductionStatus(player) {
+        return this.getPlayerUnitCreator(player).getProductionStatus();
+    }
+    canProductUnit(player, unitName) {
+        return this.getPlayerUnitCreator(player).canProduct(unitName);
+    }
+    holdBuilding(player, itemName) {
+        return this.getPlayerBuildingCreator(player).hold(itemName);
+    }
+    holdUnit(player, itemName) {
+        return this.getPlayerUnitCreator(player).hold(itemName);
+    }
+    isBuildingProducing(player, itemName) {
+        return this.getPlayerBuildingCreator(player).isProducing(itemName);
+    }
+    isBuildingHold(player, itemName) {
+        return this.getPlayerBuildingCreator(player).isHold(itemName);
+    }
+    isUnitHold(player, itemName) {
+        return this.getPlayerUnitCreator(player).isHold(itemName);
+    }
+    isUnitProducing(player, itemName) {
+        return this.getPlayerUnitCreator(player).isProducing(itemName);
+    }
+    cancelBuilding(player, itemName) {
+        return this.getPlayerBuildingCreator(player).cancel(itemName);
+    }
+    cancelUnit(player, itemName) {
+        return this.getPlayerUnitCreator(player).cancel(itemName);
+    }
+    getFogKnownCells(player) {
+        return this.fogs.filter((fog) => {
+            return fog.getPlayer() === player;
+        })[0].getKnownCells();
+    }
+    getPlayerUnitCreator(player) {
+        return this.unitCreators.filter((unitCreator) => {
+            return unitCreator.getPlayer() === player;
+        })[0];
+    }
+    getPlayerBuildingCreator(player) {
+        return this.buildingCreators.filter((buildingCreator) => {
+            return buildingCreator.getPlayer() === player;
+        })[0];
     }
 }
 exports.WorldKnowledge = WorldKnowledge;

@@ -9,13 +9,13 @@ export class Barracks extends ConstructableBuilding {
         super(worldKnowledge, cell, player);
     }
 
-    create(game: Phaser.Game, group: Phaser.Group) {
+    create(game: Phaser.Game, groups: Phaser.Group[]) {
         this.sprite = new BarracksSprite(
             game,
+            groups,
             Cell.cellToReal(this.cellPosition.x),
             Cell.cellToReal(this.cellPosition.y),
             'Module'
         );
-        group.add(this.sprite);
     }
 }

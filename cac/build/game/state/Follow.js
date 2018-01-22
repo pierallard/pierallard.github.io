@@ -16,7 +16,9 @@ class Follow {
         }
     }
     isArrived() {
-        return AlternativePosition_1.AlternativePosition.isArrived(this.goal.getCellPositions()[0], this.unit.getCellPositions()[0], this.worldKnowledge.isCellAccessible.bind(this.worldKnowledge));
+        return AlternativePosition_1.AlternativePosition.isArrived(this.goal.getCellPositions()[0], this.unit.getCellPositions()[0], this.unit.isOnGround() ?
+            this.worldKnowledge.isGroundCellAccessible.bind(this.worldKnowledge) :
+            this.worldKnowledge.isAerialCellAccessible.bind(this.worldKnowledge));
     }
 }
 exports.Follow = Follow;

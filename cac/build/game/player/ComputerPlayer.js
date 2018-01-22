@@ -1,41 +1,54 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const Player_1 = require("./Player");
+const BuildingPositionner_1 = require("../interface/BuildingPositionner");
 class ComputerPlayer extends Player_1.Player {
     update() {
         // Check if MCV to open
-        this.worldKnowledge.getPlayerUnits(this, 'MCV').forEach((unit) => {
+        this.worldKnowledge.getPlayerArmies(this, 'MCV').forEach((unit) => {
             this.order().expand(unit);
         });
-        // Check if there is Power Plant
-        if (this.worldKnowledge.getPlayerBuildings(this, 'PowerPlant').length === 0) {
-            if (this.order().getBuildingCreator().isProduced('PowerPlant')) {
-                this.order().createBuilding('PowerPlant', this.getRandomCellNearBase());
-            }
-            else {
-                this.order().productBuilding('PowerPlant');
-            }
-        }
-        // Check if there is Barracks
-        if (this.worldKnowledge.getPlayerBuildings(this, 'Barracks').length === 0) {
-            if (this.order().getBuildingCreator().isProduced('Barracks')) {
-                this.order().createBuilding('Barracks', this.getRandomCellNearBase());
-            }
-            else {
-                this.order().productBuilding('Barracks');
-            }
-        }
-        else {
-            this.order().productUnit('Tank');
+        this.constructWhenYouCan('PowerPlant');
+        this.constructWhenYouCan('TiberiumRefinery');
+        this.constructWhenYouCan('Barracks');
+        if (this.worldKnowledge.getPlayerArmies(this, 'Barracks').length > 0) {
+            this.order().productUnit('MinigunInfantry');
         }
         // Attack
-        this.worldKnowledge.getPlayerUnits(this, 'Tank').forEach((unit) => {
-            this.order().orderMoveAttack(unit, new PIXI.Point(0, 0));
-        });
+        if (this.worldKnowledge.getPlayerArmies(this, 'MinigunInfantry').length > 5) {
+            this.worldKnowledge.getPlayerArmies(this, 'MinigunInfantry').forEach((unit) => {
+                this.order().orderMoveAttack(unit, new PIXI.Point(0, 0));
+            });
+        }
     }
-    getRandomCellNearBase() {
-        const cellPos = this.worldKnowledge.getPlayerBuildings(this, 'ConstructionYard')[0].getCellPositions()[0];
-        return new PIXI.Point(cellPos.x + (2 + Math.floor(Math.random() * 3)) * (Math.random() > 0.5 ? -1 : 1), cellPos.y + (2 + Math.floor(Math.random() * 3)) * (Math.random() > 0.5 ? -1 : 1));
+    getRandomCellNearBase(buildingName) {
+        const constructionYard = this.worldKnowledge.getPlayerArmies(this, 'ConstructionYard')[0];
+        if (!constructionYard) {
+            return null;
+        }
+        const cellPos = constructionYard.getCellPositions()[0];
+        let tries = 10;
+        while (tries > 0) {
+            const test = new PIXI.Point(cellPos.x + (BuildingPositionner_1.BUILDING_POSITIONNER_MIN_DIST / 2 + Math.floor(Math.random() * BuildingPositionner_1.BUILDING_POSITIONNER_MIN_DIST)), cellPos.y + (BuildingPositionner_1.BUILDING_POSITIONNER_MIN_DIST / 2 + Math.floor(Math.random() * BuildingPositionner_1.BUILDING_POSITIONNER_MIN_DIST)));
+            if (BuildingPositionner_1.BuildingPositioner.isAccessible(test, buildingName, this.worldKnowledge, this)) {
+                return test;
+            }
+            tries--;
+        }
+        return null;
+    }
+    constructWhenYouCan(buildingName) {
+        if (this.worldKnowledge.getPlayerArmies(this, buildingName).length === 0) {
+            if (this.worldKnowledge.isBuildingProduced(this, buildingName)) {
+                const randomCell = this.getRandomCellNearBase(buildingName);
+                if (randomCell) {
+                    this.order().createBuilding(buildingName, randomCell);
+                }
+            }
+            else {
+                this.order().productBuilding(buildingName);
+            }
+        }
     }
 }
 exports.ComputerPlayer = ComputerPlayer;

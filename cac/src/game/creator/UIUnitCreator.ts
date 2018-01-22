@@ -2,6 +2,7 @@ import {WorldKnowledge} from "../map/WorldKnowledge";
 import {Player} from "../player/Player";
 import {UnitProperties} from "../unit/UnitProperties";
 import {AbstractUICreator} from "./AbstractUICreator";
+import {ProductionStatus} from "./AbstractCreator";
 
 const X = 1202;
 
@@ -10,31 +11,37 @@ export class UIUnitCreator extends AbstractUICreator {
         super(worldKnowledge, player, X);
     }
 
-    getConstructableItems(): string[] {
-        return UnitProperties.getConstructableUnits();
+    protected getPossibleButtons(): string[] {
+        return this.worldKnowledge.getPlayerAllowedUnits(this.player);
     }
 
-    getSpriteKey(itemName: string): string {
+    protected getSpriteKey(itemName: string): string {
         return UnitProperties.getSprite(itemName, this.player.getId());
     }
 
-    getSpriteLayer(itemName: string): number {
+    protected getSpriteLayer(itemName: string): number {
         return UnitProperties.getSpriteLayer(itemName);
     }
 
-    getConstructionTime(itemName: string): number {
-        return UnitProperties.getConstructionTime(itemName);
+    protected onClickFunction(itemName: string) {
+        this.worldKnowledge.productUnit(this.player, itemName);
     }
 
-    onProductFinish(itemName: string) {
-        return this.resetButton(itemName);
+    protected getProductionStatus(): ProductionStatus {
+        return this.worldKnowledge.getUnitProductionStatus(this.player);
     }
 
-    onClickFunction(itemName: string) {
-        if (this.player.order().getUnitCreator().isProducing(itemName)) {
-            // Do nothing
-        } else if (this.player.order().getUnitCreator().isAllowed(itemName)) {
-            this.player.order().productUnit(itemName);
+    protected canProduct(itemName: string): boolean {
+        return this.worldKnowledge.canProductUnit(this.player, itemName);
+    }
+
+    protected onRightClickFunction(itemName: string) {
+        if (this.worldKnowledge.isUnitProducing(this.player, itemName)) {
+            if (this.worldKnowledge.isUnitHold(this.player, itemName)) {
+                this.worldKnowledge.cancelUnit(this.player, itemName);
+            } else {
+                this.worldKnowledge.holdUnit(this.player, itemName);
+            }
         }
     }
 }

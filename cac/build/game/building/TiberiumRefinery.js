@@ -7,9 +7,11 @@ class TiberiumRefinery extends ConstructableBuilding_1.ConstructableBuilding {
     constructor(worldKnowledge, cell, player) {
         super(worldKnowledge, cell, player);
     }
-    create(game, group) {
-        this.sprite = new TiberiumRefinerySprite_1.TiberiumRefinerySprite(game, Cell_1.Cell.cellToReal(this.cellPosition.x), Cell_1.Cell.cellToReal(this.cellPosition.y), 'Factory3');
-        group.add(this.sprite);
+    create(game, groups) {
+        this.sprite = new TiberiumRefinerySprite_1.TiberiumRefinerySprite(game, groups, Cell_1.Cell.cellToReal(this.cellPosition.x), Cell_1.Cell.cellToReal(this.cellPosition.y), 'Factory3');
+    }
+    runUnloadAnimation() {
+        this.sprite.runUnloadAnimation();
     }
 }
 exports.TiberiumRefinery = TiberiumRefinery;

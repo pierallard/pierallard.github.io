@@ -3,8 +3,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ConstructableBuilding_1 = require("./ConstructableBuilding");
 const Cell_1 = require("../computing/Cell");
 const Play_1 = require("../game_state/Play");
+const Ground_1 = require("../map/Ground");
+const LifeRectangle_1 = require("../sprite/LifeRectangle");
+const SelectRectangle_1 = require("../sprite/SelectRectangle");
 class ConcreteBarrier extends ConstructableBuilding_1.ConstructableBuilding {
-    create(game, group) {
+    create(game, groups) {
         const positionX = Cell_1.Cell.cellToReal(this.cellPosition.x);
         const positionY = Cell_1.Cell.cellToReal(this.cellPosition.y);
         this.topLeftSprite = new Phaser.Sprite(game, positionX, positionY, 'Wall', this.getTopLeftLayer());
@@ -17,20 +20,36 @@ class ConcreteBarrier extends ConstructableBuilding_1.ConstructableBuilding {
         this.bottomLeftSprite.anchor.setTo(1, 0.5);
         this.getSprites().forEach((sprite) => {
             sprite.scale.setTo(Play_1.SCALE / 2, Play_1.SCALE / 2); // Wall texture should be resized by 50%
-            group.add(sprite);
+            groups[Play_1.GROUP.UNIT].add(sprite);
         });
-        this.worldKnowledge.getPlayerBuildings(this.player, this.constructor.name).forEach((building) => {
-            const concreteBarrier = building;
-            if (concreteBarrier !== this) {
-                concreteBarrier.updateTileLayers();
-            }
-        });
+        this.updateConcretes();
+        this.selectedRectable = new SelectRectangle_1.SelectRectangle(game, Ground_1.GROUND_SIZE / Play_1.SCALE, Ground_1.GROUND_SIZE / Play_1.SCALE);
+        groups[Play_1.GROUP.UNIT].add(this.selectedRectable);
+        this.lifeRectangle = new LifeRectangle_1.LifeRectangle(game, Ground_1.GROUND_SIZE / Play_1.SCALE, Ground_1.GROUND_SIZE / Play_1.SCALE);
+        groups[Play_1.GROUP.UNIT].add(this.lifeRectangle);
     }
     updateTileLayers() {
         this.topLeftSprite.loadTexture(this.topLeftSprite.key, this.getTopLeftLayer());
         this.topRightSprite.loadTexture(this.topRightSprite.key, this.getTopRightLayer());
         this.bottomRightSprite.loadTexture(this.bottomRightSprite.key, this.getBottomRightLayer());
         this.bottomLeftSprite.loadTexture(this.bottomLeftSprite.key, this.getBottomLeftLayer());
+    }
+    destroy() {
+        this.getSprites().forEach((sprite) => {
+            sprite.destroy(true);
+        });
+        this.updateConcretes();
+    }
+    isInside(left, right, top, bottom) {
+        return this.topLeftSprite.x + Ground_1.GROUND_SIZE / 2 > left &&
+            this.topLeftSprite.x - Ground_1.GROUND_SIZE / 2 < right &&
+            this.topLeftSprite.y + Ground_1.GROUND_SIZE / 2 > top &&
+            this.topLeftSprite.y - Ground_1.GROUND_SIZE / 2 < bottom;
+    }
+    setSelected(value) {
+        this.selected = value;
+        this.selectedRectable.setVisible(value);
+        this.lifeRectangle.setVisible(value);
     }
     getSprites() {
         return [
@@ -129,10 +148,18 @@ class ConcreteBarrier extends ConstructableBuilding_1.ConstructableBuilding {
         ];
     }
     hasConcreteNeighbourAt(cell) {
-        const building = this.worldKnowledge.getBuildingAt(cell);
+        const building = this.worldKnowledge.getGroundArmyAt(cell);
         return (null !== building &&
             building.constructor.name === this.constructor.name &&
             building.getPlayer() === this.getPlayer());
+    }
+    updateConcretes() {
+        this.worldKnowledge.getPlayerArmies(this.player, this.constructor.name).forEach((building) => {
+            const concreteBarrier = building;
+            if (concreteBarrier !== this) {
+                concreteBarrier.updateTileLayers();
+            }
+        });
     }
 }
 exports.ConcreteBarrier = ConcreteBarrier;

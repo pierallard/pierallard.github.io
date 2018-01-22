@@ -3,6 +3,7 @@ import {Cell} from "../computing/Cell";
 import {WorldKnowledge} from "../map/WorldKnowledge";
 
 export class Selector {
+    private camera: Phaser.Camera;
     private isDoubleClick: boolean;
     private corner: PIXI.Point = null;
     private worldKnowledge: WorldKnowledge;
@@ -10,7 +11,6 @@ export class Selector {
     private timerDoubleClick: Phaser.TimerEvent;
     private graphics: Phaser.Graphics;
     private mousePointer: Phaser.Pointer;
-    private cameraPosition: Phaser.Point;
     private leftButton: Phaser.DeviceButton;
     private rightButton: Phaser.DeviceButton;
     private gameWidth: number;
@@ -24,7 +24,7 @@ export class Selector {
 
     create(game: Phaser.Game) {
         this.mousePointer = game.input.mousePointer;
-        this.cameraPosition = game.camera.position;
+        this.camera = game.camera;
         this.leftButton = game.input.activePointer.leftButton;
         this.rightButton = game.input.activePointer.rightButton;
         this.graphics = game.add.graphics(0, 0);
@@ -42,8 +42,8 @@ export class Selector {
 
     getMousePointer(): PIXI.Point {
         return new PIXI.Point(
-            this.mousePointer.x + this.cameraPosition.x,
-            this.mousePointer.y + this.cameraPosition.y
+            this.mousePointer.x + this.camera.position.x,
+            this.mousePointer.y + this.camera.position.y
         );
     }
 
@@ -54,28 +54,24 @@ export class Selector {
 
         if (this.corner !== null && this.leftButton.isUp) {
             if (this.corner.x === this.getMousePointer().x && this.corner.y === this.getMousePointer().y) {
-                let unitUnderPointer = this.worldKnowledge.getUnitAt(new PIXI.Point(
+                let unitUnderPointer = this.worldKnowledge.getArmyAt(new PIXI.Point(
                     Cell.realToCell(this.corner.x),
                     Cell.realToCell(this.corner.y)
                 ));
-                if (unitUnderPointer && unitUnderPointer.getPlayer() !== this.player) {
-                    unitUnderPointer = null;
-                }
-                if (unitUnderPointer && this.isDoubleClick) {
+                if (unitUnderPointer && unitUnderPointer.getPlayer() === this.player && this.isDoubleClick) {
                     this.selectUnitsInside(
-                        new PIXI.Point(this.cameraPosition.x, this.cameraPosition.y),
+                        new PIXI.Point(this.camera.position.x, this.camera.position.y),
                         new PIXI.Point(
-                            this.cameraPosition.x + this.gameWidth,
-                            this.cameraPosition.y + this.gameHeight,
+                            this.camera.position.x + this.gameWidth,
+                            this.camera.position.y + this.gameHeight,
                         ),
                         unitUnderPointer.constructor
                     );
                 } else {
-                    this.worldKnowledge.getUnits().forEach((unit) => {
-                        unit.setSelected(unit === unitUnderPointer);
+                    this.worldKnowledge.getArmies().forEach((army) => {
+                        army.setSelected(army === unitUnderPointer);
                     });
                 }
-
             } else {
                 this.selectUnitsInside(this.corner, this.getMousePointer());
             }
@@ -92,7 +88,7 @@ export class Selector {
         }
 
         if (this.rightButton.isDown) {
-            this.worldKnowledge.getSelectedUnits().forEach((source) => {
+            this.worldKnowledge.getSelectedArmies().forEach((source) => {
                 source.updateStateAfterClick(new PIXI.Point(
                     Cell.realToCell(this.getMousePointer().x),
                     Cell.realToCell(this.getMousePointer().y)
@@ -119,9 +115,12 @@ export class Selector {
         const top = Math.min(corner.y, mousePointer.y);
         const bottom = Math.max(corner.y, mousePointer.y);
 
-        this.worldKnowledge.getUnits().forEach((unit) => {
+        this.worldKnowledge.getArmies().forEach((unit) => {
             let isInside = false;
-            if (unit.getPlayer() === this.player && (null === constructor || unit.constructor === constructor)) {
+            if (unit.isVisible() &&
+                unit.getPlayer() === this.player &&
+                (null === constructor || unit.constructor === constructor)
+            ) {
                 isInside = unit.isInside(left, right, top, bottom);
             }
             unit.setSelected(isInside);

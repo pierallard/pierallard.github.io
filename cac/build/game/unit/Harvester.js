@@ -1,50 +1,42 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const Unit_1 = require("./Unit");
-const Attack_1 = require("../state/Attack");
-const Follow_1 = require("../state/Follow");
-const MoveAttack_1 = require("../state/MoveAttack");
 const Harvest_1 = require("../state/Harvest");
+const TiberiumPlant_1 = require("../sprite/TiberiumPlant");
 const Distance_1 = require("../computing/Distance");
-const CubeSet_1 = require("../building/CubeSet");
 const UnitProperties_1 = require("./UnitProperties");
 class Harvester extends Unit_1.Unit {
     constructor(worldKnowledge, cellPosition, player) {
-        super(worldKnowledge, cellPosition, player, UnitProperties_1.UnitProperties.getSprite(Harvester.prototype.constructor.name, player.getId()));
-        this.life = this.maxLife = UnitProperties_1.UnitProperties.getLife(Harvester.prototype.constructor.name);
+        super(worldKnowledge, cellPosition, player);
         this.loading = 0;
     }
+    harvest() {
+        const closestGround = Distance_1.Distance.getClosestItem(this.getCellPositions()[0], this.worldKnowledge.getGrounds());
+        this.state = new Harvest_1.Harvest(this.worldKnowledge, this, closestGround.getSource());
+    }
     updateStateAfterClick(cell) {
-        const unit = this.worldKnowledge.getUnitAt(cell);
-        if (null !== unit) {
-            if (this.getPlayer() !== unit.getPlayer()) {
-                this.state = new Attack_1.Attack(this.worldKnowledge, this, unit);
-            }
-            else {
-                this.state = new Follow_1.Follow(this.worldKnowledge, this, unit);
-            }
-        }
-        else {
-            const building = this.worldKnowledge.getBuildingAt(cell);
-            if (building && building instanceof CubeSet_1.CubeSet) {
-                this.state = new Harvest_1.Harvest(this.worldKnowledge, this, building);
-            }
-            else {
-                this.state = new MoveAttack_1.MoveAttack(this.worldKnowledge, this, cell);
+        const unit = this.worldKnowledge.getGroundArmyAt(cell);
+        if (null === unit) {
+            const ground = this.worldKnowledge.getGroundAt(cell);
+            if (ground && ground instanceof TiberiumPlant_1.TiberiumPlant) {
+                this.state = new Harvest_1.Harvest(this.worldKnowledge, this, ground.getSource());
+                return;
             }
         }
+        super.updateStateAfterClick(cell);
     }
-    getClosestBase() {
-        return Distance_1.Distance.getClosest(this.getCellPositions()[0], this.worldKnowledge.getPlayerBuildings(this.player, 'ConstructionYard'));
+    getClosestRefinery() {
+        return Distance_1.Distance.getClosestItem(this.getCellPositions()[0], this.worldKnowledge.getPlayerArmies(this.player, 'TiberiumRefinery'));
     }
-    getClosestCube(cubeSet) {
-        return Distance_1.Distance.getClosest(this.getCellPositions()[0], cubeSet.getCubes());
+    getClosestPlant(source) {
+        return Distance_1.Distance.getClosestItem(this.getCellPositions()[0], source.getFreePlants(this));
     }
     isFull() {
         return this.loading >= UnitProperties_1.UnitProperties.getOption(this.constructor.name, 'max_loading');
     }
-    unload(base) {
-        base.addMinerals(this.loading);
+    unload(refinery) {
+        refinery.runUnloadAnimation();
+        refinery.getPlayer().addMinerals(this.loading);
         this.loading = 0;
         this.freeze(UnitProperties_1.UnitProperties.getOption(this.constructor.name, 'unload_time') * Phaser.Timer.SECOND);
     }

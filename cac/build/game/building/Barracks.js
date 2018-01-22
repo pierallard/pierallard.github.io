@@ -7,9 +7,8 @@ class Barracks extends ConstructableBuilding_1.ConstructableBuilding {
     constructor(worldKnowledge, cell, player) {
         super(worldKnowledge, cell, player);
     }
-    create(game, group) {
-        this.sprite = new BarracksSprite_1.BarracksSprite(game, Cell_1.Cell.cellToReal(this.cellPosition.x), Cell_1.Cell.cellToReal(this.cellPosition.y), 'Module');
-        group.add(this.sprite);
+    create(game, groups) {
+        this.sprite = new BarracksSprite_1.BarracksSprite(game, groups, Cell_1.Cell.cellToReal(this.cellPosition.x), Cell_1.Cell.cellToReal(this.cellPosition.y), 'Module');
     }
 }
 exports.Barracks = Barracks;

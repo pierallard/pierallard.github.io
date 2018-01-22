@@ -7,8 +7,8 @@ class UIUnitCreator extends AbstractUICreator_1.AbstractUICreator {
     constructor(worldKnowledge, player) {
         super(worldKnowledge, player, X);
     }
-    getConstructableItems() {
-        return UnitProperties_1.UnitProperties.getConstructableUnits();
+    getPossibleButtons() {
+        return this.worldKnowledge.getPlayerAllowedUnits(this.player);
     }
     getSpriteKey(itemName) {
         return UnitProperties_1.UnitProperties.getSprite(itemName, this.player.getId());
@@ -16,18 +16,23 @@ class UIUnitCreator extends AbstractUICreator_1.AbstractUICreator {
     getSpriteLayer(itemName) {
         return UnitProperties_1.UnitProperties.getSpriteLayer(itemName);
     }
-    getConstructionTime(itemName) {
-        return UnitProperties_1.UnitProperties.getConstructionTime(itemName);
-    }
-    onProductFinish(itemName) {
-        return this.resetButton(itemName);
-    }
     onClickFunction(itemName) {
-        if (this.player.order().getUnitCreator().isProducing(itemName)) {
-            // Do nothing
-        }
-        else if (this.player.order().getUnitCreator().isAllowed(itemName)) {
-            this.player.order().productUnit(itemName);
+        this.worldKnowledge.productUnit(this.player, itemName);
+    }
+    getProductionStatus() {
+        return this.worldKnowledge.getUnitProductionStatus(this.player);
+    }
+    canProduct(itemName) {
+        return this.worldKnowledge.canProductUnit(this.player, itemName);
+    }
+    onRightClickFunction(itemName) {
+        if (this.worldKnowledge.isUnitProducing(this.player, itemName)) {
+            if (this.worldKnowledge.isUnitHold(this.player, itemName)) {
+                this.worldKnowledge.cancelUnit(this.player, itemName);
+            }
+            else {
+                this.worldKnowledge.holdUnit(this.player, itemName);
+            }
         }
     }
 }

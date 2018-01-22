@@ -3,13 +3,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Stand_1 = require("./Stand");
 const AlternativePosition_1 = require("../computing/AlternativePosition");
 class Harvest {
-    constructor(worldKnowledge, harvester, cubeSet) {
+    constructor(worldKnowledge, harvester, source) {
         this.worldKnowledge = worldKnowledge;
         this.harvester = harvester;
-        this.cubeSet = cubeSet;
+        this.source = source;
     }
     getNextStep() {
-        if (this.cubeSet.isEmpty() && !this.harvester.isLoaded()) {
+        if (null === this.harvester.getClosestRefinery()) {
+            return new Stand_1.Stand(this.harvester);
+        }
+        if (this.source.isEmpty() && !this.harvester.isLoaded()) {
             return new Stand_1.Stand(this.harvester);
         }
         return this;
@@ -19,34 +22,37 @@ class Harvest {
             this.goToBaseAndUnload();
         }
         else {
-            const closestCube = this.harvester.getClosestCube(this.cubeSet);
-            if (!closestCube) {
+            const closestPlant = this.harvester.getClosestPlant(this.source);
+            if (!closestPlant) {
                 this.goToBaseAndUnload();
             }
             else {
-                if (this.isArrivedToCube(closestCube)) {
-                    this.harvester.load(closestCube);
+                if (this.isArrivedToPlant(closestPlant)) {
+                    this.harvester.load(closestPlant);
                 }
                 else {
-                    this.harvester.moveTowards(closestCube.getCellPositions()[0]);
+                    this.harvester.moveTowards(closestPlant.getCellPositions()[0]);
                 }
             }
         }
     }
     goToBaseAndUnload() {
-        const closestBase = this.harvester.getClosestBase();
-        if (this.isArrivedToBase(closestBase)) {
-            this.harvester.unload(closestBase);
-        }
-        else {
-            this.harvester.moveTowards(new PIXI.Point(closestBase.getCellPositions()[0].x + 1, closestBase.getCellPositions()[0].y + 1));
+        const closestRefinery = this.harvester.getClosestRefinery();
+        if (null !== closestRefinery) {
+            if (this.isArrivedToRefinery(closestRefinery)) {
+                this.harvester.unload(closestRefinery);
+            }
+            else {
+                this.harvester.moveTowards(new PIXI.Point(closestRefinery.getCellPositions()[0].x + 1, closestRefinery.getCellPositions()[0].y + 1));
+            }
         }
     }
-    isArrivedToCube(cube) {
-        return AlternativePosition_1.AlternativePosition.isArrived(cube.getCellPositions()[0], this.harvester.getCellPositions()[0], this.worldKnowledge.isCellAccessible.bind(this.worldKnowledge));
+    isArrivedToPlant(plant) {
+        return plant.getCellPositions()[0].x === this.harvester.getCellPositions()[0].x &&
+            plant.getCellPositions()[0].y === this.harvester.getCellPositions()[0].y;
     }
-    isArrivedToBase(base) {
-        return AlternativePosition_1.AlternativePosition.isArrived(new PIXI.Point(base.getCellPositions()[0].x + 1, base.getCellPositions()[0].y + 1), this.harvester.getCellPositions()[0], this.worldKnowledge.isCellAccessible.bind(this.worldKnowledge));
+    isArrivedToRefinery(refinery) {
+        return AlternativePosition_1.AlternativePosition.isArrived(refinery.getCellPositions()[0], this.harvester.getCellPositions()[0], this.worldKnowledge.isGroundCellAccessible.bind(this.worldKnowledge));
     }
 }
 exports.Harvest = Harvest;

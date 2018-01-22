@@ -31,6 +31,10 @@ class SelectRectangle extends Phaser.Graphics {
         this.isVisible = value;
         this.render();
     }
+    setAnchor(x, y) {
+        this.x = (0.5 - x) * this.unitWidth;
+        this.y = (0.5 - y) * this.unitHeight;
+    }
 }
 exports.SelectRectangle = SelectRectangle;
 //# sourceMappingURL=SelectRectangle.js.map

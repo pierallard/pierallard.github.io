@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const AStar_1 = require("./AStar");
+const GeneratedGround_1 = require("../map/GeneratedGround");
 const MAX_SEARCH_RADIUS = 20;
 class AlternativePosition {
     /**
@@ -12,6 +12,7 @@ class AlternativePosition {
      * @returns {boolean}
      */
     static isArrived(goalPosition, currentPosition, isAccessible) {
+        let zones = this.getZones(isAccessible, currentPosition);
         for (let radius = 0; radius < MAX_SEARCH_RADIUS; radius++) {
             const points = this.getPointsFromRadius(goalPosition, radius);
             let foundAccessible = false;
@@ -20,7 +21,9 @@ class AlternativePosition {
                 if (currentPosition.x === test.x && currentPosition.y === test.y) {
                     return true;
                 }
-                if (isAccessible(test) && null !== AStar_1.AStar.getPath(currentPosition, test, isAccessible)) {
+                if (isAccessible(test) &&
+                    AlternativePosition.getZone(zones, test) ===
+                        AlternativePosition.getZone(zones, currentPosition)) {
                     foundAccessible = true;
                 }
             }
@@ -29,6 +32,15 @@ class AlternativePosition {
             }
         }
         return true;
+    }
+    static getSquareClosest(position, radius = 0) {
+        let result = [];
+        for (let x = position.x - radius; x <= position.x + radius; x++) {
+            for (let y = position.y - radius; y <= position.y + radius; y++) {
+                result.push(new PIXI.Point(x, y));
+            }
+        }
+        return result;
     }
     /**
      * Returns the closest available position to be considered as arrived.
@@ -39,10 +51,13 @@ class AlternativePosition {
      * @returns {{PIXI.Point}}
      */
     static getClosestAvailable(goalPosition, currentPosition, isAccessible) {
+        let zones = this.getZones(isAccessible, currentPosition);
         for (let radius = 0; radius < MAX_SEARCH_RADIUS; radius++) {
             let possiblePositions = this.getPointsFromRadius(goalPosition, radius);
             possiblePositions = possiblePositions.filter((pos) => {
-                return isAccessible(pos) && null !== AStar_1.AStar.getPath(currentPosition, pos, isAccessible);
+                return isAccessible(pos) &&
+                    AlternativePosition.getZone(zones, pos) ===
+                        AlternativePosition.getZone(zones, currentPosition);
             });
             if (possiblePositions.length) {
                 possiblePositions.sort((pos1, pos2) => {
@@ -54,6 +69,65 @@ class AlternativePosition {
             }
         }
         return null;
+    }
+    static getZones(isAccessible, source = null) {
+        if (this.zones) {
+            return this.zones;
+        }
+        this.zones = [];
+        for (let y = 0; y < GeneratedGround_1.GROUND_HEIGHT; y++) {
+            for (let x = 0; x < GeneratedGround_1.GROUND_WIDTH; x++) {
+                const point = new PIXI.Point(x, y);
+                if ((null !== source && source.x === x && source.y === y) || isAccessible(point)) {
+                    if (y === 0 && x === 0) {
+                        this.zones.push([point]);
+                    }
+                    else if (y === 0) {
+                        const leftZone = AlternativePosition.getZone(this.zones, new PIXI.Point(x - 1, y));
+                        if (null !== leftZone) {
+                            this.zones[leftZone].push(point);
+                        }
+                        else {
+                            this.zones.push([point]);
+                        }
+                    }
+                    else if (x === 0) {
+                        const topZone = AlternativePosition.getZone(this.zones, new PIXI.Point(x, y - 1));
+                        if (null !== topZone) {
+                            this.zones[topZone].push(point);
+                        }
+                        else {
+                            this.zones.push([point]);
+                        }
+                    }
+                    else {
+                        const topLeftZone = AlternativePosition.getZone(this.zones, new PIXI.Point(x - 1, y - 1));
+                        const leftZone = AlternativePosition.getZone(this.zones, new PIXI.Point(x - 1, y));
+                        const topZone = AlternativePosition.getZone(this.zones, new PIXI.Point(x, y - 1));
+                        let neighbourZones = [topLeftZone, leftZone, topZone].filter((zone) => {
+                            return null !== zone;
+                        });
+                        neighbourZones = Array.from(new Set(neighbourZones)).sort((a, b) => {
+                            return a - b;
+                        });
+                        if (neighbourZones.length === 0) {
+                            this.zones.push([point]);
+                        }
+                        else {
+                            this.zones[neighbourZones[0]].push(point);
+                            if (neighbourZones.length > 1) {
+                                for (let i = 1; i < neighbourZones.length; i++) {
+                                    this.zones[neighbourZones[0]] = this.zones[neighbourZones[0]]
+                                        .concat(this.zones[neighbourZones[i]]);
+                                    this.zones[neighbourZones[i]] = [];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return this.zones;
     }
     static getPointsFromRadius(position, radius) {
         let possiblePositions = [];
@@ -71,6 +145,16 @@ class AlternativePosition {
             }
         }
         return possiblePositions;
+    }
+    static getZone(zones, point) {
+        for (let i = 0; i < zones.length; i++) {
+            for (let j = 0; j < zones[i].length; j++) {
+                if (zones[i][j].x === point.x && zones[i][j].y === point.y) {
+                    return i;
+                }
+            }
+        }
+        return null;
     }
 }
 exports.AlternativePosition = AlternativePosition;

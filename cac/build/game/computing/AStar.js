@@ -7,11 +7,14 @@ class AStar {
         return this.getPath(cellPosition, goal, isPositionAccessible);
     }
     static getPath(cellPosition, cellGoal, isPositionAccessible) {
+        if (null === cellGoal) {
+            debugger;
+        }
         let firstPath = new Path(cellGoal);
         firstPath.add(cellPosition);
         let paths = new Paths();
         paths.add(firstPath);
-        let tries = 500;
+        let tries = 1000;
         while (tries > 0) {
             let path = paths.getBetterConfidence();
             if (!path) {

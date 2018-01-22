@@ -18,6 +18,14 @@ export class CommandCenter {
         this.buildingCreator = new BuildingCreator(this.worldKnowledge, this.player);
     }
 
+    getUnitCreator() {
+        return this.unitCreator;
+    }
+
+    getBuildingCreator() {
+        return this.buildingCreator;
+    }
+
     expand(mcv: MCV) {
         if (mcv.getPlayer() === this.player) {
             mcv.orderExpand();
@@ -31,33 +39,16 @@ export class CommandCenter {
     }
 
     productBuilding(buildingName: string) {
-        if (this.buildingCreator.isAllowed(buildingName) && !this.buildingCreator.isProducing(buildingName)) {
-            this.buildingCreator.runProduction(buildingName);
-        }
+        this.buildingCreator.orderProduction(buildingName);
+    }
+
+    productUnit(unitName: string) {
+        this.unitCreator.orderProduction(unitName);
     }
 
     createBuilding(buildingName: string, cell: PIXI.Point) {
         if (this.buildingCreator.isProduced(buildingName)) {
             this.buildingCreator.runCreation(buildingName, cell);
-        }
-    }
-
-    getBuildingCreator(): BuildingCreator {
-        return this.buildingCreator;
-    }
-
-    getUnitCreator(): UnitCreator {
-        return this.unitCreator;
-    }
-
-    updateAllowedUnitsAndBuildings() {
-        this.unitCreator.updateAllowedItems();
-        this.buildingCreator.updateAllowedItems();
-    }
-
-    productUnit(unitName: string) {
-        if (this.unitCreator.isAllowed(unitName) && !this.unitCreator.isProducing(unitName)) {
-            this.unitCreator.runProduction(unitName);
         }
     }
 }

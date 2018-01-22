@@ -1,3 +1,4 @@
+import {GAME_HEIGHT, GAME_WIDTH} from "../../app";
 const HEIGHT = 3;
 
 export class LifeRectangle extends Phaser.Graphics {
@@ -27,6 +28,7 @@ export class LifeRectangle extends Phaser.Graphics {
                 Math.round((this.unitWidth - 4 + 1) * this.percentage),
                 HEIGHT - 1
             );
+            this.endFill();
         }
     }
 
@@ -38,5 +40,10 @@ export class LifeRectangle extends Phaser.Graphics {
     updateLife(percentage: number) {
         this.percentage = percentage;
         this.render();
+    }
+
+    setAnchor(x: number, y: number) {
+        this.x = (0.5 - x) * this.unitWidth;
+        this.y = (0.5 - y) * this.unitHeight;
     }
 }

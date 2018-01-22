@@ -1,7 +1,7 @@
 import {Cell} from "../computing/Cell";
 import {Player} from "../player/Player";
 import {ConstructableBuilding} from "./ConstructableBuilding";
-import {PowerPlantSprite} from "../sprite/PowerPlanSprite";
+import {PowerPlantSprite} from "../sprite/PowerPlantSprite";
 import {WorldKnowledge} from "../map/WorldKnowledge";
 
 export class PowerPlant extends ConstructableBuilding {
@@ -9,13 +9,13 @@ export class PowerPlant extends ConstructableBuilding {
         super(worldKnowledge, cell, player);
     }
 
-    create(game: Phaser.Game, group: Phaser.Group) {
+    create(game: Phaser.Game, groups: Phaser.Group[]) {
         this.sprite = new PowerPlantSprite(
             game,
+            groups,
             Cell.cellToReal(this.cellPosition.x),
             Cell.cellToReal(this.cellPosition.y),
             'Factory2'
         );
-        group.add(this.sprite);
     }
 }

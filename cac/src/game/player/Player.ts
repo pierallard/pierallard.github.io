@@ -1,13 +1,15 @@
 import {WorldKnowledge} from "../map/WorldKnowledge";
 import {CommandCenter} from "./CommandCenter";
-import {BuildingCreator} from "../creator/BuildingCreator";
-import {UnitCreator} from "../creator/UnitCreator";
+
+const START_MINERALS = 5000;
+export const START_POWER = 10;
 
 export abstract class Player {
     protected worldKnowledge: WorldKnowledge;
     private color: number;
     private id: number;
     private commandCenter: CommandCenter;
+    private minerals: number = START_MINERALS;
 
     constructor(worldKnowledge: WorldKnowledge, id: number, color: number) {
         this.worldKnowledge = worldKnowledge;
@@ -24,19 +26,29 @@ export abstract class Player {
         return this.id;
     }
 
-    order() {
+    order(): CommandCenter {
         return this.commandCenter;
     }
 
-    getBuildingCreator(): BuildingCreator {
-        return this.commandCenter.getBuildingCreator();
+    addMinerals(amount: number) {
+        this.minerals = this.minerals + amount;
+        this.getUnitCreator().unHoldProductionStatus();
+        this.getBuildingCreator().unHoldProductionStatus();
     }
 
-    getUnitCreator(): UnitCreator {
+    removeMinerals(amount: number) {
+        this.minerals = this.minerals - amount;
+    }
+
+    getMinerals(): number {
+        return this.minerals;
+    }
+
+    getUnitCreator() {
         return this.commandCenter.getUnitCreator();
     }
 
-    updateAllowedUnitsAndBuildings() {
-        this.commandCenter.updateAllowedUnitsAndBuildings();
+    getBuildingCreator() {
+        return this.commandCenter.getBuildingCreator();
     }
 }

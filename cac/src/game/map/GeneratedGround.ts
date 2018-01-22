@@ -1,7 +1,13 @@
 import {SCALE} from "../game_state/Play";
+import {AlternativePosition} from "../computing/AlternativePosition";
 
-export const GROUND_WIDTH = 80;
-export const GROUND_HEIGHT = 80;
+export const GROUND_WIDTH = 100;
+export const GROUND_HEIGHT = 40;
+
+enum TYPE {
+    NORMAL,
+    VARIATION,
+}
 
 enum TERRAIN {
     SNOW = 312,
@@ -14,15 +20,20 @@ enum TERRAIN {
     STONE = 930,
 }
 
+const MIN = 0.2;
+const MAX = 0.8;
+const TERRAINS = [TERRAIN.WATER, TERRAIN.GRASS, TERRAIN.MOUNTAIN, TERRAIN.SNOW, TERRAIN.STONE];
+const STEP = (MAX - MIN) / TERRAINS.length;
+
 export class GeneratedGround {
-    private static generateNoises(max: number): number[][] {
+    private static generateNoises(max: number, predefinedTiles: any): number[][] {
         const maps = [];
         for (let i = 0; i <= max; i++) {
-            maps.push(this.generateNoise(i));
+            maps.push(this.generateNoise(i, predefinedTiles));
         }
 
         const result = [];
-        for (let y = 0; y <= GROUND_WIDTH; y++) {
+        for (let y = 0; y <= GROUND_HEIGHT; y++) {
             const resultLine = [];
             for (let x = 0; x <= GROUND_WIDTH; x++) {
                 let value = 0;
@@ -39,19 +50,32 @@ export class GeneratedGround {
         return result;
     }
 
-    private static generateNoise(power: number): number[][] {
+    private static generateNoise(power: number, predefinedTiles: any): number[][] {
         const littleMapWidth = Math.ceil(GROUND_WIDTH / Math.pow(2, power));
         const littleMapHeight = Math.ceil(GROUND_HEIGHT / Math.pow(2, power));
         const littleMap = [];
-        for (let y = 0; y <= littleMapWidth; y++) {
+        const littlePredefinedTiles = predefinedTiles.map((predefinedTile) => {
+            return [new PIXI.Point(
+                Math.floor(predefinedTile[0].x / Math.pow(2, power)),
+                Math.floor(predefinedTile[0].y / Math.pow(2, power))
+            ), predefinedTile[1]];
+        });
+        for (let y = 0; y <= littleMapHeight; y++) {
             const littleMapLine = [];
-            for (let x = 0; x <= littleMapHeight; x++) {
-                littleMapLine.push(Math.random());
+            for (let x = 0; x <= littleMapWidth; x++) {
+                let value = Math.random();
+                littlePredefinedTiles.forEach((predefinedTile) => {
+                    const position = predefinedTile[0];
+                    if (position.x === x && position.y === y) {
+                        value = GeneratedGround.textureToRand(predefinedTile[1]);
+                    }
+                });
+                littleMapLine.push(value);
             }
             littleMap.push(littleMapLine);
         }
         const result = [];
-        for (let y = 0; y <= GROUND_WIDTH; y++) {
+        for (let y = 0; y <= GROUND_HEIGHT; y++) {
             const resultLine = [];
             for (let x = 0; x <= GROUND_WIDTH; x++) {
                 resultLine.push(littleMap[Math.floor(y / Math.pow(2, power))][Math.floor(x / Math.pow(2, power))]);
@@ -59,14 +83,14 @@ export class GeneratedGround {
             result.push(resultLine);
         }
 
-        return this.fluzz(result, Math.floor(Math.pow(2, power) / 2));
+        return this.fluzz(result, Math.floor(Math.pow(2, power) / 2) + 1);
     }
 
     private static fluzz(cells: number[][], radius: number): number[][] {
         const result = [];
-        for (let y = 0; y <= GROUND_WIDTH; y++) {
+        for (let y = 0; y <= GROUND_HEIGHT; y++) {
             const resultLine = [];
-            for (let x = 0; x <= GROUND_HEIGHT; x++) {
+            for (let x = 0; x <= GROUND_WIDTH; x++) {
                 resultLine.push(this.getAvgAroundCellValues(cells, radius, x, y));
             }
             result.push(resultLine);
@@ -78,7 +102,7 @@ export class GeneratedGround {
         const cellsValues = [];
         for (let y = startY - radius; y <= startY + radius; y++) {
             for (let x = startX - radius; x <= startX + radius; x++) {
-                if (y >= 0 && x >= 0 && y <= GROUND_WIDTH && x <= GROUND_HEIGHT) {
+                if (y >= 0 && x >= 0 && y <= GROUND_HEIGHT && x <= GROUND_WIDTH) {
                     cellsValues.push(cells[y][x]);
                 }
             }
@@ -89,6 +113,25 @@ export class GeneratedGround {
             }, 0) / cellsValues.length;
     }
 
+    private static randToTexture(rand: number): number {
+        let val = TERRAINS[TERRAINS.length - 1];
+        if (rand < MIN) {
+            return TERRAINS[0];
+        }
+        for (let i = 0; i < TERRAINS.length; i++) {
+            if (rand >= MIN + i * STEP && rand <= MIN + (i + 1) * STEP) {
+                val = TERRAINS[i];
+            }
+        }
+        return val;
+    }
+
+    private static textureToRand(texture: number): number {
+        const index = TERRAINS.indexOf(texture);
+
+        return MIN + (index + 0.5) * STEP;
+    }
+
     private generatedTiles: number[][];
     private map: Phaser.Tilemap;
     private cornersMap: number[][];
@@ -97,20 +140,33 @@ export class GeneratedGround {
 
     constructor() {
         this.tiles = {
-            312: [TERRAIN.SNOW, TERRAIN.SNOW, TERRAIN.SNOW, TERRAIN.SNOW],
-            212: [TERRAIN.ICE, TERRAIN.ICE, TERRAIN.ICE, TERRAIN.ICE],
-            412: [TERRAIN.CRATER, TERRAIN.CRATER, TERRAIN.CRATER, TERRAIN.CRATER],
-            640: [TERRAIN.GRASS, TERRAIN.GRASS, TERRAIN.GRASS, TERRAIN.GRASS],
-            612: [TERRAIN.WATER, TERRAIN.WATER, TERRAIN.WATER, TERRAIN.WATER],
-            712: [TERRAIN.MOUNTAIN, TERRAIN.MOUNTAIN, TERRAIN.MOUNTAIN, TERRAIN.MOUNTAIN],
-            930: [TERRAIN.STONE, TERRAIN.STONE, TERRAIN.STONE, TERRAIN.STONE],
+            // Plain tiles
+            312: [TERRAIN.SNOW, TERRAIN.SNOW, TERRAIN.SNOW, TERRAIN.SNOW, TYPE.NORMAL],
+            212: [TERRAIN.ICE, TERRAIN.ICE, TERRAIN.ICE, TERRAIN.ICE, TYPE.NORMAL],
+            412: [TERRAIN.CRATER, TERRAIN.CRATER, TERRAIN.CRATER, TERRAIN.CRATER, TYPE.NORMAL],
+            640: [TERRAIN.GRASS, TERRAIN.GRASS, TERRAIN.GRASS, TERRAIN.GRASS, TYPE.NORMAL],
+            612: [TERRAIN.WATER, TERRAIN.WATER, TERRAIN.WATER, TERRAIN.WATER, TYPE.NORMAL],
+            712: [TERRAIN.MOUNTAIN, TERRAIN.MOUNTAIN, TERRAIN.MOUNTAIN, TERRAIN.MOUNTAIN, TYPE.NORMAL],
+            930: [TERRAIN.STONE, TERRAIN.STONE, TERRAIN.STONE, TERRAIN.STONE, TYPE.NORMAL],
+
+            // Variations
+            118: [TERRAIN.GRASS, TERRAIN.GRASS, TERRAIN.GRASS, TERRAIN.GRASS, TYPE.VARIATION],
+            120: [TERRAIN.GRASS, TERRAIN.GRASS, TERRAIN.GRASS, TERRAIN.GRASS, TYPE.VARIATION],
+            132: [TERRAIN.GRASS, TERRAIN.GRASS, TERRAIN.GRASS, TERRAIN.GRASS, TYPE.VARIATION],
+            134: [TERRAIN.GRASS, TERRAIN.GRASS, TERRAIN.GRASS, TERRAIN.GRASS, TYPE.VARIATION],
+            136: [TERRAIN.GRASS, TERRAIN.GRASS, TERRAIN.GRASS, TERRAIN.GRASS, TYPE.VARIATION],
         };
         this.collisions.push(TERRAIN.WATER);
         this.initializeTiles();
     }
 
-    create(game: Phaser.Game) {
-        this.createFakeData2();
+    create(game: Phaser.Game, startPositions: PIXI.Point[]) {
+        this.createFakeData2(startPositions.reduce((previous, startPosition) => {
+            AlternativePosition.getSquareClosest(startPosition, 5).forEach((position) => {
+                previous.push([position, TERRAIN.GRASS]);
+            });
+            return previous;
+        }, []));
         let data = this.getCSV();
 
         game.cache.addTilemap('dynamicMap', null, data, Phaser.Tilemap.CSV);
@@ -128,10 +184,25 @@ export class GeneratedGround {
         let layer = this.map.createLayer(0);
         layer.scale.setTo(SCALE, SCALE);
         game.add.existing(layer);
+
+        /*
+        const zones = AlternativePosition.getZones(this.isGroundCellAccessible.bind(this));
+        let graphics = game.add.graphics(0, 0);
+        graphics.alpha = 0.5;
+        for (let z = 0; z < zones.length; z++) {
+            if (zones[z].length > 0) {
+                game.add.text(zones[z][0].x * 40, zones[z][0].y * 40, z + '');
+            }
+            graphics.beginFill(Phaser.Color.getRandomColor(0, 255, 200));
+            for (let i = 0; i < zones[z].length; i++) {
+                graphics.drawRect(zones[z][i].x * 40, zones[z][i].y * 40, 40, 40);
+            }
+        }
+        */
     }
 
     isCellAccessible(position: PIXI.Point): boolean {
-        if (position.x < 0 || position.y < 0) {
+        if (position.x < 0 || position.y < 0 || position.x >= GROUND_WIDTH || position.y >= GROUND_HEIGHT) {
             return false;
         }
 
@@ -166,16 +237,16 @@ export class GeneratedGround {
     }
 
     private initializeTiles() {
-        this.generate(200, TERRAIN.SNOW, TERRAIN.ICE, true);
-        this.generate(400, TERRAIN.SNOW, TERRAIN.CRATER, true);
-        this.generate(500, TERRAIN.ICE, TERRAIN.ICE_BREAK2, false);
-        this.generate(600, TERRAIN.GRASS, TERRAIN.WATER, true, true);
-        this.generate(700, TERRAIN.MOUNTAIN, TERRAIN.GRASS, true);
-        this.generate(800, TERRAIN.MOUNTAIN, TERRAIN.SNOW, true);
-        this.generate(900, TERRAIN.STONE, TERRAIN.SNOW, true);
+        this.initializeTerrain(200, TERRAIN.SNOW, TERRAIN.ICE, true);
+        this.initializeTerrain(400, TERRAIN.SNOW, TERRAIN.CRATER, true);
+        this.initializeTerrain(500, TERRAIN.ICE, TERRAIN.ICE_BREAK2, false);
+        this.initializeTerrain(600, TERRAIN.GRASS, TERRAIN.WATER, true, true);
+        this.initializeTerrain(700, TERRAIN.MOUNTAIN, TERRAIN.GRASS, true);
+        this.initializeTerrain(800, TERRAIN.MOUNTAIN, TERRAIN.SNOW, true);
+        this.initializeTerrain(900, TERRAIN.STONE, TERRAIN.SNOW, true);
     }
 
-    private generate(
+    private initializeTerrain(
         startNumber: number,
         terrain1: TERRAIN,
         terrain2: TERRAIN,
@@ -183,18 +254,18 @@ export class GeneratedGround {
         isCollision: boolean = false
     ) {
         let result = {};
-        result[startNumber] = [terrain1, terrain1, terrain2, terrain1];
-        result[startNumber + 2] = [terrain1, terrain1, terrain2, terrain2];
-        result[startNumber + 4] = [terrain1, terrain1, terrain1, terrain2];
-        result[startNumber + 10] = [terrain1, terrain2, terrain2, terrain1];
-        result[startNumber + 14] = [terrain2, terrain1, terrain1, terrain2];
-        result[startNumber + 20] = [terrain1, terrain2, terrain1, terrain1];
-        result[startNumber + 22] = [terrain2, terrain2, terrain1, terrain1];
-        result[startNumber + 24] = [terrain2, terrain1, terrain1, terrain1];
-        result[startNumber + (rightGap ? 32 : 30)] = [terrain1, terrain2, terrain2, terrain2];
-        result[startNumber + (rightGap ? 34 : 32)] = [terrain2, terrain1, terrain2, terrain2];
-        result[startNumber + (rightGap ? 42 : 40)] = [terrain2, terrain2, terrain2, terrain1];
-        result[startNumber + (rightGap ? 44 : 42)] = [terrain2, terrain2, terrain1, terrain2];
+        result[startNumber] = [terrain1, terrain1, terrain2, terrain1, TYPE.NORMAL];
+        result[startNumber + 2] = [terrain1, terrain1, terrain2, terrain2, TYPE.NORMAL];
+        result[startNumber + 4] = [terrain1, terrain1, terrain1, terrain2, TYPE.NORMAL];
+        result[startNumber + 10] = [terrain1, terrain2, terrain2, terrain1, TYPE.NORMAL];
+        result[startNumber + 14] = [terrain2, terrain1, terrain1, terrain2, TYPE.NORMAL];
+        result[startNumber + 20] = [terrain1, terrain2, terrain1, terrain1, TYPE.NORMAL];
+        result[startNumber + 22] = [terrain2, terrain2, terrain1, terrain1, TYPE.NORMAL];
+        result[startNumber + 24] = [terrain2, terrain1, terrain1, terrain1, TYPE.NORMAL];
+        result[startNumber + (rightGap ? 32 : 30)] = [terrain1, terrain2, terrain2, terrain2, TYPE.NORMAL];
+        result[startNumber + (rightGap ? 34 : 32)] = [terrain2, terrain1, terrain2, terrain2, TYPE.NORMAL];
+        result[startNumber + (rightGap ? 42 : 40)] = [terrain2, terrain2, terrain2, terrain1, TYPE.NORMAL];
+        result[startNumber + (rightGap ? 44 : 42)] = [terrain2, terrain2, terrain1, terrain2, TYPE.NORMAL];
 
         if (isCollision) {
             this.collisions.push(startNumber);
@@ -214,30 +285,14 @@ export class GeneratedGround {
         this.tiles = Object.assign(this.tiles, result);
     }
 
-    private createFakeData2() {
+    private createFakeData2(predefinedTiles: any): void {
         this.cornersMap = [];
-        const noises = GeneratedGround.generateNoises(4);
-        let min = 1;
-        let max = 0;
-        for (let y = 0; y < noises.length; y++) {
-            for (let x = 0; x < noises[y].length; x++) {
-                min = Math.min(noises[y][x], min);
-                max = Math.max(noises[y][x], max);
-            }
-        }
-        const terrains = [TERRAIN.WATER, TERRAIN.GRASS, TERRAIN.MOUNTAIN, TERRAIN.SNOW, TERRAIN.STONE];
-        const step = (max - min) / terrains.length;
+        const noises = GeneratedGround.generateNoises(4, predefinedTiles);
 
         for (let y = 0; y <= GROUND_HEIGHT; y++) {
             let line = [];
             for (let x = 0; x <= GROUND_WIDTH; x++) {
-                let val = 0;
-                for (let i = 0; i < 5; i++) {
-                    if (noises[y][x] >= min + i * step && noises[y][x] <= min + (i + 1) * step) {
-                        val = terrains[i];
-                    }
-                }
-                line.push(val);
+                line.push(GeneratedGround.randToTexture(noises[y][x]));
             }
             this.cornersMap.push(line);
         }
@@ -253,16 +308,29 @@ export class GeneratedGround {
     }
 
     private getTileNumber(param: number[]): number {
+        let normals = [];
+        let variations = [];
         const keys = Object.keys(this.tiles);
         for (let i = 0; i < keys.length; i++) {
             if (this.tiles[keys[i]][0] === param[0] &&
                 this.tiles[keys[i]][1] === param[1] &&
                 this.tiles[keys[i]][2] === param[2] &&
                 this.tiles[keys[i]][3] === param[3]) {
-                return parseInt(keys[i]);
+                if (this.tiles[keys[i]][4] === TYPE.NORMAL) {
+                    normals.push(parseInt(keys[i]));
+                } else {
+                    variations.push(parseInt(keys[i]));
+                }
             }
         }
 
-        return null;
+        if (normals.length === 0 && variations.length === 0) {
+            return null;
+        }
+
+        if (Math.random() > 0.97 && variations.length !== 0 || normals.length === 0) {
+            return variations[Math.floor(Math.random() * variations.length)];
+        }
+        return normals[Math.floor(Math.random() * normals.length)];
     }
 }

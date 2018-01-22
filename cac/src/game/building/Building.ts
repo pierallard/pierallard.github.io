@@ -1,10 +1,14 @@
 import {Player} from "../player/Player";
 import {Positionnable} from "../Positionnable";
+import {Army} from "../Army";
 
-export interface Building extends Positionnable {
-    create(game: Phaser.Game, group: Phaser.Group): void;
+export interface Building extends Positionnable, Army {
+    create(
+        game: Phaser.Game,
+        groups: Phaser.Group[]
+    ): void;
     setVisible(value: boolean): void;
     getPlayer(): Player;
-    lostLife(life: number): void;
     destroy(): void;
+    update(): void;
 }

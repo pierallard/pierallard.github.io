@@ -5,8 +5,11 @@ import {Player} from "../player/Player";
 import {BuildingPositioner} from "./BuildingPositionner";
 import {Selector} from "./Selector";
 import {UIUnitCreator} from "../creator/UIUnitCreator";
+import {GAME_WIDTH} from "../../app";
+import {PowerInterface} from "./PowerInterface";
+import {Cursor} from "../Custor";
 
-export const INTERFACE_WIDTH = 160;
+export const INTERFACE_WIDTH = 94 * 2;
 
 export class UserInterface {
     private UIBuildingCreator: UIBuildingCreator;
@@ -16,6 +19,9 @@ export class UserInterface {
     private player: Player;
     private selector: Selector;
     private buildingPositionner: BuildingPositioner;
+    private mineralText: Phaser.Text;
+    private powerInterface: PowerInterface;
+    private cursor: Cursor;
 
     constructor(worldKnowledge: WorldKnowledge, player: Player) {
         this.player = player;
@@ -23,7 +29,9 @@ export class UserInterface {
         this.buildingPositionner = new BuildingPositioner(worldKnowledge, this.player);
         this.UIBuildingCreator = new UIBuildingCreator(worldKnowledge, this.player, this.buildingPositionner);
         this.UIUnitCreator = new UIUnitCreator(worldKnowledge, this.player);
-        this.miniMap = new MiniMap(worldKnowledge);
+        this.miniMap = new MiniMap(worldKnowledge, this.player);
+        this.powerInterface = new PowerInterface(worldKnowledge, this.player);
+        this.cursor = new Cursor(worldKnowledge, this.player);
     }
 
     create(game: Phaser.Game) {
@@ -37,13 +45,31 @@ export class UserInterface {
         interfaceSprite.scale.setTo(2);
         this.interfaceGroup.add(interfaceSprite);
 
-        this.UIUnitCreator.create(game, this.interfaceGroup, this.player.getUnitCreator());
-        this.UIBuildingCreator.create(game, this.interfaceGroup, this.player.getBuildingCreator());
-        this.miniMap.create(game);
+        this.UIUnitCreator.create(game, this.interfaceGroup);
+        this.UIBuildingCreator.create(game, this.interfaceGroup);
+        this.miniMap.create(game, this.interfaceGroup);
+
+        this.mineralText = new Phaser.Text(
+            game,
+            GAME_WIDTH - INTERFACE_WIDTH / 2,
+            212,
+            this.player.getMinerals() + '',
+            { align: 'center', fill: "#ffffff", font: '24px 000webfont' }
+        );
+        this.interfaceGroup.add(this.mineralText);
+
+        this.powerInterface.create(game, this.interfaceGroup);
+
+        this.cursor.create(game);
     }
 
     update() {
         this.selector.update();
         this.miniMap.update();
+        this.powerInterface.update();
+        this.mineralText.text = Math.floor(this.player.getMinerals()) + '';
+        this.UIUnitCreator.update();
+        this.UIBuildingCreator.update();
+        this.cursor.update();
     }
 }

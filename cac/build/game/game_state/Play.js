@@ -5,38 +5,55 @@ const UserInterface_1 = require("../interface/UserInterface");
 const MCV_1 = require("../unit/MCV");
 const HumanPlayer_1 = require("../player/HumanPlayer");
 const ComputerPlayer_1 = require("../player/ComputerPlayer");
+const GeneratedGround_1 = require("../map/GeneratedGround");
+const TiberiumSource_1 = require("../building/TiberiumSource");
+const AlternativePosition_1 = require("../computing/AlternativePosition");
+exports._DEBUG_FAST_CONSTRUCT = true;
 exports.SCALE = 2;
 exports.MOVE = 3 * exports.SCALE;
 exports.PANEL_WIDTH = 80;
+var GROUP;
+(function (GROUP) {
+    GROUP[GROUP["UNIT"] = 0] = "UNIT";
+    GROUP[GROUP["EFFECTS"] = 1] = "EFFECTS";
+    GROUP[GROUP["AERIAL"] = 2] = "AERIAL";
+    GROUP[GROUP["SHADOW"] = 3] = "SHADOW";
+    GROUP[GROUP["GROUND"] = 4] = "GROUND";
+})(GROUP = exports.GROUP || (exports.GROUP = {}));
 class Play extends Phaser.State {
     constructor() {
         super();
-        this.worldKnowledge = new WorldKnowledge_1.WorldKnowledge();
-        this.players = [
-            new HumanPlayer_1.HumanPlayer(this.worldKnowledge, 0, 0x00ff00),
-            new ComputerPlayer_1.ComputerPlayer(this.worldKnowledge, 1, 0xff00ff),
+        this.startPositions = [
+            new PIXI.Point(Math.round(GeneratedGround_1.GROUND_WIDTH / 5), Math.round(GeneratedGround_1.GROUND_HEIGHT / 5)),
+            new PIXI.Point(Math.round(GeneratedGround_1.GROUND_WIDTH * 4 / 5), Math.round(GeneratedGround_1.GROUND_HEIGHT * 4 / 5)),
         ];
-        this.userInterface = new UserInterface_1.UserInterface(this.worldKnowledge, this.players[0]);
+        this.startTiberiums = [
+            new PIXI.Point(Math.round(GeneratedGround_1.GROUND_WIDTH * 2 / 5), Math.round(GeneratedGround_1.GROUND_HEIGHT / 5)),
+            new PIXI.Point(Math.round(GeneratedGround_1.GROUND_WIDTH * 3 / 5), Math.round(GeneratedGround_1.GROUND_HEIGHT * 4 / 5)),
+        ];
+        this.worldKnowledge = new WorldKnowledge_1.WorldKnowledge();
+        this.worldKnowledge.addPlayer(new HumanPlayer_1.HumanPlayer(this.worldKnowledge, 0, 0x00ff00));
+        this.worldKnowledge.addPlayer(new ComputerPlayer_1.ComputerPlayer(this.worldKnowledge, 1, 0xff00ff));
+        this.userInterface = new UserInterface_1.UserInterface(this.worldKnowledge, this.worldKnowledge.getPlayers()[0]);
     }
     create() {
-        this.worldKnowledge.create(this.game);
+        this.worldKnowledge.create(this.game, this.startPositions.concat(this.startTiberiums), this.worldKnowledge.getPlayers()[0]);
         this.userInterface.create(this.game);
         this.world.setBounds(0, 0, this.worldKnowledge.getGroundWidth(), this.worldKnowledge.getGroundHeight());
         this.game.camera.bounds.setTo(0, 0, this.worldKnowledge.getGroundWidth() + exports.PANEL_WIDTH * exports.SCALE, this.worldKnowledge.getGroundHeight());
+        // this.game.stage.disableVisibilityChange = true;
         this.registerInputs();
         this.start();
     }
     start() {
-        this.worldKnowledge.addUnit(new MCV_1.MCV(this.worldKnowledge, new PIXI.Point(5, 5), this.players[0]));
-        this.worldKnowledge.addUnit(new MCV_1.MCV(this.worldKnowledge, new PIXI.Point(35, 35), this.players[1]));
-        this.players.filter((player) => {
-            if (player.constructor.name === 'ComputerPlayer') {
-                player.getUnitCreator().create(this.game);
-                player.getBuildingCreator().create(this.game);
-            }
+        AlternativePosition_1.AlternativePosition.getZones(this.worldKnowledge.isGroundCellAccessible.bind(this.worldKnowledge));
+        this.worldKnowledge.addArmy(new MCV_1.MCV(this.worldKnowledge, this.startPositions[0], this.worldKnowledge.getPlayers()[0]));
+        this.worldKnowledge.addArmy(new MCV_1.MCV(this.worldKnowledge, this.startPositions[1], this.worldKnowledge.getPlayers()[1]));
+        this.startTiberiums.forEach((tiberiumPosition) => {
+            this.worldKnowledge.addArmy(new TiberiumSource_1.TiberiumSource(this.worldKnowledge, tiberiumPosition));
         });
         this.game.time.events.loop(5000, () => {
-            this.players.filter((player) => {
+            this.worldKnowledge.getPlayers().filter((player) => {
                 if (player.constructor.name === 'ComputerPlayer') {
                     player.update();
                 }

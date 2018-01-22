@@ -3,45 +3,54 @@ import {WorldKnowledge} from "../map/WorldKnowledge";
 import {Player} from "../player/Player";
 import {BuildingPositioner} from "../interface/BuildingPositionner";
 import {BuildingProperties} from "../building/BuildingProperties";
+import {ProductionStatus} from "./AbstractCreator";
 
 const X = 1202 - 66;
 
 export class UIBuildingCreator extends AbstractUICreator {
     private buildingPositioner: BuildingPositioner;
 
-    constructor(worldKnowledge: WorldKnowledge, player: Player, buildingPositionner: BuildingPositioner) {
+    constructor(worldKnowledge: WorldKnowledge, player: Player, buildingPositioner: BuildingPositioner) {
         super(worldKnowledge, player, X);
 
-        this.buildingPositioner = buildingPositionner;
+        this.buildingPositioner = buildingPositioner;
     }
 
-    getConstructableItems(): string[] {
-        return BuildingProperties.getConstructableBuildings();
+    protected getPossibleButtons(): string[] {
+        return this.worldKnowledge.getPlayerAllowedBuildings(this.player);
     }
 
-    getSpriteKey(itemName: string): string {
+    protected getSpriteKey(itemName: string): string {
         return BuildingProperties.getSpriteKey(itemName);
     }
 
-    getSpriteLayer(itemName: string): number {
+    protected getSpriteLayer(itemName: string): number {
         return BuildingProperties.getSpriteLayer(itemName);
     }
 
-    getConstructionTime(itemName: string): number {
-        return BuildingProperties.getConstructionTime(itemName);
-    }
-
-    onProductFinish(itemName: string) {
-        return this.setPendingButton(itemName);
-    }
-
-    onClickFunction(itemName: string) {
-        if (this.player.order().getBuildingCreator().isProduced(itemName)) {
-            this.buildingPositioner.activate(this.player.order().getBuildingCreator(), itemName);
-        } else if (this.player.order().getBuildingCreator().isProducing(itemName)) {
-            // Do nothing
-        } else if (this.player.order().getBuildingCreator().isAllowed(itemName)) {
-            this.player.order().productBuilding(itemName);
+    protected onClickFunction(itemName: string) {
+        if (this.worldKnowledge.isBuildingProduced(this.player, itemName)) {
+            this.buildingPositioner.activate(itemName);
+        } else {
+            this.worldKnowledge.productBuilding(this.player, itemName);
         }
+    }
+
+    protected onRightClickFunction(itemName: string) {
+        if (this.worldKnowledge.isBuildingProducing(this.player, itemName)) {
+            if (this.worldKnowledge.isBuildingHold(this.player, itemName)) {
+                this.worldKnowledge.cancelBuilding(this.player, itemName);
+            } else {
+                this.worldKnowledge.holdBuilding(this.player, itemName);
+            }
+        }
+    }
+
+    protected getProductionStatus(): ProductionStatus {
+        return this.worldKnowledge.getBuildingProductionStatus(this.player);
+    }
+
+    protected canProduct(itemName: string): boolean {
+        return this.worldKnowledge.canProductBuilding(this.player, itemName);
     }
 }

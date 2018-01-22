@@ -11,8 +11,14 @@ import {UnitProperties} from "./UnitProperties";
 import {WorldKnowledge} from "../map/WorldKnowledge";
 import {Shootable} from "../Shootable";
 import {Positionnable} from "../Positionnable";
+import {Rocket} from "../shoot/Rocket";
+import {Cell} from "../computing/Cell";
+import {Bullet} from "../shoot/Bullet";
+import {Army} from "../Army";
+import {MoveTo} from "../state/MoveTo";
+import {GROUP} from "../game_state/Play";
 
-export abstract class Unit implements Shootable, Positionnable {
+export abstract class Unit implements Army, Shootable, Positionnable {
     protected life: number;
     protected maxLife: number;
     protected unitSprite: UnitSprite;
@@ -20,24 +26,33 @@ export abstract class Unit implements Shootable, Positionnable {
     protected player: Player;
     protected worldKnowledge: WorldKnowledge;
     protected cellPosition: PIXI.Point;
+    protected timerEvents: Phaser.Timer;
+    protected effectsGroup: Phaser.Group;
     private pathCache: Path;
     private goalCache: PIXI.Point;
     private isFrozen: boolean = false;
     private selected: boolean = false;
     private key: string;
-    private timerEvents: Phaser.Timer;
 
-    constructor(worldKnowledge: WorldKnowledge, cellPosition: PIXI.Point, player: Player, key: string) {
+    constructor(worldKnowledge: WorldKnowledge, cellPosition: PIXI.Point, player: Player) {
         this.worldKnowledge = worldKnowledge;
         this.cellPosition = cellPosition;
         this.player = player;
         this.state = new Stand(this);
-        this.key = key;
+        this.key = UnitProperties.getSprite(this.constructor.name, player.getId());
+        this.life = this.maxLife = UnitProperties.getLife(this.constructor.name);
     }
 
-    create(game: Phaser.Game, group: Phaser.Group) {
-        this.unitSprite = new UnitSprite(game, group, this.cellPosition, this.key);
+    create(game: Phaser.Game, groups: Phaser.Group[]) {
+        this.effectsGroup = groups[GROUP.EFFECTS];
         this.timerEvents = game.time.events;
+        this.unitSprite = new UnitSprite(
+            game,
+            groups,
+            this.cellPosition,
+            this.key,
+            UnitProperties.getImageFormat(this.constructor.name)
+        );
     }
 
     update(): void {
@@ -67,34 +82,51 @@ export abstract class Unit implements Shootable, Positionnable {
         return this.selected;
     }
 
-    shoot(ennemy: Shootable): void {
-        this.unitSprite.doShoot(ennemy.getCellPositions()[0]);
-        ennemy.lostLife(10);
+    shoot(enemy: Shootable): void {
+        let closestEnemyPosition = Distance.getClosestPosition(this.getCellPositions()[0], enemy.getCellPositions());
+        enemy.lostLife(UnitProperties.getShootPower(this.constructor.name));
         this.freeze(UnitProperties.getShootTime(this.constructor.name) * Phaser.Timer.SECOND);
+        this.unitSprite.rotateTowards(closestEnemyPosition);
+
+        switch (UnitProperties.getShootType(this.constructor.name)) {
+            case 'rocket':
+                new Rocket(this.effectsGroup, this.getShootSource(closestEnemyPosition), new PIXI.Point(
+                    Cell.cellToReal(closestEnemyPosition.x),
+                    Cell.cellToReal(closestEnemyPosition.y)
+                ));
+                break;
+            default:
+                new Bullet(this.effectsGroup, this.getShootSource(closestEnemyPosition), new PIXI.Point(
+                    Cell.cellToReal(closestEnemyPosition.x),
+                    Cell.cellToReal(closestEnemyPosition.y)
+                ));
+        }
     }
 
     lostLife(life: number) {
         this.life -= life;
         if (!this.isAlive()) {
             this.unitSprite.doDestroy();
-            this.worldKnowledge.removeUnit(this);
+            this.worldKnowledge.removeArmy(this);
         }
 
         this.unitSprite.updateLife(this.life, this.maxLife);
     }
 
     getClosestShootable(): Shootable {
-        const enemies = this.worldKnowledge.getEnemies(this.player);
+        const enemies = this.worldKnowledge.getEnemyArmies(this.player);
         let minDistance = null;
         let closest = null;
         for (let i = 0; i < enemies.length; i++) {
             const enemy = enemies[i];
             if (enemy !== this) {
-                const distance = Distance.to(this.cellPosition, enemy.getCellPositions());
-                if (distance <= this.getShootDistance()) {
-                    if (null === closest || minDistance > distance) {
-                        minDistance = distance;
-                        closest = enemy;
+                if (enemy.isOnGround() || UnitProperties.getShootAirPower(this.constructor.name) > 0) {
+                    const distance = Distance.to(this.cellPosition, enemy.getCellPositions());
+                    if (distance <= this.getShootDistance()) {
+                        if (null === closest || minDistance > distance) {
+                            minDistance = distance;
+                            closest = enemy;
+                        }
                     }
                 }
             }
@@ -110,7 +142,11 @@ export abstract class Unit implements Shootable, Positionnable {
         }
         let nextStep = null;
         if (this.pathCache) {
-            if (this.pathCache.isStillAvailable(this.worldKnowledge.isCellAccessible.bind(this.worldKnowledge))) {
+            if (this.pathCache.isStillAvailable(
+                this.isOnGround() ?
+                    this.worldKnowledge.isGroundCellAccessible.bind(this.worldKnowledge) :
+                    this.worldKnowledge.isAerialCellAccessible.bind(this.worldKnowledge)
+                )) {
                 nextStep = this.pathCache.splice();
             }
         }
@@ -118,13 +154,20 @@ export abstract class Unit implements Shootable, Positionnable {
             const newPath = AStar.getPathOrClosest(
                 this.cellPosition,
                 goal,
-                this.worldKnowledge.isCellAccessible.bind(this.worldKnowledge)
+                this.isOnGround() ?
+                    this.worldKnowledge.isGroundCellAccessible.bind(this.worldKnowledge) :
+                    this.worldKnowledge.isAerialCellAccessible.bind(this.worldKnowledge)
             );
             if (null !== newPath) {
                 this.pathCache = newPath;
                 this.goalCache = goal;
                 nextStep = this.pathCache.splice();
-            } else if (null !== this.pathCache && this.worldKnowledge.isCellAccessible(this.pathCache.firstStep())) {
+            } else if (null !== this.pathCache &&
+                this.pathCache.firstStep() &&
+                (this.isOnGround() ?
+                    this.worldKnowledge.isGroundCellAccessible(this.pathCache.firstStep()) :
+                    this.worldKnowledge.isAerialCellAccessible(this.pathCache.firstStep()))
+            ) {
                 nextStep = this.pathCache.splice();
             }
         }
@@ -145,16 +188,26 @@ export abstract class Unit implements Shootable, Positionnable {
     }
 
     updateStateAfterClick(cell: PIXI.Point) {
-        const unit = this.worldKnowledge.getUnitAt(cell);
-        if (null !== unit) {
-            if (this.getPlayer() !== unit.getPlayer()) {
-                this.state = new Attack(this.worldKnowledge, this, unit);
+        const army = this.worldKnowledge.getArmyAt(cell);
+        if (null !== army) {
+            if (this.getPlayer() !== army.getPlayer()) {
+                if (army.isOnGround() || UnitProperties.getShootAirPower(this.constructor.name) > 0) {
+                    this.state = this.getAttackState(army);
+                } else {
+                    this.state = new MoveTo(this.worldKnowledge, this, cell);
+                }
+            } else if (army instanceof Unit) {
+                this.state = new Follow(this.worldKnowledge, this, army);
             } else {
-                this.state = new Follow(this.worldKnowledge, this, unit);
+                this.state = new MoveTo(this.worldKnowledge, this, cell);
             }
         } else {
-            this.state = new MoveAttack(this.worldKnowledge, this, cell);
+            this.state = new MoveTo(this.worldKnowledge, this, cell);
         }
+    }
+
+    protected getAttackState(army: Army) {
+        return new Attack(this.worldKnowledge, this, army);
     }
 
     isInside(left: number, right: number, top: number, bottom: number): boolean {
@@ -173,11 +226,26 @@ export abstract class Unit implements Shootable, Positionnable {
         this.unitSprite.alpha = value ? 1 : 0;
     }
 
+    isVisible(): boolean {
+        return this.unitSprite.alpha > 0;
+    }
+
+    isOnGround(): boolean {
+        return true;
+    }
+
+    canShoot(): boolean {
+        return true;
+    }
+
+    protected getShootSource(cellDest: PIXI.Point): PIXI.Point {
+        return new PIXI.Point(Cell.cellToReal(this.cellPosition.x), Cell.cellToReal(this.cellPosition.y));
+    }
+
     protected freeze(time: number) {
         this.isFrozen = true;
         this.timerEvents.add(time, () => {
             this.isFrozen = false;
         }, this);
     }
-
 }

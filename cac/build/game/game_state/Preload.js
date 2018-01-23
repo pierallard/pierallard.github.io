@@ -26,7 +26,8 @@ class Preload extends Phaser.State {
         this.load.spritesheet('Tank12', 'assets/Tank12.png', 20, 20, 9, 0, 0);
         this.load.spritesheet('Builder2', 'assets/Builder2.png', 20, 20, 9, 0, 0);
         this.load.spritesheet('Transprt', 'assets/Transprt.png', 40, 40, 9, 0, 0);
-        this.load.spritesheet('Scout2', 'assets/Scout2.png', 20, 20, 9, 0, 0);
+        this.load.spritesheet('Scout2p1', 'assets/Scout2p1.png', 20, 20, 9, 0, 0);
+        this.load.spritesheet('Scout2p2', 'assets/Scout2p2.png', 20, 20, 9, 0, 0);
         this.load.spritesheet('Tank7', 'assets/Tank7.png', 20, 20, 9, 0, 0);
         this.load.spritesheet('Copter', 'assets/Copter.png', 40, 20, 8 * 4, 0, 0);
         this.load.spritesheet('CptrShd1', 'assets/CptrShd1.png', 40, 20, 8 * 4, 0, 0);
@@ -80,6 +81,8 @@ class Preload extends Phaser.State {
         this.load.spritesheet('Outline2', 'assets/Outline2.png', 20, 20, 13 * 5, 0, 0);
         this.load.spritesheet('mouse', 'assets/mouse.png', 20, 13, 1, 0, 0);
         this.load.spritesheet('Selected', 'assets/Selected.png', 20, 20, 12, 0, 0);
+        this.load.spritesheet('Selected', 'assets/Selected.png', 20, 20, 12, 0, 0);
+        this.load.spritesheet('snow', 'assets/snow.png', 60, 60, 1, 0, 0);
     }
     loadFonts() {
     }

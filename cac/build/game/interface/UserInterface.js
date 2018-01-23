@@ -16,7 +16,7 @@ class UserInterface {
         this.buildingPositionner = new BuildingPositionner_1.BuildingPositioner(worldKnowledge, this.player);
         this.UIBuildingCreator = new UIBuildingCreator_1.UIBuildingCreator(worldKnowledge, this.player, this.buildingPositionner);
         this.UIUnitCreator = new UIUnitCreator_1.UIUnitCreator(worldKnowledge, this.player);
-        this.miniMap = new Minimap_1.MiniMap(worldKnowledge, this.player);
+        this.miniMap = new Minimap_1.Minimap(worldKnowledge, this.player);
         this.powerInterface = new PowerInterface_1.PowerInterface(worldKnowledge, this.player);
         this.cursor = new Custor_1.Cursor(worldKnowledge, this.player);
     }

@@ -7,7 +7,7 @@ const UnitProperties_1 = require("./unit/UnitProperties");
 const BuildingProperties_1 = require("./building/BuildingProperties");
 const Unit_1 = require("./unit/Unit");
 const REFRESH_TIME = 0.25 * Phaser.Timer.SECOND;
-const SIGHT_RATIO = 3;
+const SIGHT_RATIO = 2;
 class Fog {
     constructor(worldKnowledge, player) {
         this.hasRenderedRecently = false;

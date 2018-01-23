@@ -51,6 +51,9 @@ class ConcreteBarrier extends ConstructableBuilding_1.ConstructableBuilding {
         this.selectedRectable.setVisible(value);
         this.lifeRectangle.setVisible(value);
     }
+    isVisible() {
+        return true;
+    }
     getSprites() {
         return [
             this.topLeftSprite,

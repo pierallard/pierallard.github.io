@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = require("../game_state/Play");
 const AlternativePosition_1 = require("../computing/AlternativePosition");
 exports.GROUND_WIDTH = 100;
-exports.GROUND_HEIGHT = 40;
+exports.GROUND_HEIGHT = 100;
 var TYPE;
 (function (TYPE) {
     TYPE[TYPE["NORMAL"] = 0] = "NORMAL";

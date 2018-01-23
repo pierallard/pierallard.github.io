@@ -73,6 +73,26 @@
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+const Ground_1 = __webpack_require__(9);
+const Play_1 = __webpack_require__(1);
+class Cell {
+    static cellToReal(position) {
+        return Ground_1.GROUND_SIZE * Play_1.SCALE * position + (Ground_1.GROUND_SIZE * Play_1.SCALE) / 2;
+    }
+    static realToCell(position) {
+        return Math.round((position - (Ground_1.GROUND_SIZE * Play_1.SCALE) / 2) / (Ground_1.GROUND_SIZE * Play_1.SCALE));
+    }
+}
+exports.Cell = Cell;
+
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 const WorldKnowledge_1 = __webpack_require__(56);
 const UserInterface_1 = __webpack_require__(12);
 const MCV_1 = __webpack_require__(21);
@@ -82,7 +102,7 @@ const GeneratedGround_1 = __webpack_require__(13);
 const TiberiumSource_1 = __webpack_require__(44);
 const AlternativePosition_1 = __webpack_require__(6);
 exports._DEBUG_FAST_CONSTRUCT = true;
-exports.SCALE = 2;
+exports.SCALE = 1.2;
 exports.MOVE = 3 * exports.SCALE;
 exports.PANEL_WIDTH = 80;
 var GROUP;
@@ -161,26 +181,6 @@ class Play extends Phaser.State {
     }
 }
 exports.default = Play;
-
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const Ground_1 = __webpack_require__(9);
-const Play_1 = __webpack_require__(0);
-class Cell {
-    static cellToReal(position) {
-        return Ground_1.GROUND_SIZE * Play_1.SCALE * position + (Ground_1.GROUND_SIZE * Play_1.SCALE) / 2;
-    }
-    static realToCell(position) {
-        return Math.round((position - (Ground_1.GROUND_SIZE * Play_1.SCALE) / 2) / (Ground_1.GROUND_SIZE * Play_1.SCALE));
-    }
-}
-exports.Cell = Cell;
 
 
 /***/ }),
@@ -337,10 +337,10 @@ const UnitSprite_1 = __webpack_require__(20);
 const Distance_1 = __webpack_require__(3);
 const UnitProperties_1 = __webpack_require__(8);
 const Rocket_1 = __webpack_require__(27);
-const Cell_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 const Bullet_1 = __webpack_require__(61);
 const MoveTo_1 = __webpack_require__(31);
-const Play_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 class Unit {
     constructor(worldKnowledge, cellPosition, player) {
         this.isFrozen = false;
@@ -525,7 +525,7 @@ exports.Unit = Unit;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Play_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 const DATA = {
     AdvancedGuardTower: {
         cellPositions: [
@@ -987,7 +987,7 @@ exports.AlternativePosition = AlternativePosition;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Play_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 const Explosion_1 = __webpack_require__(15);
 const LifeRectangle_1 = __webpack_require__(16);
 const SelectRectangle_1 = __webpack_require__(17);
@@ -1037,7 +1037,7 @@ exports.BuildingSprite = BuildingSprite;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Play_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 const UnitSprite_1 = __webpack_require__(20);
 exports.SHOOT_COOLDOWN_RATIO = 0.1;
 const DATA = {
@@ -1128,7 +1128,7 @@ const DATA = {
         sight: 1,
         speed: 8,
         sprite_layer: 6,
-        sprites: ['Scout2', 'Scout2'],
+        sprites: ['Scout2p1', 'Scout2p2'],
     },
     Orca: {
         allowed_by: ['Barracks', 'Helipad'],
@@ -1242,7 +1242,7 @@ exports.UnitProperties = UnitProperties;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Play_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 exports.GROUND_SIZE = 20;
 class Ground {
     constructor() {
@@ -1298,7 +1298,7 @@ exports.Ground = Ground;
 Object.defineProperty(exports, "__esModule", { value: true });
 const Boot_1 = __webpack_require__(51);
 const Preload_1 = __webpack_require__(52);
-const Play_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 exports.GAME_WIDTH = 1600 * 0.8;
 exports.GAME_HEIGHT = 900 * 0.8;
 class SimpleGame extends Phaser.Game {
@@ -1394,7 +1394,7 @@ class UserInterface {
         this.buildingPositionner = new BuildingPositionner_1.BuildingPositioner(worldKnowledge, this.player);
         this.UIBuildingCreator = new UIBuildingCreator_1.UIBuildingCreator(worldKnowledge, this.player, this.buildingPositionner);
         this.UIUnitCreator = new UIUnitCreator_1.UIUnitCreator(worldKnowledge, this.player);
-        this.miniMap = new Minimap_1.MiniMap(worldKnowledge, this.player);
+        this.miniMap = new Minimap_1.Minimap(worldKnowledge, this.player);
         this.powerInterface = new PowerInterface_1.PowerInterface(worldKnowledge, this.player);
         this.cursor = new Custor_1.Cursor(worldKnowledge, this.player);
     }
@@ -1434,10 +1434,10 @@ exports.UserInterface = UserInterface;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Play_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 const AlternativePosition_1 = __webpack_require__(6);
 exports.GROUND_WIDTH = 100;
-exports.GROUND_HEIGHT = 40;
+exports.GROUND_HEIGHT = 100;
 var TYPE;
 (function (TYPE) {
     TYPE[TYPE["NORMAL"] = 0] = "NORMAL";
@@ -1758,7 +1758,7 @@ exports.Stand = Stand;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Play_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 const Ground_1 = __webpack_require__(9);
 class Explosion extends Phaser.Sprite {
     constructor(game, x, y, size = null) {
@@ -1870,7 +1870,7 @@ exports.SelectRectangle = SelectRectangle;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Cell_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 const ConstructableBuilding_1 = __webpack_require__(2);
 const HelipadSprite_1 = __webpack_require__(70);
 class Helipad extends ConstructableBuilding_1.ConstructableBuilding {
@@ -1949,9 +1949,9 @@ exports.Player = Player;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Play_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 const Explosion_1 = __webpack_require__(15);
-const Cell_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 const SelectRectangle_1 = __webpack_require__(17);
 const LifeRectangle_1 = __webpack_require__(16);
 const Rotation_1 = __webpack_require__(11);
@@ -2146,10 +2146,10 @@ exports.MCV = MCV;
 Object.defineProperty(exports, "__esModule", { value: true });
 const Unit_1 = __webpack_require__(4);
 const OrcaSprite_1 = __webpack_require__(72);
-const Play_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 const AttackReload_1 = __webpack_require__(77);
 const Helipad_1 = __webpack_require__(18);
-const Cell_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 const Reload_1 = __webpack_require__(81);
 const SHOOT_COUNTER = 5;
 exports.UNLAND_TIME = 0.5;
@@ -2440,7 +2440,6 @@ exports.ProductionStatus = ProductionStatus;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Play_1 = __webpack_require__(0);
 const WIDTH = 33;
 const HEIGHT = 36;
 const TOP = 244;
@@ -2471,12 +2470,12 @@ class AbstractUICreator {
         this.game = game;
         this.group = group;
         this.bottomButton = new Phaser.Sprite(game, this.x + 3 * 2, 305 * 2, 'interfacebuttons', 3);
-        this.bottomButton.scale.setTo(Play_1.SCALE);
+        this.bottomButton.scale.setTo(2);
         this.bottomButton.events.onInputDown.add(() => {
             this.goDown();
         }, this);
         this.topButton = new Phaser.Sprite(game, this.x + 18 * 2, 305 * 2, 'interfacebuttons', 2);
-        this.topButton.scale.setTo(Play_1.SCALE);
+        this.topButton.scale.setTo(2);
         this.topButton.events.onInputDown.add(() => {
             this.goUp();
         }, this);
@@ -2500,7 +2499,7 @@ class AbstractUICreator {
         return this.player;
     }
     createButton(itemName) {
-        this.buttons.push(new CreationButton(this, this.game, this.buttons.length > 0 ? this.buttons[this.buttons.length - 1].getTop() + HEIGHT * Play_1.SCALE : TOP, itemName, this.group, this.x, this.getSpriteKey(itemName), this.getSpriteLayer(itemName), this.onClickFunction, this.onRightClickFunction));
+        this.buttons.push(new CreationButton(this, this.game, this.buttons.length > 0 ? this.buttons[this.buttons.length - 1].getTop() + HEIGHT * 2 : TOP, itemName, this.group, this.x, this.getSpriteKey(itemName), this.getSpriteLayer(itemName), this.onClickFunction, this.onRightClickFunction));
     }
     goDown() {
         this.index += 1;
@@ -2554,7 +2553,7 @@ class CreationButton {
         this.itemName = itemName;
         this.uiCreator = creator;
         this.button = new Phaser.Sprite(game, x, top, 'buttons', 2);
-        this.button.scale.setTo(Play_1.SCALE, Play_1.SCALE);
+        this.button.scale.setTo(2, 2);
         this.button.inputEnabled = true;
         this.button.events.onInputDown.add(() => {
             if (game.input.activePointer.rightButton.isDown) {
@@ -2565,8 +2564,7 @@ class CreationButton {
             }
         }, creator);
         group.add(this.button);
-        this.itemSprite = new Phaser.Sprite(game, x + WIDTH * Play_1.SCALE / 2, top + HEIGHT * Play_1.SCALE / 2, spriteKey, spriteLayer);
-        this.itemSprite.scale.setTo(Play_1.SCALE / 2, Play_1.SCALE / 2);
+        this.itemSprite = new Phaser.Sprite(game, x + WIDTH, top + HEIGHT, spriteKey, spriteLayer);
         this.itemSprite.anchor.setTo(0.5, 0.7);
         group.add(this.itemSprite);
         this.text = new Phaser.Text(game, x, top, AbstractUICreator.getUIText(this.itemName), { align: 'center', fill: "#ffffff", font: '14px 000webfont' });
@@ -2592,12 +2590,12 @@ class CreationButton {
     }
     goDown() {
         this.applyAllElement((element) => {
-            element.y = element.y + HEIGHT * Play_1.SCALE;
+            element.y = element.y + HEIGHT * 2;
         });
     }
     goUp() {
         this.applyAllElement((element) => {
-            element.y = element.y - HEIGHT * Play_1.SCALE;
+            element.y = element.y - HEIGHT * 2;
         });
     }
     setAvailable(value) {
@@ -2615,7 +2613,7 @@ class CreationButton {
 class CreationButtonProgress extends Phaser.Sprite {
     constructor(game, top, x) {
         super(game, x, top + 54, 'button-progress');
-        this.scale.setTo(Play_1.SCALE);
+        this.scale.setTo(2);
         this.myCropRect = new Phaser.Rectangle(0, 0, 0, 8);
         this.crop(this.myCropRect, false);
     }
@@ -2635,8 +2633,8 @@ class CreationButtonProgress extends Phaser.Sprite {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Play_1 = __webpack_require__(0);
-const Cell_1 = __webpack_require__(1);
+const Play_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 const BuildingProperties_1 = __webpack_require__(5);
 const Ground_1 = __webpack_require__(9);
 const app_1 = __webpack_require__(10);
@@ -2750,7 +2748,7 @@ class BuildingPositionerGraphics extends Phaser.Graphics {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Rotation_1 = __webpack_require__(11);
-const Play_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 const Explosion_1 = __webpack_require__(15);
 const Distance_1 = __webpack_require__(3);
 class Rocket extends Phaser.Sprite {
@@ -2815,7 +2813,7 @@ exports.Rocket = Rocket;
 Object.defineProperty(exports, "__esModule", { value: true });
 const BuildingSprite_1 = __webpack_require__(7);
 const Rotation_1 = __webpack_require__(11);
-const Cell_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 const Rocket_1 = __webpack_require__(27);
 class AbstractShootingBuildingSprite extends BuildingSprite_1.BuildingSprite {
     doShoot(closestEnemyPosition) {
@@ -2868,8 +2866,8 @@ exports.AbstractShootingBuildingSprite = AbstractShootingBuildingSprite;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Cell_1 = __webpack_require__(1);
-const Play_1 = __webpack_require__(0);
+const Cell_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 const Ground_1 = __webpack_require__(9);
 const START_AMOUNT = 1000;
 const HARVEST_QUANTITY = 100;
@@ -3080,9 +3078,9 @@ exports.Harvester = Harvester;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Play_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 const Unit_1 = __webpack_require__(4);
-const Cell_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 const app_1 = __webpack_require__(10);
 const UserInterface_1 = __webpack_require__(12);
 const MCV_1 = __webpack_require__(21);
@@ -3218,7 +3216,7 @@ const UnitProperties_1 = __webpack_require__(8);
 const BuildingProperties_1 = __webpack_require__(5);
 const Unit_1 = __webpack_require__(4);
 const REFRESH_TIME = 0.25 * Phaser.Timer.SECOND;
-const SIGHT_RATIO = 3;
+const SIGHT_RATIO = 2;
 class Fog {
     constructor(worldKnowledge, player) {
         this.hasRenderedRecently = false;
@@ -3294,7 +3292,7 @@ exports.Fog = Fog;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Cell_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 const AbstractShootingBuilding_1 = __webpack_require__(23);
 const AdvancedGuardTowerSprite_1 = __webpack_require__(62);
 class AdvancedGuardTower extends AbstractShootingBuilding_1.AbstractShootingBuilding {
@@ -3313,7 +3311,7 @@ exports.AdvancedGuardTower = AdvancedGuardTower;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Cell_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 const ConstructableBuilding_1 = __webpack_require__(2);
 const AdvancedPowerPlantSprite_1 = __webpack_require__(63);
 class AdvancedPowerPlant extends ConstructableBuilding_1.ConstructableBuilding {
@@ -3334,7 +3332,7 @@ exports.AdvancedPowerPlant = AdvancedPowerPlant;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Cell_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 const ConstructableBuilding_1 = __webpack_require__(2);
 const BarracksSprite_1 = __webpack_require__(65);
 class Barracks extends ConstructableBuilding_1.ConstructableBuilding {
@@ -3355,7 +3353,7 @@ exports.Barracks = Barracks;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Cell_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 const ConstructableBuilding_1 = __webpack_require__(2);
 const CommunicationCenterSprite_1 = __webpack_require__(66);
 class CommunicationCenter extends ConstructableBuilding_1.ConstructableBuilding {
@@ -3377,8 +3375,8 @@ exports.CommunicationCenter = CommunicationCenter;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const ConstructableBuilding_1 = __webpack_require__(2);
-const Cell_1 = __webpack_require__(1);
-const Play_1 = __webpack_require__(0);
+const Cell_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 const Ground_1 = __webpack_require__(9);
 const LifeRectangle_1 = __webpack_require__(16);
 const SelectRectangle_1 = __webpack_require__(17);
@@ -3426,6 +3424,9 @@ class ConcreteBarrier extends ConstructableBuilding_1.ConstructableBuilding {
         this.selected = value;
         this.selectedRectable.setVisible(value);
         this.lifeRectangle.setVisible(value);
+    }
+    isVisible() {
+        return true;
     }
     getSprites() {
         return [
@@ -3548,7 +3549,7 @@ exports.ConcreteBarrier = ConcreteBarrier;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Cell_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 const ConstructableBuilding_1 = __webpack_require__(2);
 const ConstructionYardSprite_1 = __webpack_require__(67);
 class ConstructionYard extends ConstructableBuilding_1.ConstructableBuilding {
@@ -3566,7 +3567,7 @@ exports.ConstructionYard = ConstructionYard;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Cell_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 const GuardTowerSprite_1 = __webpack_require__(69);
 const AbstractShootingBuilding_1 = __webpack_require__(23);
 class GuardTower extends AbstractShootingBuilding_1.AbstractShootingBuilding {
@@ -3585,7 +3586,7 @@ exports.GuardTower = GuardTower;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Cell_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 const ConstructableBuilding_1 = __webpack_require__(2);
 const PowerPlantSprite_1 = __webpack_require__(73);
 class PowerPlant extends ConstructableBuilding_1.ConstructableBuilding {
@@ -3606,7 +3607,7 @@ exports.PowerPlant = PowerPlant;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Cell_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 const ConstructableBuilding_1 = __webpack_require__(2);
 const TiberiumRefinerySprite_1 = __webpack_require__(75);
 class TiberiumRefinery extends ConstructableBuilding_1.ConstructableBuilding {
@@ -3630,8 +3631,8 @@ exports.TiberiumRefinery = TiberiumRefinery;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Cell_1 = __webpack_require__(1);
-const Play_1 = __webpack_require__(0);
+const Cell_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 const TiberiumPlant_1 = __webpack_require__(29);
 const Distance_1 = __webpack_require__(3);
 const RADIUS = 6;
@@ -3729,7 +3730,7 @@ exports.TiberiumSource = TiberiumSource;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Cell_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 const ConstructableBuilding_1 = __webpack_require__(2);
 const WeaponsFactorySprite_1 = __webpack_require__(76);
 class WeaponsFactory extends ConstructableBuilding_1.ConstructableBuilding {
@@ -4252,7 +4253,8 @@ class Preload extends Phaser.State {
         this.load.spritesheet('Tank12', 'assets/Tank12.png', 20, 20, 9, 0, 0);
         this.load.spritesheet('Builder2', 'assets/Builder2.png', 20, 20, 9, 0, 0);
         this.load.spritesheet('Transprt', 'assets/Transprt.png', 40, 40, 9, 0, 0);
-        this.load.spritesheet('Scout2', 'assets/Scout2.png', 20, 20, 9, 0, 0);
+        this.load.spritesheet('Scout2p1', 'assets/Scout2p1.png', 20, 20, 9, 0, 0);
+        this.load.spritesheet('Scout2p2', 'assets/Scout2p2.png', 20, 20, 9, 0, 0);
         this.load.spritesheet('Tank7', 'assets/Tank7.png', 20, 20, 9, 0, 0);
         this.load.spritesheet('Copter', 'assets/Copter.png', 40, 20, 8 * 4, 0, 0);
         this.load.spritesheet('CptrShd1', 'assets/CptrShd1.png', 40, 20, 8 * 4, 0, 0);
@@ -4306,6 +4308,8 @@ class Preload extends Phaser.State {
         this.load.spritesheet('Outline2', 'assets/Outline2.png', 20, 20, 13 * 5, 0, 0);
         this.load.spritesheet('mouse', 'assets/mouse.png', 20, 13, 1, 0, 0);
         this.load.spritesheet('Selected', 'assets/Selected.png', 20, 20, 12, 0, 0);
+        this.load.spritesheet('Selected', 'assets/Selected.png', 20, 20, 12, 0, 0);
+        this.load.spritesheet('snow', 'assets/snow.png', 60, 60, 1, 0, 0);
     }
     loadFonts() {
     }
@@ -4320,7 +4324,7 @@ exports.default = Preload;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Play_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 const app_1 = __webpack_require__(10);
 const UserInterface_1 = __webpack_require__(12);
 const BuildingProperties_1 = __webpack_require__(5);
@@ -4383,7 +4387,7 @@ exports.PowerInterface = PowerInterface;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Cell_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 class Selector {
     constructor(worldKnowledge, player) {
         this.corner = null;
@@ -4474,7 +4478,7 @@ exports.Selector = Selector;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Play_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 const GeneratedGround_1 = __webpack_require__(13);
 const UserInterface_1 = __webpack_require__(12);
 const Ground_1 = __webpack_require__(9);
@@ -4484,11 +4488,25 @@ const Y = 9;
 const REFRESH_TIME = 0.25 * Phaser.Timer.SECOND;
 const TILE_SIZE = 20;
 const IDONTKNOW = 1;
-class MiniMap {
+var MINIMAP_STATE;
+(function (MINIMAP_STATE) {
+    MINIMAP_STATE[MINIMAP_STATE["HIDDEN"] = 0] = "HIDDEN";
+    MINIMAP_STATE[MINIMAP_STATE["VISIBLE"] = 1] = "VISIBLE";
+    MINIMAP_STATE[MINIMAP_STATE["NO_ENERGY"] = 2] = "NO_ENERGY";
+})(MINIMAP_STATE || (MINIMAP_STATE = {}));
+class Minimap {
     constructor(worldKnowledge, player) {
         this.hasRenderedRecently = false;
         this.worldKnowledge = worldKnowledge;
         this.player = player;
+    }
+    static rectsContains(rects, pos) {
+        for (let i = 0; i < rects.length; i++) {
+            if (rects[i].x === pos.x && rects[i].y === pos.y) {
+                return true;
+            }
+        }
+        return false;
     }
     create(game, group) {
         this.timerEvents = game.time.events;
@@ -4506,25 +4524,32 @@ class MiniMap {
         map.addTilesetImage('Snw2Mnt', 'Snw2Mnt', TILE_SIZE, TILE_SIZE, 0, 0, 800);
         map.addTilesetImage('Stn2SnwB', 'Stn2SnwB', TILE_SIZE, TILE_SIZE, 0, 0, 900);
         this.layer = map.createLayer(0, GeneratedGround_1.GROUND_WIDTH * IDONTKNOW, GeneratedGround_1.GROUND_HEIGHT * IDONTKNOW, group);
-        this.scale = SIZE / Math.max(GeneratedGround_1.GROUND_WIDTH, GeneratedGround_1.GROUND_HEIGHT) * Play_1.SCALE;
+        this.scale = SIZE / Math.max(GeneratedGround_1.GROUND_WIDTH, GeneratedGround_1.GROUND_HEIGHT) * 2;
+        let position = new PIXI.Point(X * 2, Y * 2);
+        if (GeneratedGround_1.GROUND_WIDTH > GeneratedGround_1.GROUND_HEIGHT) {
+            position.y = position.y + (SIZE * 2 - GeneratedGround_1.GROUND_HEIGHT * this.scale) / 2;
+        }
+        else {
+            position.x = position.x + (SIZE * 2 - GeneratedGround_1.GROUND_WIDTH * this.scale) / 2;
+        }
         this.layer.scale.setTo(this.scale, this.scale);
         this.layer.fixedToCamera = false;
-        this.layer.position.setTo(X * Play_1.SCALE, Y * Play_1.SCALE);
+        this.layer.position.setTo(position.x, position.y);
         this.layer.scrollFactorX = 0;
         this.layer.scrollFactorY = 0;
-        const secondScale = SIZE * Play_1.SCALE / Math.max(GeneratedGround_1.GROUND_WIDTH, GeneratedGround_1.GROUND_HEIGHT);
+        const secondScale = SIZE * 2 / Math.max(GeneratedGround_1.GROUND_WIDTH, GeneratedGround_1.GROUND_HEIGHT);
         this.unitAndBuildingGraphics = new Phaser.Graphics(game);
-        this.unitAndBuildingGraphics.position.setTo(X * Play_1.SCALE, Y * Play_1.SCALE);
+        this.unitAndBuildingGraphics.position.setTo(position.x, position.y);
         this.unitAndBuildingGraphics.fixedToCamera = true;
         this.unitAndBuildingGraphics.scale.set(secondScale, secondScale);
         game.add.existing(this.unitAndBuildingGraphics);
         this.fogGraphics = new Phaser.Graphics(game);
-        this.fogGraphics.position.setTo(X * Play_1.SCALE, Y * Play_1.SCALE);
+        this.fogGraphics.position.setTo(position.x, position.y);
         this.fogGraphics.fixedToCamera = true;
         this.fogGraphics.scale.set(secondScale, secondScale);
         game.add.existing(this.fogGraphics);
         this.rectGraphics = new Phaser.Graphics(game);
-        this.rectGraphics.position.setTo(X * Play_1.SCALE, Y * Play_1.SCALE);
+        this.rectGraphics.position.setTo(position.x, position.y);
         this.rectGraphics.fixedToCamera = true;
         game.add.existing(this.rectGraphics);
         this.layer.inputEnabled = true;
@@ -4533,18 +4558,24 @@ class MiniMap {
             const cameraView = this.layer.game.camera.view;
             const cameraWidth = (cameraView.width - UserInterface_1.INTERFACE_WIDTH) * scaleCamera;
             const cameraHeight = cameraView.height * scaleCamera;
-            const x = (game.input.mousePointer.x - X * Play_1.SCALE - cameraWidth / 2) / this.scale * Ground_1.GROUND_SIZE * Play_1.SCALE;
-            const y = (game.input.mousePointer.y - Y * Play_1.SCALE - cameraHeight / 2) / this.scale * Ground_1.GROUND_SIZE * Play_1.SCALE;
+            const x = (game.input.mousePointer.x - X * 2 - cameraWidth / 2) / this.scale * Ground_1.GROUND_SIZE * Play_1.SCALE;
+            const y = (game.input.mousePointer.y - Y * 2 - cameraHeight / 2) / this.scale * Ground_1.GROUND_SIZE * Play_1.SCALE;
             game.camera.setPosition(x, y);
         });
+        this.multiplicator = Math.ceil(Math.sqrt(GeneratedGround_1.GROUND_WIDTH * GeneratedGround_1.GROUND_HEIGHT / 1000));
+        this.snow = game.add.sprite(X * 2, Y * 2, 'snow');
+        this.snow.scale.setTo(2);
+        this.snow.fixedToCamera = true;
+        this.updateState();
     }
     update() {
         if (this.hasRenderedRecently) {
             return;
         }
+        this.updateState();
         this.updateUnitAndBuildingGraphics();
         this.updateFogGraphics();
-        this.udpateRectGraphics();
+        this.updateRectGraphics();
         this.hasRenderedRecently = true;
         this.timerEvents.add(REFRESH_TIME, () => {
             this.hasRenderedRecently = false;
@@ -4552,29 +4583,50 @@ class MiniMap {
     }
     updateUnitAndBuildingGraphics() {
         this.unitAndBuildingGraphics.clear();
+        this.unitAndBuildingGraphics.lineStyle(null);
+        let rects = [];
         this.worldKnowledge.getArmies().forEach((unit) => {
             if (null !== unit.getPlayer()) {
-                this.unitAndBuildingGraphics.beginFill(unit.getPlayer().getColor());
-                this.unitAndBuildingGraphics.lineStyle(1, unit.getPlayer().getColor());
+                const color = unit.getPlayer().getColor();
+                if (!rects[color]) {
+                    rects[color] = [];
+                }
                 unit.getCellPositions().forEach((cellPosition) => {
-                    this.unitAndBuildingGraphics.drawRect(cellPosition.x, cellPosition.y, 1, 1);
+                    const pos = new PIXI.Point(Math.round(cellPosition.x / this.multiplicator), Math.round(cellPosition.y / this.multiplicator));
+                    if (!Minimap.rectsContains(rects[color], pos)) {
+                        rects[color].push(pos);
+                    }
                 });
             }
         });
+        for (let i = 0; i < Object.keys(rects).length; i++) {
+            this.unitAndBuildingGraphics.beginFill(+Object.keys(rects)[i]);
+            rects[+Object.keys(rects)[i]].forEach((rect) => {
+                this.unitAndBuildingGraphics.drawRect(rect.x * this.multiplicator, rect.y * this.multiplicator, this.multiplicator, this.multiplicator);
+            });
+        }
     }
     updateFogGraphics() {
         this.fogGraphics.clear();
         this.fogGraphics.beginFill(0x000000);
         const fogKnownCells = this.worldKnowledge.getFogKnownCells(this.player);
-        for (let y = 0; y < fogKnownCells.length; y++) {
-            for (let x = 0; x < fogKnownCells[y].length; x++) {
-                if (!fogKnownCells[y][x]) {
-                    this.fogGraphics.drawRect(x, y, 1, 1);
+        for (let y = 0; y < fogKnownCells.length; y += this.multiplicator) {
+            for (let x = 0; x < fogKnownCells[y].length; x += this.multiplicator) {
+                let addRect = false;
+                for (let gapX = 0; !addRect && gapX < this.multiplicator; gapX++) {
+                    for (let gapY = 0; !addRect && gapY < this.multiplicator; gapY++) {
+                        if (!fogKnownCells[y][x]) {
+                            addRect = true;
+                        }
+                    }
+                }
+                if (addRect) {
+                    this.fogGraphics.drawRect(x, y, this.multiplicator, this.multiplicator);
                 }
             }
         }
     }
-    udpateRectGraphics() {
+    updateRectGraphics() {
         this.rectGraphics.clear();
         const cameraView = this.layer.game.camera.view;
         const scaleCamera = this.scale / Play_1.SCALE / Ground_1.GROUND_SIZE;
@@ -4582,8 +4634,50 @@ class MiniMap {
         this.rectGraphics.endFill();
         this.rectGraphics.drawRect(cameraView.x * scaleCamera, cameraView.y * scaleCamera, (cameraView.width - UserInterface_1.INTERFACE_WIDTH) * scaleCamera, cameraView.height * scaleCamera);
     }
+    updateState() {
+        let state = MINIMAP_STATE.HIDDEN;
+        if (this.hasCommunicationCenter()) {
+            if (this.hasPower()) {
+                state = MINIMAP_STATE.VISIBLE;
+            }
+            else {
+                state = MINIMAP_STATE.NO_ENERGY;
+            }
+        }
+        switch (state) {
+            case MINIMAP_STATE.HIDDEN:
+                this.layer.alpha = 0;
+                this.unitAndBuildingGraphics.alpha = 0;
+                this.fogGraphics.alpha = 0;
+                this.rectGraphics.alpha = 0;
+                this.snow.alpha = 0;
+                break;
+            case MINIMAP_STATE.VISIBLE:
+                this.layer.alpha = 1;
+                this.unitAndBuildingGraphics.alpha = 1;
+                this.fogGraphics.alpha = 1;
+                this.rectGraphics.alpha = 1;
+                this.snow.alpha = 0;
+                break;
+            case MINIMAP_STATE.NO_ENERGY: {
+                this.layer.alpha = 0;
+                this.unitAndBuildingGraphics.alpha = 0;
+                this.fogGraphics.alpha = 0;
+                this.rectGraphics.alpha = 0;
+                this.snow.alpha = 1;
+                break;
+            }
+        }
+    }
+    hasCommunicationCenter() {
+        return this.worldKnowledge.getPlayerArmies(this.player, 'CommunicationCenter').length > 0;
+    }
+    hasPower() {
+        return this.worldKnowledge.getPlayerNeededPower(this.player) <=
+            this.worldKnowledge.getPlayerProvidedPower(this.player);
+    }
 }
-exports.MiniMap = MiniMap;
+exports.Minimap = Minimap;
 
 
 /***/ }),
@@ -4600,7 +4694,7 @@ const MiniAppear_1 = __webpack_require__(71);
 const BuildingProperties_1 = __webpack_require__(5);
 const Fog_1 = __webpack_require__(34);
 const Appear_1 = __webpack_require__(64);
-const Play_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 class WorldKnowledge {
     constructor() {
         this.ground = new GeneratedGround_1.GeneratedGround();
@@ -5020,7 +5114,7 @@ exports.ArmyRepository = ArmyRepository;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Rotation_1 = __webpack_require__(11);
-const Play_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 const Explosion_1 = __webpack_require__(15);
 const Distance_1 = __webpack_require__(3);
 class Bullet extends Phaser.Sprite {
@@ -5103,8 +5197,8 @@ exports.AdvancedPowerPlantSprite = AdvancedPowerPlantSprite;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Cell_1 = __webpack_require__(1);
-const Play_1 = __webpack_require__(0);
+const Cell_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 const FRAME_RATE = 30;
 const ANCHOR_X = 3 / 8;
 const ANCHOR_Y = 6.5 / 8;
@@ -5254,10 +5348,10 @@ exports.ConstructionYardSprite = ConstructionYardSprite;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Play_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 const app_1 = __webpack_require__(10);
 const UserInterface_1 = __webpack_require__(12);
-const Cell_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 const GeneratedGround_1 = __webpack_require__(13);
 const SECURITY_MARGIN = 3;
 class FogSprite {
@@ -5424,8 +5518,8 @@ exports.HelipadSprite = HelipadSprite;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Cell_1 = __webpack_require__(1);
-const Play_1 = __webpack_require__(0);
+const Cell_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 const FRAME_RATE = 20;
 const ANCHOR_X = 0.75;
 const ANCHOR_Y = 0.6;
@@ -5475,9 +5569,9 @@ const UnitSprite_1 = __webpack_require__(20);
 const Rotation_1 = __webpack_require__(11);
 const SelectRectangle_1 = __webpack_require__(17);
 const LifeRectangle_1 = __webpack_require__(16);
-const Play_1 = __webpack_require__(0);
+const Play_1 = __webpack_require__(1);
 const ShotCounter_1 = __webpack_require__(74);
-const Cell_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 const Orca_1 = __webpack_require__(22);
 const ANIM_SPEED = 30;
 const GAP_X = 20;
@@ -5954,7 +6048,7 @@ exports.MinigunInfantry = MinigunInfantry;
 Object.defineProperty(exports, "__esModule", { value: true });
 const Unit_1 = __webpack_require__(4);
 const Rotation_1 = __webpack_require__(11);
-const Cell_1 = __webpack_require__(1);
+const Cell_1 = __webpack_require__(0);
 class RocketSoldier extends Unit_1.Unit {
     getShootSource(cellDest) {
         const rotation = Rotation_1.Rotation.getRotation(new Phaser.Point(cellDest.x - this.cellPosition.x, cellDest.y - this.cellPosition.y));

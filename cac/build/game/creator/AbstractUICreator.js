@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const Play_1 = require("../game_state/Play");
 const WIDTH = 33;
 const HEIGHT = 36;
 const TOP = 244;
@@ -31,12 +30,12 @@ class AbstractUICreator {
         this.game = game;
         this.group = group;
         this.bottomButton = new Phaser.Sprite(game, this.x + 3 * 2, 305 * 2, 'interfacebuttons', 3);
-        this.bottomButton.scale.setTo(Play_1.SCALE);
+        this.bottomButton.scale.setTo(2);
         this.bottomButton.events.onInputDown.add(() => {
             this.goDown();
         }, this);
         this.topButton = new Phaser.Sprite(game, this.x + 18 * 2, 305 * 2, 'interfacebuttons', 2);
-        this.topButton.scale.setTo(Play_1.SCALE);
+        this.topButton.scale.setTo(2);
         this.topButton.events.onInputDown.add(() => {
             this.goUp();
         }, this);
@@ -60,7 +59,7 @@ class AbstractUICreator {
         return this.player;
     }
     createButton(itemName) {
-        this.buttons.push(new CreationButton(this, this.game, this.buttons.length > 0 ? this.buttons[this.buttons.length - 1].getTop() + HEIGHT * Play_1.SCALE : TOP, itemName, this.group, this.x, this.getSpriteKey(itemName), this.getSpriteLayer(itemName), this.onClickFunction, this.onRightClickFunction));
+        this.buttons.push(new CreationButton(this, this.game, this.buttons.length > 0 ? this.buttons[this.buttons.length - 1].getTop() + HEIGHT * 2 : TOP, itemName, this.group, this.x, this.getSpriteKey(itemName), this.getSpriteLayer(itemName), this.onClickFunction, this.onRightClickFunction));
     }
     goDown() {
         this.index += 1;
@@ -114,7 +113,7 @@ class CreationButton {
         this.itemName = itemName;
         this.uiCreator = creator;
         this.button = new Phaser.Sprite(game, x, top, 'buttons', 2);
-        this.button.scale.setTo(Play_1.SCALE, Play_1.SCALE);
+        this.button.scale.setTo(2, 2);
         this.button.inputEnabled = true;
         this.button.events.onInputDown.add(() => {
             if (game.input.activePointer.rightButton.isDown) {
@@ -125,8 +124,7 @@ class CreationButton {
             }
         }, creator);
         group.add(this.button);
-        this.itemSprite = new Phaser.Sprite(game, x + WIDTH * Play_1.SCALE / 2, top + HEIGHT * Play_1.SCALE / 2, spriteKey, spriteLayer);
-        this.itemSprite.scale.setTo(Play_1.SCALE / 2, Play_1.SCALE / 2);
+        this.itemSprite = new Phaser.Sprite(game, x + WIDTH, top + HEIGHT, spriteKey, spriteLayer);
         this.itemSprite.anchor.setTo(0.5, 0.7);
         group.add(this.itemSprite);
         this.text = new Phaser.Text(game, x, top, AbstractUICreator.getUIText(this.itemName), { align: 'center', fill: "#ffffff", font: '14px 000webfont' });
@@ -152,12 +150,12 @@ class CreationButton {
     }
     goDown() {
         this.applyAllElement((element) => {
-            element.y = element.y + HEIGHT * Play_1.SCALE;
+            element.y = element.y + HEIGHT * 2;
         });
     }
     goUp() {
         this.applyAllElement((element) => {
-            element.y = element.y - HEIGHT * Play_1.SCALE;
+            element.y = element.y - HEIGHT * 2;
         });
     }
     setAvailable(value) {
@@ -175,7 +173,7 @@ class CreationButton {
 class CreationButtonProgress extends Phaser.Sprite {
     constructor(game, top, x) {
         super(game, x, top + 54, 'button-progress');
-        this.scale.setTo(Play_1.SCALE);
+        this.scale.setTo(2);
         this.myCropRect = new Phaser.Rectangle(0, 0, 0, 8);
         this.crop(this.myCropRect, false);
     }

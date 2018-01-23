@@ -10,11 +10,25 @@ const Y = 9;
 const REFRESH_TIME = 0.25 * Phaser.Timer.SECOND;
 const TILE_SIZE = 20;
 const IDONTKNOW = 1;
-class MiniMap {
+var MINIMAP_STATE;
+(function (MINIMAP_STATE) {
+    MINIMAP_STATE[MINIMAP_STATE["HIDDEN"] = 0] = "HIDDEN";
+    MINIMAP_STATE[MINIMAP_STATE["VISIBLE"] = 1] = "VISIBLE";
+    MINIMAP_STATE[MINIMAP_STATE["NO_ENERGY"] = 2] = "NO_ENERGY";
+})(MINIMAP_STATE || (MINIMAP_STATE = {}));
+class Minimap {
     constructor(worldKnowledge, player) {
         this.hasRenderedRecently = false;
         this.worldKnowledge = worldKnowledge;
         this.player = player;
+    }
+    static rectsContains(rects, pos) {
+        for (let i = 0; i < rects.length; i++) {
+            if (rects[i].x === pos.x && rects[i].y === pos.y) {
+                return true;
+            }
+        }
+        return false;
     }
     create(game, group) {
         this.timerEvents = game.time.events;
@@ -32,25 +46,32 @@ class MiniMap {
         map.addTilesetImage('Snw2Mnt', 'Snw2Mnt', TILE_SIZE, TILE_SIZE, 0, 0, 800);
         map.addTilesetImage('Stn2SnwB', 'Stn2SnwB', TILE_SIZE, TILE_SIZE, 0, 0, 900);
         this.layer = map.createLayer(0, GeneratedGround_1.GROUND_WIDTH * IDONTKNOW, GeneratedGround_1.GROUND_HEIGHT * IDONTKNOW, group);
-        this.scale = SIZE / Math.max(GeneratedGround_1.GROUND_WIDTH, GeneratedGround_1.GROUND_HEIGHT) * Play_1.SCALE;
+        this.scale = SIZE / Math.max(GeneratedGround_1.GROUND_WIDTH, GeneratedGround_1.GROUND_HEIGHT) * 2;
+        let position = new PIXI.Point(X * 2, Y * 2);
+        if (GeneratedGround_1.GROUND_WIDTH > GeneratedGround_1.GROUND_HEIGHT) {
+            position.y = position.y + (SIZE * 2 - GeneratedGround_1.GROUND_HEIGHT * this.scale) / 2;
+        }
+        else {
+            position.x = position.x + (SIZE * 2 - GeneratedGround_1.GROUND_WIDTH * this.scale) / 2;
+        }
         this.layer.scale.setTo(this.scale, this.scale);
         this.layer.fixedToCamera = false;
-        this.layer.position.setTo(X * Play_1.SCALE, Y * Play_1.SCALE);
+        this.layer.position.setTo(position.x, position.y);
         this.layer.scrollFactorX = 0;
         this.layer.scrollFactorY = 0;
-        const secondScale = SIZE * Play_1.SCALE / Math.max(GeneratedGround_1.GROUND_WIDTH, GeneratedGround_1.GROUND_HEIGHT);
+        const secondScale = SIZE * 2 / Math.max(GeneratedGround_1.GROUND_WIDTH, GeneratedGround_1.GROUND_HEIGHT);
         this.unitAndBuildingGraphics = new Phaser.Graphics(game);
-        this.unitAndBuildingGraphics.position.setTo(X * Play_1.SCALE, Y * Play_1.SCALE);
+        this.unitAndBuildingGraphics.position.setTo(position.x, position.y);
         this.unitAndBuildingGraphics.fixedToCamera = true;
         this.unitAndBuildingGraphics.scale.set(secondScale, secondScale);
         game.add.existing(this.unitAndBuildingGraphics);
         this.fogGraphics = new Phaser.Graphics(game);
-        this.fogGraphics.position.setTo(X * Play_1.SCALE, Y * Play_1.SCALE);
+        this.fogGraphics.position.setTo(position.x, position.y);
         this.fogGraphics.fixedToCamera = true;
         this.fogGraphics.scale.set(secondScale, secondScale);
         game.add.existing(this.fogGraphics);
         this.rectGraphics = new Phaser.Graphics(game);
-        this.rectGraphics.position.setTo(X * Play_1.SCALE, Y * Play_1.SCALE);
+        this.rectGraphics.position.setTo(position.x, position.y);
         this.rectGraphics.fixedToCamera = true;
         game.add.existing(this.rectGraphics);
         this.layer.inputEnabled = true;
@@ -59,18 +80,24 @@ class MiniMap {
             const cameraView = this.layer.game.camera.view;
             const cameraWidth = (cameraView.width - UserInterface_1.INTERFACE_WIDTH) * scaleCamera;
             const cameraHeight = cameraView.height * scaleCamera;
-            const x = (game.input.mousePointer.x - X * Play_1.SCALE - cameraWidth / 2) / this.scale * Ground_1.GROUND_SIZE * Play_1.SCALE;
-            const y = (game.input.mousePointer.y - Y * Play_1.SCALE - cameraHeight / 2) / this.scale * Ground_1.GROUND_SIZE * Play_1.SCALE;
+            const x = (game.input.mousePointer.x - X * 2 - cameraWidth / 2) / this.scale * Ground_1.GROUND_SIZE * Play_1.SCALE;
+            const y = (game.input.mousePointer.y - Y * 2 - cameraHeight / 2) / this.scale * Ground_1.GROUND_SIZE * Play_1.SCALE;
             game.camera.setPosition(x, y);
         });
+        this.multiplicator = Math.ceil(Math.sqrt(GeneratedGround_1.GROUND_WIDTH * GeneratedGround_1.GROUND_HEIGHT / 1000));
+        this.snow = game.add.sprite(X * 2, Y * 2, 'snow');
+        this.snow.scale.setTo(2);
+        this.snow.fixedToCamera = true;
+        this.updateState();
     }
     update() {
         if (this.hasRenderedRecently) {
             return;
         }
+        this.updateState();
         this.updateUnitAndBuildingGraphics();
         this.updateFogGraphics();
-        this.udpateRectGraphics();
+        this.updateRectGraphics();
         this.hasRenderedRecently = true;
         this.timerEvents.add(REFRESH_TIME, () => {
             this.hasRenderedRecently = false;
@@ -78,29 +105,50 @@ class MiniMap {
     }
     updateUnitAndBuildingGraphics() {
         this.unitAndBuildingGraphics.clear();
+        this.unitAndBuildingGraphics.lineStyle(null);
+        let rects = [];
         this.worldKnowledge.getArmies().forEach((unit) => {
             if (null !== unit.getPlayer()) {
-                this.unitAndBuildingGraphics.beginFill(unit.getPlayer().getColor());
-                this.unitAndBuildingGraphics.lineStyle(1, unit.getPlayer().getColor());
+                const color = unit.getPlayer().getColor();
+                if (!rects[color]) {
+                    rects[color] = [];
+                }
                 unit.getCellPositions().forEach((cellPosition) => {
-                    this.unitAndBuildingGraphics.drawRect(cellPosition.x, cellPosition.y, 1, 1);
+                    const pos = new PIXI.Point(Math.round(cellPosition.x / this.multiplicator), Math.round(cellPosition.y / this.multiplicator));
+                    if (!Minimap.rectsContains(rects[color], pos)) {
+                        rects[color].push(pos);
+                    }
                 });
             }
         });
+        for (let i = 0; i < Object.keys(rects).length; i++) {
+            this.unitAndBuildingGraphics.beginFill(+Object.keys(rects)[i]);
+            rects[+Object.keys(rects)[i]].forEach((rect) => {
+                this.unitAndBuildingGraphics.drawRect(rect.x * this.multiplicator, rect.y * this.multiplicator, this.multiplicator, this.multiplicator);
+            });
+        }
     }
     updateFogGraphics() {
         this.fogGraphics.clear();
         this.fogGraphics.beginFill(0x000000);
         const fogKnownCells = this.worldKnowledge.getFogKnownCells(this.player);
-        for (let y = 0; y < fogKnownCells.length; y++) {
-            for (let x = 0; x < fogKnownCells[y].length; x++) {
-                if (!fogKnownCells[y][x]) {
-                    this.fogGraphics.drawRect(x, y, 1, 1);
+        for (let y = 0; y < fogKnownCells.length; y += this.multiplicator) {
+            for (let x = 0; x < fogKnownCells[y].length; x += this.multiplicator) {
+                let addRect = false;
+                for (let gapX = 0; !addRect && gapX < this.multiplicator; gapX++) {
+                    for (let gapY = 0; !addRect && gapY < this.multiplicator; gapY++) {
+                        if (!fogKnownCells[y][x]) {
+                            addRect = true;
+                        }
+                    }
+                }
+                if (addRect) {
+                    this.fogGraphics.drawRect(x, y, this.multiplicator, this.multiplicator);
                 }
             }
         }
     }
-    udpateRectGraphics() {
+    updateRectGraphics() {
         this.rectGraphics.clear();
         const cameraView = this.layer.game.camera.view;
         const scaleCamera = this.scale / Play_1.SCALE / Ground_1.GROUND_SIZE;
@@ -108,6 +156,48 @@ class MiniMap {
         this.rectGraphics.endFill();
         this.rectGraphics.drawRect(cameraView.x * scaleCamera, cameraView.y * scaleCamera, (cameraView.width - UserInterface_1.INTERFACE_WIDTH) * scaleCamera, cameraView.height * scaleCamera);
     }
+    updateState() {
+        let state = MINIMAP_STATE.HIDDEN;
+        if (this.hasCommunicationCenter()) {
+            if (this.hasPower()) {
+                state = MINIMAP_STATE.VISIBLE;
+            }
+            else {
+                state = MINIMAP_STATE.NO_ENERGY;
+            }
+        }
+        switch (state) {
+            case MINIMAP_STATE.HIDDEN:
+                this.layer.alpha = 0;
+                this.unitAndBuildingGraphics.alpha = 0;
+                this.fogGraphics.alpha = 0;
+                this.rectGraphics.alpha = 0;
+                this.snow.alpha = 0;
+                break;
+            case MINIMAP_STATE.VISIBLE:
+                this.layer.alpha = 1;
+                this.unitAndBuildingGraphics.alpha = 1;
+                this.fogGraphics.alpha = 1;
+                this.rectGraphics.alpha = 1;
+                this.snow.alpha = 0;
+                break;
+            case MINIMAP_STATE.NO_ENERGY: {
+                this.layer.alpha = 0;
+                this.unitAndBuildingGraphics.alpha = 0;
+                this.fogGraphics.alpha = 0;
+                this.rectGraphics.alpha = 0;
+                this.snow.alpha = 1;
+                break;
+            }
+        }
+    }
+    hasCommunicationCenter() {
+        return this.worldKnowledge.getPlayerArmies(this.player, 'CommunicationCenter').length > 0;
+    }
+    hasPower() {
+        return this.worldKnowledge.getPlayerNeededPower(this.player) <=
+            this.worldKnowledge.getPlayerProvidedPower(this.player);
+    }
 }
-exports.MiniMap = MiniMap;
+exports.Minimap = Minimap;
 //# sourceMappingURL=Minimap.js.map

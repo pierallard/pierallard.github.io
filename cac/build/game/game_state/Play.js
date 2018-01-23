@@ -9,7 +9,7 @@ const GeneratedGround_1 = require("../map/GeneratedGround");
 const TiberiumSource_1 = require("../building/TiberiumSource");
 const AlternativePosition_1 = require("../computing/AlternativePosition");
 exports._DEBUG_FAST_CONSTRUCT = true;
-exports.SCALE = 2;
+exports.SCALE = 1.2;
 exports.MOVE = 3 * exports.SCALE;
 exports.PANEL_WIDTH = 80;
 var GROUP;

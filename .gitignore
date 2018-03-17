@@ -1,0 +1,7 @@
+idk/images/
+idk/node_modules/
+idk/python/
+idk/src/
+idk/tsconfig.json
+idk/tslint.json
+idk/webpack.config.js

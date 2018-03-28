@@ -23,6 +23,9 @@ class Sofa {
     getEntries() {
         return [Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.BOTTOM];
     }
+    forceOrientation() {
+        return null;
+    }
 }
 exports.Sofa = Sofa;
 //# sourceMappingURL=Sofa.js.map

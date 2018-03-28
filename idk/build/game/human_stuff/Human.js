@@ -5,14 +5,6 @@ const ClosestPathFinder_1 = require("../ClosestPathFinder");
 const Direction_1 = require("../Direction");
 const HumanAnimationManager_1 = require("./HumanAnimationManager");
 const HumanStateManager_1 = require("./HumanStateManager");
-var ANIMATION;
-(function (ANIMATION) {
-    ANIMATION[ANIMATION["FREEZE"] = 0] = "FREEZE";
-    ANIMATION[ANIMATION["WALK"] = 1] = "WALK";
-    ANIMATION[ANIMATION["SMOKE"] = 2] = "SMOKE";
-    ANIMATION[ANIMATION["SIT_DOWN"] = 3] = "SIT_DOWN";
-    ANIMATION[ANIMATION["STAND_UP"] = 4] = "STAND_UP";
-})(ANIMATION = exports.ANIMATION || (exports.ANIMATION = {}));
 exports.WALK_CELL_DURATION = 1200;
 const GAP_FROM_BOTTOM = -8;
 class Human {
@@ -30,7 +22,7 @@ class Human {
         this.tile = game.add.tileSprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).x + this.anchorPixels.x, PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).y + this.anchorPixels.y, 24, 25, 'human');
         this.animationManager.create(this.tile);
         this.tile.anchor.set(0.5, 1.0);
-        this.animationManager.loadAnimation(ANIMATION.FREEZE, true, false);
+        this.animationManager.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE, true, false);
         this.tile.inputEnabled = true;
         this.tile.events.onInputDown.add(this.select, this);
         group.add(this.tile);
@@ -66,7 +58,7 @@ class Human {
     animateMove(direction) {
         const isLeft = Human.isHumanLeft(direction);
         const isTop = Human.isHumanTop(direction);
-        this.animationManager.loadAnimation(ANIMATION.WALK, isLeft, isTop);
+        this.animationManager.loadAnimation(HumanAnimationManager_1.ANIMATION.WALK, isLeft, isTop);
         this.moving = true;
         this.game.add.tween(this.tile.position).to({
             x: PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).x + this.anchorPixels.x,
@@ -80,7 +72,7 @@ class Human {
         this.moving = false;
         let humanPositions = [this.cell];
         if (this.path.length == 0) {
-            this.animationManager.loadAnimation(ANIMATION.FREEZE, isLeft, isTop);
+            this.animationManager.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE, isLeft, isTop);
         }
         else {
             const next = this.path.shift();
@@ -101,10 +93,11 @@ class Human {
     isMoving() {
         return this.moving;
     }
-    goToSittable(sittable) {
+    goToSittable(sittable, isLeft = null) {
         const direction = Direction_1.Direction.getNeighborDirection(this.cell, sittable.getPosition());
+        const side = (isLeft !== null) ? isLeft : Human.isHumanLeft(direction);
         // Human has to gap 5px from the sofa to be sit properly, and 1px from the bottom.
-        this.anchorPixels.x = sittable.getPositionGap().x + (Human.isHumanLeft(direction) ? -5 : 5);
+        this.anchorPixels.x = sittable.getPositionGap().x + (side ? -5 : 5);
         this.anchorPixels.y = sittable.getPositionGap().y - 1;
         this.cell = sittable.getPosition();
         this.animateMove(direction);
@@ -129,8 +122,8 @@ class Human {
             this.popPath(null, null);
         }
     }
-    loadAnimation(animation) {
-        this.animationManager.loadAnimation(animation);
+    loadAnimation(animation, isLeft = null) {
+        this.animationManager.loadAnimation(animation, isLeft);
     }
 }
 exports.Human = Human;

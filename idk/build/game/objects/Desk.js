@@ -2,22 +2,38 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const PositionTransformer_1 = require("../PositionTransformer");
 const Direction_1 = require("../Direction");
-const CHAIR_BOTTOM = -10;
-const CHAIR_LEFT = -10;
-const CHAIR_ANCHOR_BOTTOM = 2;
+/**
+ * This variable will fake the position of the sprite without changing it for the enduser.
+ * A negative number (e.g. -10) will draw the object 10 pixels on the top but will update the anchor to put it back
+ * to its position.
+ * If the Human is not seen because the object is in front of it, you have to put a more negative number.
+ * @type {number}
+ */
+const FAKE_ANCHOR_BOTTOM = -4;
+/**
+ * Negative : will display the object to the left
+ * @type {number}
+ */
+const GAP_HORIZONTAL = -10;
+/**
+ * Negative: Will display the object to the top
+ * @type {number}
+ */
+const GAP_VERTICAL = -8;
 class Desk {
     constructor(point) {
         this.position = point;
     }
     create(game, group) {
-        this.chairSprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + CHAIR_LEFT, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + CHAIR_BOTTOM, 'chair');
+        const isLeftOriented = Math.random() >= 0.5;
+        this.chairSprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + (isLeftOriented ? -GAP_HORIZONTAL : GAP_HORIZONTAL), PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM + GAP_VERTICAL, 'chair');
         this.deskSprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y, 'desk');
-        this.chairSprite.anchor.set(0.5, 1 - CHAIR_ANCHOR_BOTTOM / this.chairSprite.height);
+        this.chairSprite.anchor.set(0.5, 1 + FAKE_ANCHOR_BOTTOM / this.chairSprite.height);
         this.deskSprite.anchor.set(0.5, 1);
-        // if (Math.random() >= 0.5) {
-        //     this.deskSprite.scale.set(-1, 1);
-        //     this.chairSprite.scale.set(-1, 1);
-        // }
+        if (isLeftOriented) {
+            this.deskSprite.scale.set(-1, 1);
+            this.chairSprite.scale.set(-1, 1);
+        }
         group.add(this.chairSprite);
         group.add(this.deskSprite);
     }
@@ -25,11 +41,18 @@ class Desk {
         return this.position;
     }
     getPositionGap() {
-        return new PIXI.Point(CHAIR_LEFT, CHAIR_BOTTOM);
+        return new PIXI.Point(this.isLeftOriented() ? -GAP_HORIZONTAL : GAP_HORIZONTAL, GAP_VERTICAL - 2);
     }
     getEntries() {
-        // return [DIRECTION.LEFT, DIRECTION.TOP, DIRECTION.BOTTOM];
-        return [Direction_1.DIRECTION.BOTTOM];
+        return this.isLeftOriented() ?
+            [Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.TOP] :
+            [Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT];
+    }
+    isLeftOriented() {
+        return this.deskSprite.scale.x === -1;
+    }
+    forceOrientation() {
+        return this.isLeftOriented();
     }
 }
 exports.Desk = Desk;

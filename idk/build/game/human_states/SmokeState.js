@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const Human_1 = require("../human_stuff/Human");
+const HumanAnimationManager_1 = require("../human_stuff/HumanAnimationManager");
 class SmokeState {
     constructor(human, timeLoop) {
         this.human = human;
@@ -12,7 +12,7 @@ class SmokeState {
     start(game) {
         game.time.events.add(Phaser.Math.random(1, 3) * this.timeLoop, this.end, this);
         this.active = true;
-        this.human.loadAnimation(Human_1.ANIMATION.SMOKE);
+        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SMOKE);
     }
     end() {
         this.active = false;

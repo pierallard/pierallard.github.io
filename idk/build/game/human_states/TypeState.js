@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const Human_1 = require("../human_stuff/Human");
 const HumanAnimationManager_1 = require("../human_stuff/HumanAnimationManager");
-class SitState {
+class TypeState {
     constructor(human, loopTime, sittable, world) {
         this.human = human;
         this.loopTime = loopTime;
@@ -19,18 +19,21 @@ class SitState {
         }
         if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
             this.isHumanOnTheRightCell = true;
-            this.human.goToSittable(this.sittable);
+            this.human.goToSittable(this.sittable, this.sittable.forceOrientation());
             this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
-                this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN);
-                this.game.time.events.add(Phaser.Math.random(1, 3) * Phaser.Timer.SECOND + this.loopTime, () => {
-                    this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.STAND_UP);
-                    this.game.time.events.add(this.loopTime + 100, () => {
-                        this.human.goToFreeCell(this.sittable.getEntries());
-                        this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
-                            this.active = false;
+                this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN, this.sittable.forceOrientation());
+                this.game.time.events.add(this.loopTime, () => {
+                    this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.TYPE);
+                    this.game.time.events.add(Phaser.Math.random(5, 10) * Phaser.Timer.SECOND, () => {
+                        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.STAND_UP);
+                        this.game.time.events.add(this.loopTime + 100, () => {
+                            this.human.goToFreeCell(this.sittable.getEntries());
+                            this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
+                                this.active = false;
+                            }, this);
                         }, this);
                     }, this);
-                }, this);
+                });
             }, this);
         }
         return this.active;
@@ -45,5 +48,5 @@ class SitState {
             (this.human.getPosition().y - this.sittable.getPosition().y) * (this.human.getPosition().y - this.sittable.getPosition().y) === 1;
     }
 }
-exports.SitState = SitState;
-//# sourceMappingURL=SitState.js.map
+exports.TypeState = TypeState;
+//# sourceMappingURL=TypeState.js.map

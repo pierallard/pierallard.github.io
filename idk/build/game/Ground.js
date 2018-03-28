@@ -6,12 +6,24 @@ const WallRepository_1 = require("./repositories/WallRepository");
 const Sofa_1 = require("./objects/Sofa");
 const WIDTH = 10;
 const HEIGHT = 10;
+exports.DEBUG_WORLD = false;
 class Ground {
     constructor() {
         this.cells = [];
         this.desks = [];
         this.sofas = [];
         this.wallRepository = new WallRepository_1.WallRepository();
+        for (let y = 0; y < HEIGHT; y++) {
+            for (let x = 0; x < WIDTH; x++) {
+                this.cells.push(new Cell_1.Cell(new PIXI.Point(x, y)));
+            }
+        }
+        if (exports.DEBUG_WORLD) {
+            this.wallRepository.addWall(new PIXI.Point(5, 5));
+            this.wallRepository.addWall(new PIXI.Point(6, 5));
+            this.desks.push(new Desk_1.Desk(new PIXI.Point(4, 5)));
+            return;
+        }
         for (let x = 0; x < WIDTH; x++) {
             this.wallRepository.addWall(new PIXI.Point(x, 0));
             this.wallRepository.addWall(new PIXI.Point(x, HEIGHT - 1));
@@ -34,11 +46,6 @@ class Ground {
         ].forEach((cell) => {
             this.wallRepository.addWall(cell);
         });
-        for (let y = 0; y < HEIGHT; y++) {
-            for (let x = 0; x < WIDTH; x++) {
-                this.cells.push(new Cell_1.Cell(new PIXI.Point(x, y)));
-            }
-        }
         for (let i = 0; i < 3; i++) {
             this.desks.push(new Desk_1.Desk(this.getRandomCell()));
         }

@@ -12,11 +12,25 @@ class Ground {
         this.desks = [];
         this.sofas = [];
         this.wallRepository = new WallRepository_1.WallRepository();
+        for (let x = 0; x < WIDTH; x++) {
+            this.wallRepository.addWall(new PIXI.Point(x, 0));
+            this.wallRepository.addWall(new PIXI.Point(x, HEIGHT - 1));
+        }
+        for (let y = 1; y < (HEIGHT - 1); y++) {
+            this.wallRepository.addWall(new PIXI.Point(0, y));
+            this.wallRepository.addWall(new PIXI.Point(WIDTH - 1, y));
+        }
+        for (let x = 1; x < 3 - 1; x++) {
+            this.wallRepository.addWall(new PIXI.Point(x, WIDTH / 2 + 1));
+        }
+        for (let x = 5; x < WIDTH - 1; x++) {
+            this.wallRepository.addWall(new PIXI.Point(x, WIDTH / 2 + 1));
+        }
         [
-            new PIXI.Point(3, 3),
+            new PIXI.Point(4, 3),
+            new PIXI.Point(4, 4),
             new PIXI.Point(3, 4),
-            new PIXI.Point(2, 4),
-            new PIXI.Point(2, 3),
+            new PIXI.Point(3, 3),
         ].forEach((cell) => {
             this.wallRepository.addWall(cell);
         });
@@ -94,8 +108,32 @@ class Ground {
     getWallRepository() {
         return this.wallRepository;
     }
-    getRandomSofa() {
-        return this.sofas[Math.floor(Math.random() * this.sofas.length)];
+    getRandomFreeSofa(humans) {
+        const freeSofas = this.sofas.filter((sofa) => {
+            return !Ground.isSittableTaken(sofa, humans);
+        });
+        if (freeSofas.length === 0) {
+            return null;
+        }
+        return freeSofas[Math.floor(Math.random() * freeSofas.length)];
+    }
+    static isSittableTaken(sittable, humans) {
+        for (let i = 0; i < humans.length; i++) {
+            const human = humans[i];
+            if (sittable.getPosition().x === human.getPosition().x && sittable.getPosition().y === human.getPosition().y) {
+                return true;
+            }
+        }
+        return false;
+    }
+    getRandomFreeDesk(humans) {
+        const freeDesks = this.desks.filter((desks) => {
+            return !Ground.isSittableTaken(desks, humans);
+        });
+        if (freeDesks.length === 0) {
+            return null;
+        }
+        return freeDesks[Math.floor(Math.random() * freeDesks.length)];
     }
 }
 exports.Ground = Ground;

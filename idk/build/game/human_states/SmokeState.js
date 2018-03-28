@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const Human_1 = require("../Human");
+const Human_1 = require("../human_stuff/Human");
 class SmokeState {
     constructor(human, timeLoop) {
         this.human = human;

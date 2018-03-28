@@ -44,8 +44,14 @@ class World {
             (humanPosition.x == wallPosition.x && humanPosition.y == wallPosition.y + 1) ||
             (humanPosition.x == wallPosition.x + 1 && humanPosition.y == wallPosition.y);
     }
-    getRandomSofa() {
-        return this.ground.getRandomSofa();
+    getRandomFreeSofa() {
+        return this.ground.getRandomFreeSofa(this.humanRepository.humans);
+    }
+    isSittableTaken(sittable) {
+        return Ground_1.Ground.isSittableTaken(sittable, this.humanRepository.humans);
+    }
+    getRandomFreeDesk() {
+        return this.ground.getRandomFreeDesk(this.humanRepository.humans);
     }
 }
 exports.World = World;

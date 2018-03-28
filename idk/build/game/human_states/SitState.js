@@ -1,29 +1,31 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const Human_1 = require("../Human");
+const Human_1 = require("../human_stuff/Human");
 class SitState {
-    constructor(human, loopTime, world) {
+    constructor(human, loopTime, sittable, world) {
         this.human = human;
         this.loopTime = loopTime;
-        this.sofa = world.getRandomSofa();
-        this.toto = false;
+        this.sittable = sittable;
+        this.isHumanOnTheRightCell = false;
+        this.world = world;
     }
     isActive() {
-        if (!this.toto && this.isNeighborPosition()) {
-            this.toto = true;
-            console.log('Go to Sofa');
-            this.human.goToSofa(this.sofa.getPosition());
+        if (!this.isHumanOnTheRightCell) {
+            if (this.world.isSittableTaken(this.sittable)) {
+                this.active = false;
+                return false;
+            }
+        }
+        if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
+            this.isHumanOnTheRightCell = true;
+            this.human.goToSittable(this.sittable);
             this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
-                console.log('Sit down');
                 this.human.loadAnimation(Human_1.ANIMATION.SIT_DOWN);
                 this.game.time.events.add(Phaser.Math.random(1, 3) * Phaser.Timer.SECOND + this.loopTime, () => {
-                    console.log('Stand up');
                     this.human.loadAnimation(Human_1.ANIMATION.STAND_UP);
                     this.game.time.events.add(this.loopTime + 100, () => {
-                        console.log('Go to free cell');
-                        this.human.goToFreeCell();
+                        this.human.goToFreeCell(this.sittable.getEntries());
                         this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
-                            console.log('Disable');
                             this.active = false;
                         }, this);
                     }, this);
@@ -35,11 +37,11 @@ class SitState {
     start(game) {
         this.active = true;
         this.game = game;
-        this.human.moveToClosest(this.sofa.getPosition());
+        this.human.moveToClosest(this.sittable.getPosition(), this.sittable.getEntries());
     }
     isNeighborPosition() {
-        return !this.human.isMoving() && (this.human.getPosition().x - this.sofa.getPosition().x) * (this.human.getPosition().x - this.sofa.getPosition().x) +
-            (this.human.getPosition().y - this.sofa.getPosition().y) * (this.human.getPosition().y - this.sofa.getPosition().y) === 1;
+        return !this.human.isMoving() && (this.human.getPosition().x - this.sittable.getPosition().x) * (this.human.getPosition().x - this.sittable.getPosition().x) +
+            (this.human.getPosition().y - this.sittable.getPosition().y) * (this.human.getPosition().y - this.sittable.getPosition().y) === 1;
     }
 }
 exports.SitState = SitState;

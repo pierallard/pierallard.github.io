@@ -11,8 +11,8 @@ class ClosestPathFinder {
             this.finders[direction].setGrid(grid, acceptables);
         });
     }
-    getNeighborPath(originCell, goalCell) {
-        return this.getPathInner(originCell, goalCell, Direction_1.Direction.neighborDirections());
+    getNeighborPath(originCell, goalCell, entries = [Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT]) {
+        return this.getPathInner(originCell, goalCell, entries);
     }
     getPath(originCell, goalCell) {
         return this.getPathInner(originCell, goalCell, [Direction_1.DIRECTION.CURRENT]);

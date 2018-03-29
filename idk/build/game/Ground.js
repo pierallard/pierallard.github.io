@@ -4,8 +4,8 @@ const Cell_1 = require("./Cell");
 const Desk_1 = require("./objects/Desk");
 const WallRepository_1 = require("./repositories/WallRepository");
 const Sofa_1 = require("./objects/Sofa");
-const WIDTH = 10;
-const HEIGHT = 10;
+const GRID_WIDTH = 12;
+const GRID_HEIGHT = 12;
 exports.DEBUG_WORLD = false;
 class Ground {
     constructor() {
@@ -13,8 +13,8 @@ class Ground {
         this.desks = [];
         this.sofas = [];
         this.wallRepository = new WallRepository_1.WallRepository();
-        for (let y = 0; y < HEIGHT; y++) {
-            for (let x = 0; x < WIDTH; x++) {
+        for (let y = 0; y < GRID_HEIGHT; y++) {
+            for (let x = 0; x < GRID_WIDTH; x++) {
                 this.cells.push(new Cell_1.Cell(new PIXI.Point(x, y)));
             }
         }
@@ -24,19 +24,19 @@ class Ground {
             this.desks.push(new Desk_1.Desk(new PIXI.Point(4, 5)));
             return;
         }
-        for (let x = 0; x < WIDTH; x++) {
+        for (let x = 0; x < GRID_WIDTH; x++) {
             this.wallRepository.addWall(new PIXI.Point(x, 0));
-            this.wallRepository.addWall(new PIXI.Point(x, HEIGHT - 1));
+            this.wallRepository.addWall(new PIXI.Point(x, GRID_HEIGHT - 1));
         }
-        for (let y = 1; y < (HEIGHT - 1); y++) {
+        for (let y = 1; y < (GRID_HEIGHT - 1); y++) {
             this.wallRepository.addWall(new PIXI.Point(0, y));
-            this.wallRepository.addWall(new PIXI.Point(WIDTH - 1, y));
+            this.wallRepository.addWall(new PIXI.Point(GRID_WIDTH - 1, y));
         }
         for (let x = 1; x < 3 - 1; x++) {
-            this.wallRepository.addWall(new PIXI.Point(x, WIDTH / 2 + 1));
+            this.wallRepository.addWall(new PIXI.Point(x, GRID_WIDTH / 2 + 1));
         }
-        for (let x = 5; x < WIDTH - 1; x++) {
-            this.wallRepository.addWall(new PIXI.Point(x, WIDTH / 2 + 1));
+        for (let x = 5; x < GRID_WIDTH - 1; x++) {
+            this.wallRepository.addWall(new PIXI.Point(x, GRID_WIDTH / 2 + 1));
         }
         [
             new PIXI.Point(4, 3),
@@ -94,7 +94,7 @@ class Ground {
         return acceptables;
     }
     isFree(point) {
-        if (point.x < 0 || point.y < 0 || point.x >= WIDTH || point.y >= HEIGHT) {
+        if (point.x < 0 || point.y < 0 || point.x >= GRID_WIDTH || point.y >= GRID_HEIGHT) {
             return false;
         }
         for (let j = 0; j < this.desks.length; j++) {

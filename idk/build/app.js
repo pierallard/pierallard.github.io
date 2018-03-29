@@ -5,11 +5,13 @@ const Boot_1 = require("./game/game_state/Boot");
 const Preload_1 = require("./game/game_state/Preload");
 const Play_1 = require("./game/game_state/Play");
 exports.SCALE = 3;
-exports.GAME_WIDTH = 1600 * 0.8 / exports.SCALE;
-exports.GAME_HEIGHT = 900 * 0.8 / exports.SCALE;
+exports.CAMERA_WIDTH_PIXELS = 1280 / exports.SCALE;
+exports.CAMERA_HEIGHT_PIXELS = 720 / exports.SCALE;
+exports.WORLD_WIDTH = 1280 * 1.1 / exports.SCALE;
+exports.WORLD_HEIGHT = 720 * 1.1 / exports.SCALE;
 class SimpleGame extends Phaser.Game {
     constructor() {
-        super(exports.GAME_WIDTH, exports.GAME_HEIGHT, Phaser.CANVAS, // Open GL for effect / shader ?
+        super(exports.CAMERA_WIDTH_PIXELS, exports.CAMERA_HEIGHT_PIXELS, Phaser.CANVAS, // Open GL for effect / shader ?
         'content', null, false, false, false);
         this.antialias = false;
         this.state.add('Boot', Boot_1.default);

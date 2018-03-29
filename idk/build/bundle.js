@@ -165,21 +165,17 @@ exports.HumanAnimationManager = HumanAnimationManager;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const app_1 = __webpack_require__(3);
+const app_1 = __webpack_require__(2);
 exports.CELL_WIDTH = 40;
 exports.CELL_HEIGHT = 20;
 class PositionTransformer {
     static getRealPosition(point) {
-        return new PIXI.Point(app_1.GAME_WIDTH / 2 - (point.x - point.y) * exports.CELL_WIDTH / 2, app_1.GAME_HEIGHT - (point.x + point.y) * exports.CELL_HEIGHT / 2);
+        return new PIXI.Point(app_1.WORLD_WIDTH / 2 - (point.x - point.y) * exports.CELL_WIDTH / 2, app_1.WORLD_HEIGHT - (point.x + point.y) * exports.CELL_HEIGHT / 2);
     }
     static getCellPosition(point) {
-        const x2 = point.x;
-        const y2 = point.y;
-        const a = -exports.CELL_WIDTH / 2;
-        const c = -exports.CELL_HEIGHT / 2;
-        const b = app_1.GAME_WIDTH / 2;
-        const d = app_1.GAME_HEIGHT;
-        return new PIXI.Point(Math.floor((y2 - d) / (2 * c) + (x2 - b) / (2 * a)), Math.floor((y2 - d) / (2 * c) - (x2 - b) / (2 * a)));
+        return new PIXI.Point(Math.floor((point.y - app_1.WORLD_HEIGHT) / (2 * (-exports.CELL_HEIGHT / 2)) +
+            (point.x - (app_1.WORLD_WIDTH / 2)) / (2 * (-exports.CELL_WIDTH / 2))), Math.floor((point.y - app_1.WORLD_HEIGHT) / (2 * (-exports.CELL_HEIGHT / 2)) -
+            (point.x - (app_1.WORLD_WIDTH / 2)) / (2 * (-exports.CELL_WIDTH / 2))));
     }
 }
 exports.PositionTransformer = PositionTransformer;
@@ -187,6 +183,38 @@ exports.PositionTransformer = PositionTransformer;
 
 /***/ }),
 /* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/// <reference path="../lib/phaser.d.ts"/>
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const Boot_1 = __webpack_require__(10);
+const Preload_1 = __webpack_require__(12);
+const Play_1 = __webpack_require__(11);
+exports.SCALE = 3;
+exports.CAMERA_WIDTH_PIXELS = 1280 / exports.SCALE;
+exports.CAMERA_HEIGHT_PIXELS = 720 / exports.SCALE;
+exports.WORLD_WIDTH = 1280 * 1.1 / exports.SCALE;
+exports.WORLD_HEIGHT = 720 * 1.1 / exports.SCALE;
+class SimpleGame extends Phaser.Game {
+    constructor() {
+        super(exports.CAMERA_WIDTH_PIXELS, exports.CAMERA_HEIGHT_PIXELS, Phaser.CANVAS, // Open GL for effect / shader ?
+        'content', null, false, false, false);
+        this.antialias = false;
+        this.state.add('Boot', Boot_1.default);
+        this.state.add('Preload', Preload_1.default);
+        this.state.add('Play', Play_1.default);
+        this.state.start('Boot');
+    }
+}
+window.onload = () => {
+    new SimpleGame();
+};
+
+
+/***/ }),
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -240,36 +268,6 @@ exports.Direction = Direction;
 
 
 /***/ }),
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/// <reference path="../lib/phaser.d.ts"/>
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const Boot_1 = __webpack_require__(10);
-const Preload_1 = __webpack_require__(12);
-const Play_1 = __webpack_require__(11);
-exports.SCALE = 3;
-exports.GAME_WIDTH = 1600 * 0.8 / exports.SCALE;
-exports.GAME_HEIGHT = 900 * 0.8 / exports.SCALE;
-class SimpleGame extends Phaser.Game {
-    constructor() {
-        super(exports.GAME_WIDTH, exports.GAME_HEIGHT, Phaser.CANVAS, // Open GL for effect / shader ?
-        'content', null, false, false, false);
-        this.antialias = false;
-        this.state.add('Boot', Boot_1.default);
-        this.state.add('Preload', Preload_1.default);
-        this.state.add('Play', Play_1.default);
-        this.state.start('Boot');
-    }
-}
-window.onload = () => {
-    new SimpleGame();
-};
-
-
-/***/ }),
 /* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -278,7 +276,7 @@ window.onload = () => {
 Object.defineProperty(exports, "__esModule", { value: true });
 const PositionTransformer_1 = __webpack_require__(1);
 const ClosestPathFinder_1 = __webpack_require__(7);
-const Direction_1 = __webpack_require__(2);
+const Direction_1 = __webpack_require__(3);
 const HumanAnimationManager_1 = __webpack_require__(0);
 const HumanStateManager_1 = __webpack_require__(18);
 exports.WALK_CELL_DURATION = 1200;
@@ -298,12 +296,12 @@ class Human {
         this.tile = game.add.tileSprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).x + this.anchorPixels.x, PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).y + this.anchorPixels.y, 24, 25, 'human');
         this.animationManager.create(this.tile);
         this.tile.anchor.set(0.5, 1.0);
-        this.animationManager.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE, true, false);
         this.tile.inputEnabled = true;
         this.tile.events.onInputDown.add(this.select, this);
         group.add(this.tile);
         this.pathfinder = game.plugins.add(Phaser.Plugin.PathFinderPlugin);
         this.pathfinder.setGrid(world.getGround().getGrid(), world.getGround().getAcceptables());
+        this.animationManager.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE, true, false);
         this.closestPathFinder = new ClosestPathFinder_1.ClosestPathFinder(game, world);
         this.stateManager.create(game, world, this.animationManager);
     }
@@ -311,7 +309,7 @@ class Human {
         this.stateManager.updateState(this.game);
     }
     select() {
-        this.tile.loadTexture('human_selected', this.tile.frame, false);
+        this.tile.loadTexture(this.isSelected() ? 'human' : 'human_selected', this.tile.frame, false);
     }
     moveTo(cell) {
         const path = this.closestPathFinder.getPath(this.cell, cell);
@@ -401,6 +399,12 @@ class Human {
     loadAnimation(animation, isLeft = null) {
         this.animationManager.loadAnimation(animation, isLeft);
     }
+    isSelected() {
+        return this.tile.key === 'human_selected';
+    }
+    getSprite() {
+        return this.tile;
+    }
 }
 exports.Human = Human;
 
@@ -416,8 +420,8 @@ const Cell_1 = __webpack_require__(6);
 const Desk_1 = __webpack_require__(19);
 const WallRepository_1 = __webpack_require__(22);
 const Sofa_1 = __webpack_require__(20);
-const WIDTH = 10;
-const HEIGHT = 10;
+const GRID_WIDTH = 12;
+const GRID_HEIGHT = 12;
 exports.DEBUG_WORLD = false;
 class Ground {
     constructor() {
@@ -425,8 +429,8 @@ class Ground {
         this.desks = [];
         this.sofas = [];
         this.wallRepository = new WallRepository_1.WallRepository();
-        for (let y = 0; y < HEIGHT; y++) {
-            for (let x = 0; x < WIDTH; x++) {
+        for (let y = 0; y < GRID_HEIGHT; y++) {
+            for (let x = 0; x < GRID_WIDTH; x++) {
                 this.cells.push(new Cell_1.Cell(new PIXI.Point(x, y)));
             }
         }
@@ -436,19 +440,19 @@ class Ground {
             this.desks.push(new Desk_1.Desk(new PIXI.Point(4, 5)));
             return;
         }
-        for (let x = 0; x < WIDTH; x++) {
+        for (let x = 0; x < GRID_WIDTH; x++) {
             this.wallRepository.addWall(new PIXI.Point(x, 0));
-            this.wallRepository.addWall(new PIXI.Point(x, HEIGHT - 1));
+            this.wallRepository.addWall(new PIXI.Point(x, GRID_HEIGHT - 1));
         }
-        for (let y = 1; y < (HEIGHT - 1); y++) {
+        for (let y = 1; y < (GRID_HEIGHT - 1); y++) {
             this.wallRepository.addWall(new PIXI.Point(0, y));
-            this.wallRepository.addWall(new PIXI.Point(WIDTH - 1, y));
+            this.wallRepository.addWall(new PIXI.Point(GRID_WIDTH - 1, y));
         }
         for (let x = 1; x < 3 - 1; x++) {
-            this.wallRepository.addWall(new PIXI.Point(x, WIDTH / 2 + 1));
+            this.wallRepository.addWall(new PIXI.Point(x, GRID_WIDTH / 2 + 1));
         }
-        for (let x = 5; x < WIDTH - 1; x++) {
-            this.wallRepository.addWall(new PIXI.Point(x, WIDTH / 2 + 1));
+        for (let x = 5; x < GRID_WIDTH - 1; x++) {
+            this.wallRepository.addWall(new PIXI.Point(x, GRID_WIDTH / 2 + 1));
         }
         [
             new PIXI.Point(4, 3),
@@ -506,7 +510,7 @@ class Ground {
         return acceptables;
     }
     isFree(point) {
-        if (point.x < 0 || point.y < 0 || point.x >= WIDTH || point.y >= HEIGHT) {
+        if (point.x < 0 || point.y < 0 || point.x >= GRID_WIDTH || point.y >= GRID_HEIGHT) {
             return false;
         }
         for (let j = 0; j < this.desks.length; j++) {
@@ -590,7 +594,7 @@ exports.Cell = Cell;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Direction_1 = __webpack_require__(2);
+const Direction_1 = __webpack_require__(3);
 class ClosestPathFinder {
     constructor(game, world) {
         this.finders = {};
@@ -774,6 +778,9 @@ class World {
     getRandomFreeDesk() {
         return this.ground.getRandomFreeDesk(this.humanRepository.humans);
     }
+    getSelectedHumanSprite() {
+        return this.humanRepository.getSelectedHumanSprite();
+    }
 }
 exports.World = World;
 
@@ -785,7 +792,7 @@ exports.World = World;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const app_1 = __webpack_require__(3);
+const app_1 = __webpack_require__(2);
 class Boot extends Phaser.State {
     create() {
         // this.physics.startSystem(Phaser.Physics.ARCADE);
@@ -807,6 +814,7 @@ exports.default = Boot;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const World_1 = __webpack_require__(9);
+const app_1 = __webpack_require__(2);
 class Play extends Phaser.State {
     constructor() {
         super();
@@ -819,10 +827,16 @@ class Play extends Phaser.State {
             'noname': this.game.add.group()
         };
         this.worldKnowledge.create(this.game, this.groups);
+        this.game.world.setBounds(0, 0, app_1.WORLD_WIDTH, app_1.WORLD_HEIGHT);
+        this.game.camera.setPosition((app_1.WORLD_WIDTH - app_1.CAMERA_WIDTH_PIXELS) / 2, (app_1.WORLD_HEIGHT - app_1.CAMERA_HEIGHT_PIXELS) / 2);
     }
     update(game) {
         this.groups['noname'].sort('y', Phaser.Group.SORT_ASCENDING);
         this.worldKnowledge.update();
+        const selected = this.worldKnowledge.getSelectedHumanSprite();
+        if (selected) {
+            this.game.camera.follow(selected, Phaser.Camera.FOLLOW_LOCKON, 0.02, 0.02);
+        }
     }
 }
 exports.default = Play;
@@ -1152,7 +1166,7 @@ exports.HumanStateManager = HumanStateManager;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const PositionTransformer_1 = __webpack_require__(1);
-const Direction_1 = __webpack_require__(2);
+const Direction_1 = __webpack_require__(3);
 /**
  * This variable will fake the position of the sprite without changing it for the enduser.
  * A negative number (e.g. -10) will draw the object 10 pixels on the top but will update the anchor to put it back
@@ -1217,7 +1231,7 @@ exports.Desk = Desk;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const PositionTransformer_1 = __webpack_require__(1);
-const Direction_1 = __webpack_require__(2);
+const Direction_1 = __webpack_require__(3);
 const SOFA_BOTTOM = -8;
 const SOFA_LEFT = 0;
 const SOFA_ANCHOR_BOTTOM = 3;
@@ -1274,6 +1288,14 @@ class HumanRepository {
             human.update();
         });
     }
+    getSelectedHumanSprite() {
+        for (let i = 0; i < this.humans.length; i++) {
+            if (this.humans[i].isSelected()) {
+                return this.humans[i].getSprite();
+            }
+        }
+        return null;
+    }
 }
 exports.HumanRepository = HumanRepository;
 
@@ -1317,7 +1339,7 @@ exports.WallRepository = WallRepository;
 /* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(3);
+module.exports = __webpack_require__(2);
 
 
 /***/ })

@@ -21,6 +21,14 @@ class HumanRepository {
             human.update();
         });
     }
+    getSelectedHumanSprite() {
+        for (let i = 0; i < this.humans.length; i++) {
+            if (this.humans[i].isSelected()) {
+                return this.humans[i].getSprite();
+            }
+        }
+        return null;
+    }
 }
 exports.HumanRepository = HumanRepository;
 //# sourceMappingURL=HumanRepository.js.map

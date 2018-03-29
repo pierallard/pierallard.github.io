@@ -22,12 +22,12 @@ class Human {
         this.tile = game.add.tileSprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).x + this.anchorPixels.x, PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).y + this.anchorPixels.y, 24, 25, 'human');
         this.animationManager.create(this.tile);
         this.tile.anchor.set(0.5, 1.0);
-        this.animationManager.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE, true, false);
         this.tile.inputEnabled = true;
         this.tile.events.onInputDown.add(this.select, this);
         group.add(this.tile);
         this.pathfinder = game.plugins.add(Phaser.Plugin.PathFinderPlugin);
         this.pathfinder.setGrid(world.getGround().getGrid(), world.getGround().getAcceptables());
+        this.animationManager.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE, true, false);
         this.closestPathFinder = new ClosestPathFinder_1.ClosestPathFinder(game, world);
         this.stateManager.create(game, world, this.animationManager);
     }
@@ -35,7 +35,7 @@ class Human {
         this.stateManager.updateState(this.game);
     }
     select() {
-        this.tile.loadTexture('human_selected', this.tile.frame, false);
+        this.tile.loadTexture(this.isSelected() ? 'human' : 'human_selected', this.tile.frame, false);
     }
     moveTo(cell) {
         const path = this.closestPathFinder.getPath(this.cell, cell);
@@ -124,6 +124,12 @@ class Human {
     }
     loadAnimation(animation, isLeft = null) {
         this.animationManager.loadAnimation(animation, isLeft);
+    }
+    isSelected() {
+        return this.tile.key === 'human_selected';
+    }
+    getSprite() {
+        return this.tile;
     }
 }
 exports.Human = Human;

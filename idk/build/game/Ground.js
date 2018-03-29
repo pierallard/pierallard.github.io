@@ -8,7 +8,7 @@ const GRID_WIDTH = 12;
 const GRID_HEIGHT = 12;
 exports.DEBUG_WORLD = false;
 class Ground {
-    constructor() {
+    constructor(world) {
         this.cells = [];
         this.desks = [];
         this.sofas = [];
@@ -21,7 +21,7 @@ class Ground {
         if (exports.DEBUG_WORLD) {
             this.wallRepository.addWall(new PIXI.Point(5, 5));
             this.wallRepository.addWall(new PIXI.Point(6, 5));
-            this.desks.push(new Desk_1.Desk(new PIXI.Point(4, 5)));
+            this.desks.push(new Desk_1.Desk(new PIXI.Point(4, 5), world));
             return;
         }
         for (let x = 0; x < GRID_WIDTH; x++) {
@@ -47,7 +47,7 @@ class Ground {
             this.wallRepository.addWall(cell);
         });
         for (let i = 0; i < 3; i++) {
-            this.desks.push(new Desk_1.Desk(this.getRandomCell()));
+            this.desks.push(new Desk_1.Desk(this.getRandomCell(), world));
         }
         for (let i = 0; i < 3; i++) {
             this.sofas.push(new Sofa_1.Sofa(this.getRandomCell()));
@@ -93,17 +93,17 @@ class Ground {
         }
         return acceptables;
     }
-    isFree(point) {
+    isFree(point, object = null) {
         if (point.x < 0 || point.y < 0 || point.x >= GRID_WIDTH || point.y >= GRID_HEIGHT) {
             return false;
         }
         for (let j = 0; j < this.desks.length; j++) {
-            if (this.desks[j].getPosition().x === point.x && this.desks[j].getPosition().y === point.y) {
+            if (this.desks[j].getPosition().x === point.x && this.desks[j].getPosition().y === point.y && this.desks[j] !== object) {
                 return false;
             }
         }
         for (let j = 0; j < this.sofas.length; j++) {
-            if (this.sofas[j].getPosition().x === point.x && this.sofas[j].getPosition().y === point.y) {
+            if (this.sofas[j].getPosition().x === point.x && this.sofas[j].getPosition().y === point.y && this.sofas[j] !== object) {
                 return false;
             }
         }

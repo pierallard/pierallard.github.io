@@ -5,6 +5,7 @@ const ClosestPathFinder_1 = require("../ClosestPathFinder");
 const Direction_1 = require("../Direction");
 const HumanAnimationManager_1 = require("./HumanAnimationManager");
 const HumanStateManager_1 = require("./HumanStateManager");
+const ObjectSelector_1 = require("../objects/ObjectSelector");
 exports.WALK_CELL_DURATION = 1200;
 const GAP_FROM_BOTTOM = -8;
 class Human {
@@ -22,8 +23,7 @@ class Human {
         this.tile = game.add.tileSprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).x + this.anchorPixels.x, PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).y + this.anchorPixels.y, 24, 25, 'human');
         this.animationManager.create(this.tile);
         this.tile.anchor.set(0.5, 1.0);
-        this.tile.inputEnabled = true;
-        this.tile.events.onInputDown.add(this.select, this);
+        ObjectSelector_1.ObjectSelector.makeSelectable([this.tile]);
         group.add(this.tile);
         this.pathfinder = game.plugins.add(Phaser.Plugin.PathFinderPlugin);
         this.pathfinder.setGrid(world.getGround().getGrid(), world.getGround().getAcceptables());
@@ -33,9 +33,6 @@ class Human {
     }
     update() {
         this.stateManager.updateState(this.game);
-    }
-    select() {
-        this.tile.loadTexture(this.isSelected() ? 'human' : 'human_selected', this.tile.frame, false);
     }
     moveTo(cell) {
         const path = this.closestPathFinder.getPath(this.cell, cell);
@@ -126,10 +123,13 @@ class Human {
         this.animationManager.loadAnimation(animation, isLeft);
     }
     isSelected() {
-        return this.tile.key === 'human_selected';
+        return ObjectSelector_1.ObjectSelector.isSelected(this.tile);
     }
     getSprite() {
         return this.tile;
+    }
+    resetAStar() {
+        this.closestPathFinder.reset();
     }
 }
 exports.Human = Human;

@@ -4,6 +4,7 @@ const Direction_1 = require("./Direction");
 class ClosestPathFinder {
     constructor(game, world) {
         this.finders = {};
+        this.world = world;
         const grid = world.getGround().getGrid();
         const acceptables = world.getGround().getAcceptables();
         Direction_1.Direction.neighborDirections().concat([Direction_1.DIRECTION.CURRENT]).forEach((direction) => {
@@ -82,6 +83,13 @@ class ClosestPathFinder {
         else {
             return null;
         }
+    }
+    reset() {
+        const grid = this.world.getGround().getGrid();
+        const acceptables = this.world.getGround().getAcceptables();
+        Object.keys(this.finders).forEach((key) => {
+            this.finders[key].setGrid(grid, acceptables);
+        });
     }
 }
 exports.ClosestPathFinder = ClosestPathFinder;

@@ -63,11 +63,34 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 23);
+/******/ 	return __webpack_require__(__webpack_require__.s = 25);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const app_1 = __webpack_require__(2);
+exports.CELL_WIDTH = 40;
+exports.CELL_HEIGHT = 20;
+class PositionTransformer {
+    static getRealPosition(point) {
+        return new PIXI.Point(app_1.WORLD_WIDTH / 2 - (point.x - point.y) * exports.CELL_WIDTH / 2, app_1.WORLD_HEIGHT - (point.x + point.y) * exports.CELL_HEIGHT / 2);
+    }
+    static getCellPosition(point) {
+        return new PIXI.Point(Math.floor((point.y - app_1.WORLD_HEIGHT) / (2 * (-exports.CELL_HEIGHT / 2)) +
+            (point.x - (app_1.WORLD_WIDTH / 2)) / (2 * (-exports.CELL_WIDTH / 2))), Math.floor((point.y - app_1.WORLD_HEIGHT) / (2 * (-exports.CELL_HEIGHT / 2)) -
+            (point.x - (app_1.WORLD_WIDTH / 2)) / (2 * (-exports.CELL_WIDTH / 2))));
+    }
+}
+exports.PositionTransformer = PositionTransformer;
+
+
+/***/ }),
+/* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -159,29 +182,6 @@ exports.HumanAnimationManager = HumanAnimationManager;
 
 
 /***/ }),
-/* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const app_1 = __webpack_require__(2);
-exports.CELL_WIDTH = 40;
-exports.CELL_HEIGHT = 20;
-class PositionTransformer {
-    static getRealPosition(point) {
-        return new PIXI.Point(app_1.WORLD_WIDTH / 2 - (point.x - point.y) * exports.CELL_WIDTH / 2, app_1.WORLD_HEIGHT - (point.x + point.y) * exports.CELL_HEIGHT / 2);
-    }
-    static getCellPosition(point) {
-        return new PIXI.Point(Math.floor((point.y - app_1.WORLD_HEIGHT) / (2 * (-exports.CELL_HEIGHT / 2)) +
-            (point.x - (app_1.WORLD_WIDTH / 2)) / (2 * (-exports.CELL_WIDTH / 2))), Math.floor((point.y - app_1.WORLD_HEIGHT) / (2 * (-exports.CELL_HEIGHT / 2)) -
-            (point.x - (app_1.WORLD_WIDTH / 2)) / (2 * (-exports.CELL_WIDTH / 2))));
-    }
-}
-exports.PositionTransformer = PositionTransformer;
-
-
-/***/ }),
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -189,9 +189,9 @@ exports.PositionTransformer = PositionTransformer;
 /// <reference path="../lib/phaser.d.ts"/>
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Boot_1 = __webpack_require__(10);
-const Preload_1 = __webpack_require__(12);
-const Play_1 = __webpack_require__(11);
+const Boot_1 = __webpack_require__(11);
+const Preload_1 = __webpack_require__(13);
+const Play_1 = __webpack_require__(12);
 exports.SCALE = 3;
 exports.CAMERA_WIDTH_PIXELS = 1280 / exports.SCALE;
 exports.CAMERA_HEIGHT_PIXELS = 720 / exports.SCALE;
@@ -274,11 +274,12 @@ exports.Direction = Direction;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(1);
-const ClosestPathFinder_1 = __webpack_require__(7);
+const PositionTransformer_1 = __webpack_require__(0);
+const ClosestPathFinder_1 = __webpack_require__(8);
 const Direction_1 = __webpack_require__(3);
-const HumanAnimationManager_1 = __webpack_require__(0);
-const HumanStateManager_1 = __webpack_require__(18);
+const HumanAnimationManager_1 = __webpack_require__(1);
+const HumanStateManager_1 = __webpack_require__(19);
+const ObjectSelector_1 = __webpack_require__(6);
 exports.WALK_CELL_DURATION = 1200;
 const GAP_FROM_BOTTOM = -8;
 class Human {
@@ -296,8 +297,7 @@ class Human {
         this.tile = game.add.tileSprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).x + this.anchorPixels.x, PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).y + this.anchorPixels.y, 24, 25, 'human');
         this.animationManager.create(this.tile);
         this.tile.anchor.set(0.5, 1.0);
-        this.tile.inputEnabled = true;
-        this.tile.events.onInputDown.add(this.select, this);
+        ObjectSelector_1.ObjectSelector.makeSelectable([this.tile]);
         group.add(this.tile);
         this.pathfinder = game.plugins.add(Phaser.Plugin.PathFinderPlugin);
         this.pathfinder.setGrid(world.getGround().getGrid(), world.getGround().getAcceptables());
@@ -307,9 +307,6 @@ class Human {
     }
     update() {
         this.stateManager.updateState(this.game);
-    }
-    select() {
-        this.tile.loadTexture(this.isSelected() ? 'human' : 'human_selected', this.tile.frame, false);
     }
     moveTo(cell) {
         const path = this.closestPathFinder.getPath(this.cell, cell);
@@ -400,10 +397,13 @@ class Human {
         this.animationManager.loadAnimation(animation, isLeft);
     }
     isSelected() {
-        return this.tile.key === 'human_selected';
+        return ObjectSelector_1.ObjectSelector.isSelected(this.tile);
     }
     getSprite() {
         return this.tile;
+    }
+    resetAStar() {
+        this.closestPathFinder.reset();
     }
 }
 exports.Human = Human;
@@ -416,15 +416,15 @@ exports.Human = Human;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Cell_1 = __webpack_require__(6);
-const Desk_1 = __webpack_require__(19);
-const WallRepository_1 = __webpack_require__(22);
-const Sofa_1 = __webpack_require__(20);
+const Cell_1 = __webpack_require__(7);
+const Desk_1 = __webpack_require__(20);
+const WallRepository_1 = __webpack_require__(24);
+const Sofa_1 = __webpack_require__(22);
 const GRID_WIDTH = 12;
 const GRID_HEIGHT = 12;
 exports.DEBUG_WORLD = false;
 class Ground {
-    constructor() {
+    constructor(world) {
         this.cells = [];
         this.desks = [];
         this.sofas = [];
@@ -437,7 +437,7 @@ class Ground {
         if (exports.DEBUG_WORLD) {
             this.wallRepository.addWall(new PIXI.Point(5, 5));
             this.wallRepository.addWall(new PIXI.Point(6, 5));
-            this.desks.push(new Desk_1.Desk(new PIXI.Point(4, 5)));
+            this.desks.push(new Desk_1.Desk(new PIXI.Point(4, 5), world));
             return;
         }
         for (let x = 0; x < GRID_WIDTH; x++) {
@@ -463,7 +463,7 @@ class Ground {
             this.wallRepository.addWall(cell);
         });
         for (let i = 0; i < 3; i++) {
-            this.desks.push(new Desk_1.Desk(this.getRandomCell()));
+            this.desks.push(new Desk_1.Desk(this.getRandomCell(), world));
         }
         for (let i = 0; i < 3; i++) {
             this.sofas.push(new Sofa_1.Sofa(this.getRandomCell()));
@@ -509,17 +509,17 @@ class Ground {
         }
         return acceptables;
     }
-    isFree(point) {
+    isFree(point, object = null) {
         if (point.x < 0 || point.y < 0 || point.x >= GRID_WIDTH || point.y >= GRID_HEIGHT) {
             return false;
         }
         for (let j = 0; j < this.desks.length; j++) {
-            if (this.desks[j].getPosition().x === point.x && this.desks[j].getPosition().y === point.y) {
+            if (this.desks[j].getPosition().x === point.x && this.desks[j].getPosition().y === point.y && this.desks[j] !== object) {
                 return false;
             }
         }
         for (let j = 0; j < this.sofas.length; j++) {
-            if (this.sofas[j].getPosition().x === point.x && this.sofas[j].getPosition().y === point.y) {
+            if (this.sofas[j].getPosition().x === point.x && this.sofas[j].getPosition().y === point.y && this.sofas[j] !== object) {
                 return false;
             }
         }
@@ -569,7 +569,52 @@ exports.Ground = Ground;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(1);
+const SELECTED = '_selected';
+class ObjectSelector {
+    static makeSelectable(sprites) {
+        sprites.forEach((sprite) => {
+            sprite.inputEnabled = true;
+            sprite.input.pixelPerfectOver = true;
+            sprite.input.pixelPerfectClick = true;
+            sprite.input.useHandCursor = true;
+            sprite.events.onInputDown.add(this.click, this, 0, sprites);
+        });
+    }
+    static setSelected(sprite, selected) {
+        sprite.loadTexture(selected ?
+            this.getSelectedKey(sprite.key) :
+            this.getNonSelectedKey(sprite.key), sprite.frame, false);
+    }
+    static isSelected(tile) {
+        return tile.key.indexOf(SELECTED) > -1;
+    }
+    static click(sprite, _pointer, sprites) {
+        const isSelected = this.isSelected(sprite);
+        sprites.forEach((sprite) => {
+            this.setSelected(sprite, isSelected);
+        });
+    }
+    static getNonSelectedKey(key) {
+        return key.replace(SELECTED, '');
+    }
+    static getSelectedKey(key) {
+        if (key.indexOf(SELECTED) > -1) {
+            return key;
+        }
+        return key + SELECTED;
+    }
+}
+exports.ObjectSelector = ObjectSelector;
+
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const PositionTransformer_1 = __webpack_require__(0);
 const Ground_1 = __webpack_require__(5);
 class Cell {
     constructor(point) {
@@ -588,7 +633,7 @@ exports.Cell = Cell;
 
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -598,6 +643,7 @@ const Direction_1 = __webpack_require__(3);
 class ClosestPathFinder {
     constructor(game, world) {
         this.finders = {};
+        this.world = world;
         const grid = world.getGround().getGrid();
         const acceptables = world.getGround().getAcceptables();
         Direction_1.Direction.neighborDirections().concat([Direction_1.DIRECTION.CURRENT]).forEach((direction) => {
@@ -677,18 +723,25 @@ class ClosestPathFinder {
             return null;
         }
     }
+    reset() {
+        const grid = this.world.getGround().getGrid();
+        const acceptables = this.world.getGround().getAcceptables();
+        Object.keys(this.finders).forEach((key) => {
+            this.finders[key].setGrid(grid, acceptables);
+        });
+    }
 }
 exports.ClosestPathFinder = ClosestPathFinder;
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(1);
+const PositionTransformer_1 = __webpack_require__(0);
 const FAKE_MACHIN = -4;
 class Wall {
     constructor(position) {
@@ -719,17 +772,17 @@ exports.Wall = Wall;
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Ground_1 = __webpack_require__(5);
-const HumanRepository_1 = __webpack_require__(21);
+const HumanRepository_1 = __webpack_require__(23);
 class World {
     constructor() {
-        this.ground = new Ground_1.Ground();
+        this.ground = new Ground_1.Ground(this);
         this.humanRepository = new HumanRepository_1.HumanRepository(this);
     }
     create(game, groups) {
@@ -781,12 +834,20 @@ class World {
     getSelectedHumanSprite() {
         return this.humanRepository.getSelectedHumanSprite();
     }
+    isValidPosition(tryPosition, object) {
+        return this.ground.isFree(tryPosition, object);
+    }
+    resetAStar() {
+        this.humanRepository.humans.forEach((human) => {
+            human.resetAStar();
+        });
+    }
 }
 exports.World = World;
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -807,13 +868,13 @@ exports.default = Boot;
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const World_1 = __webpack_require__(9);
+const World_1 = __webpack_require__(10);
 const app_1 = __webpack_require__(2);
 class Play extends Phaser.State {
     constructor() {
@@ -843,7 +904,7 @@ exports.default = Play;
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -872,7 +933,9 @@ class Preload extends Phaser.State {
         this.game.load.spritesheet('casedefault', 'assets/casedefault.png', 40, 19);
         this.game.load.spritesheet('woodcell', 'assets/woodcell.png', 40, 19);
         this.game.load.spritesheet('chair', 'assets/chair.png', 40, 40);
+        this.game.load.spritesheet('chair_selected', 'assets/chair_selected.png', 40, 40);
         this.game.load.spritesheet('desk', 'assets/desk.png', 40, 40);
+        this.game.load.spritesheet('desk_selected', 'assets/desk_selected.png', 40, 40);
         this.game.load.spritesheet('wall', 'assets/wall.png', 40, 37, 16);
         this.game.load.spritesheet('sofa', 'assets/sofa.png', 8, 6);
     }
@@ -883,13 +946,13 @@ exports.default = Preload;
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(0);
+const HumanAnimationManager_1 = __webpack_require__(1);
 class FreezeState {
     constructor(human) {
         this.human = human;
@@ -910,7 +973,7 @@ exports.FreezeState = FreezeState;
 
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -937,14 +1000,14 @@ exports.MoveRandomState = MoveRandomState;
 
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Human_1 = __webpack_require__(4);
-const HumanAnimationManager_1 = __webpack_require__(0);
+const HumanAnimationManager_1 = __webpack_require__(1);
 class SitState {
     constructor(human, loopTime, sittable, world) {
         this.human = human;
@@ -992,13 +1055,13 @@ exports.SitState = SitState;
 
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(0);
+const HumanAnimationManager_1 = __webpack_require__(1);
 class SmokeState {
     constructor(human, timeLoop) {
         this.human = human;
@@ -1020,14 +1083,14 @@ exports.SmokeState = SmokeState;
 
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Human_1 = __webpack_require__(4);
-const HumanAnimationManager_1 = __webpack_require__(0);
+const HumanAnimationManager_1 = __webpack_require__(1);
 class TypeState {
     constructor(human, loopTime, sittable, world) {
         this.human = human;
@@ -1078,18 +1141,18 @@ exports.TypeState = TypeState;
 
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const FreezeState_1 = __webpack_require__(13);
-const SmokeState_1 = __webpack_require__(16);
-const SitState_1 = __webpack_require__(15);
-const MoveRandomState_1 = __webpack_require__(14);
-const HumanAnimationManager_1 = __webpack_require__(0);
-const TypeState_1 = __webpack_require__(17);
+const FreezeState_1 = __webpack_require__(14);
+const SmokeState_1 = __webpack_require__(17);
+const SitState_1 = __webpack_require__(16);
+const MoveRandomState_1 = __webpack_require__(15);
+const HumanAnimationManager_1 = __webpack_require__(1);
+const TypeState_1 = __webpack_require__(18);
 var STATE;
 (function (STATE) {
     STATE[STATE["SMOKE"] = 0] = "SMOKE";
@@ -1159,14 +1222,15 @@ exports.HumanStateManager = HumanStateManager;
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(1);
+const PositionTransformer_1 = __webpack_require__(0);
 const Direction_1 = __webpack_require__(3);
+const ObjectMover_1 = __webpack_require__(21);
 /**
  * This variable will fake the position of the sprite without changing it for the enduser.
  * A negative number (e.g. -10) will draw the object 10 pixels on the top but will update the anchor to put it back
@@ -1186,8 +1250,9 @@ const GAP_HORIZONTAL = -10;
  */
 const GAP_VERTICAL = -8;
 class Desk {
-    constructor(point) {
+    constructor(point, world) {
         this.position = point;
+        this.world = world;
     }
     create(game, group) {
         const isLeftOriented = Math.random() >= 0.5;
@@ -1195,12 +1260,17 @@ class Desk {
         this.deskSprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y, 'desk');
         this.chairSprite.anchor.set(0.5, 1 + FAKE_ANCHOR_BOTTOM / this.chairSprite.height);
         this.deskSprite.anchor.set(0.5, 1);
+        ObjectMover_1.ObjectMover.makeMovable(this, this.world);
+        this.deskSprite.events.onInputUp.add(this.release);
         if (isLeftOriented) {
             this.deskSprite.scale.set(-1, 1);
             this.chairSprite.scale.set(-1, 1);
         }
         group.add(this.chairSprite);
         group.add(this.deskSprite);
+    }
+    release(deskSprite) {
+        console.log('release');
     }
     getPosition() {
         return this.position;
@@ -1219,18 +1289,72 @@ class Desk {
     forceOrientation() {
         return this.isLeftOriented();
     }
+    getSprites() {
+        return [this.deskSprite, this.chairSprite];
+    }
+    tryToMove(realPoint) {
+        const tryPosition = PositionTransformer_1.PositionTransformer.getCellPosition(realPoint);
+        if (this.world.isValidPosition(tryPosition, this)) {
+            this.position = tryPosition;
+            this.chairSprite.position.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + (this.isLeftOriented() ? -GAP_HORIZONTAL : GAP_HORIZONTAL);
+            this.chairSprite.position.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM + GAP_VERTICAL;
+            this.deskSprite.position.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x;
+            this.deskSprite.position.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y;
+        }
+    }
 }
 exports.Desk = Desk;
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(1);
+const PositionTransformer_1 = __webpack_require__(0);
+const ObjectSelector_1 = __webpack_require__(6);
+class ObjectMover {
+    static makeMovable(movableObject, world) {
+        movableObject.getSprites().forEach((sprite) => {
+            sprite.inputEnabled = true;
+            sprite.input.pixelPerfectOver = true;
+            sprite.input.pixelPerfectClick = true;
+            sprite.input.useHandCursor = true;
+            sprite.events.onInputDown.add(this.select, this, 0, movableObject, world);
+        });
+    }
+    static select(sprite, _pointer, movableObject, world) {
+        const gap = new PIXI.Point(_pointer.position.x - PositionTransformer_1.PositionTransformer.getRealPosition(movableObject.getPosition()).x, _pointer.position.y - PositionTransformer_1.PositionTransformer.getRealPosition(movableObject.getPosition()).y);
+        const moveCallback = (p, x, y) => {
+            movableObject.tryToMove(new PIXI.Point(x - gap.x, y - gap.y));
+        };
+        movableObject.getSprites().forEach((sprite) => {
+            ObjectSelector_1.ObjectSelector.setSelected(sprite, true);
+        });
+        _pointer.game.input.addMoveCallback(moveCallback, this);
+        sprite.events.onInputUp.add(this.unselect, this, 0, movableObject, world);
+    }
+    static unselect(sprite, _pointer, bool, movableObject, world) {
+        _pointer.game.input.moveCallbacks = [];
+        movableObject.getSprites().forEach((sprite) => {
+            ObjectSelector_1.ObjectSelector.setSelected(sprite, false);
+        });
+        world.resetAStar();
+    }
+}
+exports.ObjectMover = ObjectMover;
+
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const PositionTransformer_1 = __webpack_require__(0);
 const Direction_1 = __webpack_require__(3);
 const SOFA_BOTTOM = -8;
 const SOFA_LEFT = 0;
@@ -1261,7 +1385,7 @@ exports.Sofa = Sofa;
 
 
 /***/ }),
-/* 21 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1301,13 +1425,13 @@ exports.HumanRepository = HumanRepository;
 
 
 /***/ }),
-/* 22 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Wall_1 = __webpack_require__(8);
+const Wall_1 = __webpack_require__(9);
 class WallRepository {
     constructor() {
         this.walls = [];
@@ -1320,13 +1444,16 @@ class WallRepository {
             wall.create(game, group, this.hasWall(wall.getPosition().x + 1, wall.getPosition().y), this.hasWall(wall.getPosition().x, wall.getPosition().y + 1), this.hasWall(wall.getPosition().x - 1, wall.getPosition().y), this.hasWall(wall.getPosition().x, wall.getPosition().y - 1));
         });
     }
-    hasWall(x, y) {
+    getWall(x, y) {
         for (let i = 0; i < this.walls.length; i++) {
             if (this.walls[i].getPosition().x === x && this.walls[i].getPosition().y === y) {
-                return true;
+                return this.walls[i];
             }
         }
-        return false;
+        return null;
+    }
+    hasWall(x, y) {
+        return this.getWall(x, y) !== null;
     }
     getWalls() {
         return this.walls;
@@ -1336,7 +1463,7 @@ exports.WallRepository = WallRepository;
 
 
 /***/ }),
-/* 23 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(2);

@@ -13,13 +13,16 @@ class WallRepository {
             wall.create(game, group, this.hasWall(wall.getPosition().x + 1, wall.getPosition().y), this.hasWall(wall.getPosition().x, wall.getPosition().y + 1), this.hasWall(wall.getPosition().x - 1, wall.getPosition().y), this.hasWall(wall.getPosition().x, wall.getPosition().y - 1));
         });
     }
-    hasWall(x, y) {
+    getWall(x, y) {
         for (let i = 0; i < this.walls.length; i++) {
             if (this.walls[i].getPosition().x === x && this.walls[i].getPosition().y === y) {
-                return true;
+                return this.walls[i];
             }
         }
-        return false;
+        return null;
+    }
+    hasWall(x, y) {
+        return this.getWall(x, y) !== null;
     }
     getWalls() {
         return this.walls;

@@ -4,7 +4,7 @@ const Ground_1 = require("./Ground");
 const HumanRepository_1 = require("./repositories/HumanRepository");
 class World {
     constructor() {
-        this.ground = new Ground_1.Ground();
+        this.ground = new Ground_1.Ground(this);
         this.humanRepository = new HumanRepository_1.HumanRepository(this);
     }
     create(game, groups) {
@@ -55,6 +55,14 @@ class World {
     }
     getSelectedHumanSprite() {
         return this.humanRepository.getSelectedHumanSprite();
+    }
+    isValidPosition(tryPosition, object) {
+        return this.ground.isFree(tryPosition, object);
+    }
+    resetAStar() {
+        this.humanRepository.humans.forEach((human) => {
+            human.resetAStar();
+        });
     }
 }
 exports.World = World;

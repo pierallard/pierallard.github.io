@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
 class MoveRandomState {
     constructor(human, world) {
         this.human = human;
@@ -15,6 +16,11 @@ class MoveRandomState {
     }
     start(game) {
         this.human.moveTo(this.goal);
+    }
+    stop(game) {
+    }
+    getState() {
+        return HumanStateManager_1.STATE.MOVE_RANDOM;
     }
 }
 exports.MoveRandomState = MoveRandomState;

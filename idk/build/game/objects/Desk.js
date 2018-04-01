@@ -33,16 +33,12 @@ class Desk {
         this.chairSprite.anchor.set(0.5, 1 + FAKE_ANCHOR_BOTTOM / this.chairSprite.height);
         this.deskSprite.anchor.set(0.5, 1);
         ObjectMover_1.ObjectMover.makeMovable(this, this.world);
-        this.deskSprite.events.onInputUp.add(this.release);
         if (isLeftOriented) {
             this.deskSprite.scale.set(-1, 1);
             this.chairSprite.scale.set(-1, 1);
         }
         group.add(this.chairSprite);
         group.add(this.deskSprite);
-    }
-    release(deskSprite) {
-        console.log('release');
     }
     getPosition() {
         return this.position;
@@ -64,10 +60,9 @@ class Desk {
     getSprites() {
         return [this.deskSprite, this.chairSprite];
     }
-    tryToMove(realPoint) {
-        const tryPosition = PositionTransformer_1.PositionTransformer.getCellPosition(realPoint);
-        if (this.world.isValidPosition(tryPosition, this)) {
-            this.position = tryPosition;
+    tryToMove(point) {
+        if (this.world.isFreePosition(point, this)) {
+            this.position = point;
             this.chairSprite.position.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + (this.isLeftOriented() ? -GAP_HORIZONTAL : GAP_HORIZONTAL);
             this.chairSprite.position.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM + GAP_VERTICAL;
             this.deskSprite.position.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x;

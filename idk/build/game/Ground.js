@@ -4,8 +4,8 @@ const Cell_1 = require("./Cell");
 const Desk_1 = require("./objects/Desk");
 const WallRepository_1 = require("./repositories/WallRepository");
 const Sofa_1 = require("./objects/Sofa");
-const GRID_WIDTH = 12;
-const GRID_HEIGHT = 12;
+const GRID_WIDTH = 8;
+const GRID_HEIGHT = 8;
 exports.DEBUG_WORLD = false;
 class Ground {
     constructor(world) {
@@ -50,7 +50,7 @@ class Ground {
             this.desks.push(new Desk_1.Desk(this.getRandomCell(), world));
         }
         for (let i = 0; i < 3; i++) {
-            this.sofas.push(new Sofa_1.Sofa(this.getRandomCell()));
+            this.sofas.push(new Sofa_1.Sofa(this.getRandomCell(), world));
         }
     }
     create(game, groups) {
@@ -71,6 +71,25 @@ class Ground {
         const acceptableIndexes = this.getAcceptables();
         const random = Math.floor(Math.random() * acceptableIndexes.length);
         return this.cells[acceptableIndexes[random]].getPosition();
+    }
+    getMeetingCells(cells) {
+        const acceptableIndexes = this.getAcceptables();
+        let result = null;
+        let dist = null;
+        for (let i = 0; i < acceptableIndexes.length; i++) {
+            const position1 = this.cells[acceptableIndexes[i]].getPosition();
+            for (let j = i + 1; j < acceptableIndexes.length; j++) {
+                const position2 = this.cells[acceptableIndexes[j]].getPosition();
+                if (Ground.areNeighbors(position1, position2)) {
+                    const newDist = Ground.getDist(cells, position1);
+                    if (result === null || newDist < dist) {
+                        dist = newDist;
+                        result = [position1, position2];
+                    }
+                }
+            }
+        }
+        return result;
     }
     getGrid() {
         let grid = [];
@@ -141,6 +160,20 @@ class Ground {
             return null;
         }
         return freeDesks[Math.floor(Math.random() * freeDesks.length)];
+    }
+    static areNeighbors(position, position2) {
+        return this.dist(position, position2) === 1;
+    }
+    static dist(position, position2) {
+        return (position.x - position2.x) * (position.x - position2.x) +
+            (position.y - position2.y) * (position.y - position2.y);
+    }
+    static getDist(sources, point) {
+        let dist = 0;
+        sources.forEach((source) => {
+            dist += this.dist(source, point);
+        });
+        return dist;
     }
 }
 exports.Ground = Ground;

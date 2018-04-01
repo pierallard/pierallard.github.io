@@ -15,20 +15,22 @@ class ObjectMover {
     static select(sprite, _pointer, movableObject, world) {
         const gap = new PIXI.Point(_pointer.position.x - PositionTransformer_1.PositionTransformer.getRealPosition(movableObject.getPosition()).x, _pointer.position.y - PositionTransformer_1.PositionTransformer.getRealPosition(movableObject.getPosition()).y);
         const moveCallback = (p, x, y) => {
-            movableObject.tryToMove(new PIXI.Point(x - gap.x, y - gap.y));
+            movableObject.tryToMove(PositionTransformer_1.PositionTransformer.getCellPosition(new PIXI.Point(x - gap.x, y - gap.y)));
         };
         movableObject.getSprites().forEach((sprite) => {
             ObjectSelector_1.ObjectSelector.setSelected(sprite, true);
         });
         _pointer.game.input.addMoveCallback(moveCallback, this);
-        sprite.events.onInputUp.add(this.unselect, this, 0, movableObject, world);
+        sprite.events.onInputUp.add(this.unselect, this, 0, movableObject, world, movableObject.getPosition());
     }
-    static unselect(sprite, _pointer, bool, movableObject, world) {
+    static unselect(sprite, _pointer, bool, movableObject, world, startPoint) {
         _pointer.game.input.moveCallbacks = [];
         movableObject.getSprites().forEach((sprite) => {
             ObjectSelector_1.ObjectSelector.setSelected(sprite, false);
         });
-        world.resetAStar();
+        if (startPoint.x !== movableObject.getPosition().x || startPoint.y !== movableObject.getPosition().y) {
+            world.resetAStar(startPoint, movableObject.getPosition());
+        }
     }
 }
 exports.ObjectMover = ObjectMover;

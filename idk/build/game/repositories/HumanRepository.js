@@ -8,6 +8,7 @@ class HumanRepository {
             new Human_1.Human(world.getGround().getRandomCell()),
             new Human_1.Human(world.getGround().getRandomCell()),
             new Human_1.Human(world.getGround().getRandomCell()),
+            new Human_1.Human(world.getGround().getRandomCell()),
             new Human_1.Human(world.getGround().getRandomCell())
         ];
     }

@@ -43,6 +43,12 @@ class Direction {
             debugger;
         }
     }
+    static isLeft(direction) {
+        return direction === DIRECTION.LEFT || direction === DIRECTION.BOTTOM;
+    }
+    static isTop(direction) {
+        return direction === DIRECTION.TOP || direction === DIRECTION.LEFT;
+    }
 }
 exports.Direction = Direction;
 //# sourceMappingURL=Direction.js.map

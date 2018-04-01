@@ -4,8 +4,8 @@ const FreezeState_1 = require("../human_states/FreezeState");
 const SmokeState_1 = require("../human_states/SmokeState");
 const SitState_1 = require("../human_states/SitState");
 const MoveRandomState_1 = require("../human_states/MoveRandomState");
-const HumanAnimationManager_1 = require("./HumanAnimationManager");
 const TypeState_1 = require("../human_states/TypeState");
+const TalkState_1 = require("../human_states/TalkState");
 var STATE;
 (function (STATE) {
     STATE[STATE["SMOKE"] = 0] = "SMOKE";
@@ -13,7 +13,8 @@ var STATE;
     STATE[STATE["MOVE_RANDOM"] = 2] = "MOVE_RANDOM";
     STATE[STATE["SIT"] = 3] = "SIT";
     STATE[STATE["TYPE"] = 4] = "TYPE";
-})(STATE || (STATE = {}));
+    STATE[STATE["TALK"] = 5] = "TALK";
+})(STATE = exports.STATE || (exports.STATE = {}));
 class HumanStateManager {
     constructor(human) {
         this.human = human;
@@ -28,16 +29,19 @@ class HumanStateManager {
         if (!this.state.isActive()) {
             switch (this.randomNextStepName()) {
                 case STATE.SMOKE:
-                    this.state = new SmokeState_1.SmokeState(this.human, this.animationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SMOKE));
+                    this.state = new SmokeState_1.SmokeState(this.human);
                     break;
                 case STATE.MOVE_RANDOM:
                     this.state = new MoveRandomState_1.MoveRandomState(this.human, this.world);
                     break;
                 case STATE.SIT:
-                    this.state = new SitState_1.SitState(this.human, this.animationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SIT_DOWN), this.world.getRandomFreeSofa(), this.world);
+                    this.state = new SitState_1.SitState(this.human, this.world.getRandomFreeSofa(), this.world);
                     break;
                 case STATE.TYPE:
-                    this.state = new TypeState_1.TypeState(this.human, this.animationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SIT_DOWN), this.world.getRandomFreeDesk(), this.world);
+                    this.state = new TypeState_1.TypeState(this.human, this.world.getRandomFreeDesk(), this.world);
+                    break;
+                case STATE.TALK:
+                    this.state = new TalkState_1.TalkState(this.human, this.world.getAnotherFreeHuman(this.human), game, this.world);
                     break;
                 case STATE.FREEZE:
                 default:
@@ -50,14 +54,22 @@ class HumanStateManager {
     randomNextStepName() {
         const states = [];
         states.push({ state: STATE.SMOKE, probability: 5 });
-        states.push({ state: STATE.FREEZE, probability: 5 });
-        states.push({ state: STATE.MOVE_RANDOM, probability: 2 });
+        states.push({ state: STATE.FREEZE, probability: 3 });
+        states.push({ state: STATE.MOVE_RANDOM, probability: 1 });
+        if (this.world.getAnotherFreeHuman(this.human) !== null) {
+            states.push({ state: STATE.TALK, probability: 8 });
+        }
         if (this.world.getRandomFreeSofa() !== null) {
             states.push({ state: STATE.SIT, probability: 2 });
         }
         if (this.world.getRandomFreeDesk() !== null) {
-            states.push({ state: STATE.TYPE, probability: 20 });
+            states.push({ state: STATE.TYPE, probability: 25 });
         }
+        states.forEach((state) => {
+            if (state.state === this.state.getState()) {
+                state.probability = state.probability / 10;
+            }
+        });
         const sum = states.reduce((prev, state) => {
             return prev + state.probability;
         }, 0);
@@ -69,6 +81,19 @@ class HumanStateManager {
                 return states[i].state;
             }
         }
+    }
+    reset(game) {
+        this.state.stop(game);
+        this.state = new FreezeState_1.FreezeState(this.human);
+        this.state.start(game);
+    }
+    goMeeting(game, meeting) {
+        this.state.stop(game);
+        this.state = new TalkState_1.TalkState(this.human, null, game, this.world, meeting);
+        this.state.start(game);
+    }
+    getState() {
+        return this.state.getState();
     }
 }
 exports.HumanStateManager = HumanStateManager;

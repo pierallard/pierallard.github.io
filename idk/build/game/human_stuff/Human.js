@@ -8,6 +8,7 @@ const HumanStateManager_1 = require("./HumanStateManager");
 const ObjectSelector_1 = require("../objects/ObjectSelector");
 exports.WALK_CELL_DURATION = 1200;
 const GAP_FROM_BOTTOM = -8;
+const PATH_DEBUG = false;
 class Human {
     constructor(cell) {
         this.cell = cell;
@@ -20,7 +21,7 @@ class Human {
     create(game, group, world) {
         this.game = game;
         this.world = world;
-        this.tile = game.add.tileSprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).x + this.anchorPixels.x, PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).y + this.anchorPixels.y, 24, 25, 'human');
+        this.tile = game.add.tileSprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).x + this.anchorPixels.x, PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).y + this.anchorPixels.y, 24, 25, Math.random() > 0.5 ? 'human' : 'human_red');
         this.animationManager.create(this.tile);
         this.tile.anchor.set(0.5, 1.0);
         ObjectSelector_1.ObjectSelector.makeSelectable([this.tile]);
@@ -30,26 +31,47 @@ class Human {
         this.animationManager.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE, true, false);
         this.closestPathFinder = new ClosestPathFinder_1.ClosestPathFinder(game, world);
         this.stateManager.create(game, world, this.animationManager);
+        if (PATH_DEBUG) {
+            this.pathGraphics = game.add.graphics(0, 0, group);
+            group.add(this.pathGraphics);
+        }
     }
     update() {
         this.stateManager.updateState(this.game);
+        if (PATH_DEBUG) {
+            this.pathGraphics.clear();
+            this.pathGraphics.lineStyle(2, 0x00ff00);
+            if (this.path !== null && this.path.length > 0) {
+                this.pathGraphics.moveTo(this.tile.position.x, this.tile.position.y);
+                this.path.forEach((pathItem) => {
+                    this.pathGraphics.lineTo(PositionTransformer_1.PositionTransformer.getRealPosition(pathItem).x, PositionTransformer_1.PositionTransformer.getRealPosition(pathItem).y - PositionTransformer_1.CELL_HEIGHT / 2);
+                });
+            }
+        }
+    }
+    goMeeting(meeting) {
+        this.stateManager.goMeeting(this.game, meeting);
     }
     moveTo(cell) {
         const path = this.closestPathFinder.getPath(this.cell, cell);
-        if (path !== null) {
-            this.path = path;
-            if (!this.moving) {
-                this.popPath(null, null);
-            }
+        if (path === null) {
+            this.stateManager.reset(this.game);
+            return;
+        }
+        this.path = path;
+        if (!this.moving) {
+            this.popPath(null, null);
         }
     }
     moveToClosest(cell, entries = [Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT]) {
         const path = this.closestPathFinder.getNeighborPath(this.cell, cell, entries);
-        if (path !== null) {
-            this.path = path;
-            if (!this.moving) {
-                this.popPath(null, null);
-            }
+        if (path === null) {
+            this.stateManager.reset(this.game);
+            return;
+        }
+        this.path = path;
+        if (!this.moving) {
+            this.popPath(null, null);
         }
     }
     animateMove(direction) {
@@ -113,14 +135,20 @@ class Human {
                 cells.push(tryCell);
             }
         });
-        const freeCell = cells[Math.floor(Math.random() * cells.length)];
-        this.path = [freeCell];
-        if (!this.moving) {
-            this.popPath(null, null);
+        if (cells.length === 0) {
+            console.log('oops');
+            debugger;
+        }
+        else {
+            const freeCell = cells[Math.floor(Math.random() * cells.length)];
+            this.path = [freeCell];
+            if (!this.moving) {
+                this.popPath(null, null);
+            }
         }
     }
-    loadAnimation(animation, isLeft = null) {
-        this.animationManager.loadAnimation(animation, isLeft);
+    loadAnimation(animation, isLeft = null, isTop = null) {
+        this.animationManager.loadAnimation(animation, isLeft, isTop);
     }
     isSelected() {
         return ObjectSelector_1.ObjectSelector.isSelected(this.tile);
@@ -128,8 +156,27 @@ class Human {
     getSprite() {
         return this.tile;
     }
-    resetAStar() {
+    resetAStar(startPosition, endPosition) {
         this.closestPathFinder.reset();
+        if (this.path !== null) {
+            const matchingPath = this.path.filter((cell) => {
+                return cell.x === endPosition.x && cell.y === endPosition.y;
+            });
+            if (matchingPath.length > 0) {
+                const goal = this.path[this.path.length - 1];
+                this.moveTo(goal);
+                return;
+            }
+        }
+        if (this.cell.x == startPosition.x && this.cell.y == startPosition.y) {
+            this.stateManager.reset(this.game);
+        }
+    }
+    isFree() {
+        return [HumanStateManager_1.STATE.SIT, HumanStateManager_1.STATE.MOVE_RANDOM, HumanStateManager_1.STATE.FREEZE, HumanStateManager_1.STATE.SMOKE].indexOf(this.getState()) > -1;
+    }
+    getState() {
+        return this.stateManager.getState();
     }
 }
 exports.Human = Human;

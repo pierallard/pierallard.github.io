@@ -29,9 +29,11 @@ class Desk {
     create(game, group) {
         const isLeftOriented = Math.random() >= 0.5;
         this.chairSprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + (isLeftOriented ? -GAP_HORIZONTAL : GAP_HORIZONTAL), PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM + GAP_VERTICAL, 'chair');
-        this.deskSprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y, 'desk');
+        this.deskSprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM, 'desk');
         this.chairSprite.anchor.set(0.5, 1 + FAKE_ANCHOR_BOTTOM / this.chairSprite.height);
-        this.deskSprite.anchor.set(0.5, 1);
+        this.deskSprite.anchor.set(0.5, 1 + FAKE_ANCHOR_BOTTOM / this.deskSprite.height);
+        console.log('chair: ' + this.chairSprite.y);
+        console.log('desk:  ' + this.deskSprite.y);
         ObjectMover_1.ObjectMover.makeMovable(this, this.world);
         if (isLeftOriented) {
             this.deskSprite.scale.set(-1, 1);
@@ -66,7 +68,7 @@ class Desk {
             this.chairSprite.position.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + (this.isLeftOriented() ? -GAP_HORIZONTAL : GAP_HORIZONTAL);
             this.chairSprite.position.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM + GAP_VERTICAL;
             this.deskSprite.position.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x;
-            this.deskSprite.position.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y;
+            this.deskSprite.position.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM;
         }
     }
 }

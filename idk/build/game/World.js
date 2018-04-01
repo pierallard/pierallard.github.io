@@ -53,6 +53,9 @@ class World {
     getRandomFreeDesk() {
         return this.ground.getRandomFreeDesk(this.humanRepository.humans);
     }
+    getRandomFreeDispenser() {
+        return this.ground.getRandomFreeDispenser(this.humanRepository.humans);
+    }
     getSelectedHumanSprite() {
         return this.humanRepository.getSelectedHumanSprite();
     }

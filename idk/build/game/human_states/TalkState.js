@@ -18,7 +18,7 @@ class TalkState {
         if (!this.meetingStarted) {
             if (this.meeting.isReady()) {
                 this.meetingStarted = true;
-                this.game.time.events.add(this.meeting.getTime(), this.end, this);
+                this.game.time.events.add(this.meeting.getTime() + Math.random() * Phaser.Timer.SECOND, this.end, this);
                 let animation = HumanAnimationManager_1.ANIMATION.TALK;
                 if (Math.random() > 0.5) {
                     animation = TalkState.otherAnimation(animation);
@@ -38,12 +38,19 @@ class TalkState {
         this.events.push(this.game.time.events.add(Phaser.Math.random(3, 6) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(animation), this.switchAnimation, this, TalkState.otherAnimation(animation)));
     }
     start(game) {
+        this.active = true;
         if (this.meeting === null) {
             this.meeting = new Meeting_1.Meeting([this.human, this.anotherHuman], Phaser.Math.random(8, 20) * Phaser.Timer.SECOND, this.world);
-            this.anotherHuman.goMeeting(this.meeting);
+            if (!this.anotherHuman.goMeeting(this.meeting)) {
+                this.end();
+                return false;
+            }
         }
-        this.human.moveTo(this.meeting.getCell(this.human));
-        this.active = true;
+        if (!this.human.moveTo(this.meeting.getCell(this.human))) {
+            this.end();
+            return false;
+        }
+        return true;
     }
     end() {
         this.events.forEach((event) => {
@@ -52,15 +59,13 @@ class TalkState {
         this.active = false;
     }
     stop(game) {
-        this.events.forEach((event) => {
-            this.game.time.events.remove(event);
-        });
-    }
-    static otherAnimation(animation) {
-        return animation === HumanAnimationManager_1.ANIMATION.TALK ? HumanAnimationManager_1.ANIMATION.FREEZE : HumanAnimationManager_1.ANIMATION.TALK;
+        this.end();
     }
     getState() {
         return HumanStateManager_1.STATE.TALK;
+    }
+    static otherAnimation(animation) {
+        return animation === HumanAnimationManager_1.ANIMATION.TALK ? HumanAnimationManager_1.ANIMATION.FREEZE : HumanAnimationManager_1.ANIMATION.TALK;
     }
 }
 exports.TalkState = TalkState;

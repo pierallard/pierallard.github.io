@@ -12,7 +12,8 @@ class FreezeState {
     start(game) {
         this.active = true;
         this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE);
-        this.event = game.time.events.add(Phaser.Math.random(1, 3) * Phaser.Timer.SECOND, this.end, this);
+        this.event = game.time.events.add(Phaser.Math.random(1, 2) * Phaser.Timer.SECOND, this.end, this);
+        return true;
     }
     end() {
         this.active = false;
@@ -21,6 +22,7 @@ class FreezeState {
         if (this.event) {
             game.time.events.remove(this.event);
         }
+        this.end();
     }
     getState() {
         return HumanStateManager_1.STATE.FREEZE;

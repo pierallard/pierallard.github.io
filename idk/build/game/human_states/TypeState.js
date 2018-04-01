@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Human_1 = require("../human_stuff/Human");
 const HumanAnimationManager_1 = require("../human_stuff/HumanAnimationManager");
 const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
+const PositionTransformer_1 = require("../PositionTransformer");
 class TypeState {
     constructor(human, sittable, world) {
         this.human = human;
@@ -42,16 +43,21 @@ class TypeState {
     start(game) {
         this.active = true;
         this.game = game;
-        this.human.moveToClosest(this.sittable.getPosition(), this.sittable.getEntries());
+        if (!this.human.moveToClosest(this.sittable.getPosition(), this.sittable.getEntries())) {
+            this.active = false;
+            return false;
+        }
+        return true;
     }
     isNeighborPosition() {
-        return !this.human.isMoving() && (this.human.getPosition().x - this.sittable.getPosition().x) * (this.human.getPosition().x - this.sittable.getPosition().x) +
-            (this.human.getPosition().y - this.sittable.getPosition().y) * (this.human.getPosition().y - this.sittable.getPosition().y) === 1;
+        return !this.human.isMoving() &&
+            PositionTransformer_1.PositionTransformer.isNeighbor(this.human.getPosition(), this.sittable.getPosition());
     }
     stop(game) {
         this.events.forEach((event) => {
             game.time.events.remove(event);
         });
+        this.active = false;
     }
     getState() {
         return HumanStateManager_1.STATE.TYPE;

@@ -40,7 +40,7 @@ class Direction {
             return DIRECTION.BOTTOM;
         }
         else {
-            debugger;
+            return DIRECTION.CURRENT;
         }
     }
     static isLeft(direction) {

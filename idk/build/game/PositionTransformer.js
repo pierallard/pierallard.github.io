@@ -12,6 +12,13 @@ class PositionTransformer {
             (point.x - (app_1.WORLD_WIDTH / 2)) / (2 * (-exports.CELL_WIDTH / 2))), Math.floor((point.y - app_1.WORLD_HEIGHT) / (2 * (-exports.CELL_HEIGHT / 2)) -
             (point.x - (app_1.WORLD_WIDTH / 2)) / (2 * (-exports.CELL_WIDTH / 2))));
     }
+    static dist(position1, position2) {
+        return (position1.x - position2.x) * (position1.x - position2.x) +
+            (position1.y - position2.y) * (position1.y - position2.y);
+    }
+    static isNeighbor(position1, position2) {
+        return this.dist(position1, position2) === 1;
+    }
 }
 exports.PositionTransformer = PositionTransformer;
 //# sourceMappingURL=PositionTransformer.js.map

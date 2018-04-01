@@ -50,29 +50,31 @@ class Human {
         }
     }
     goMeeting(meeting) {
-        this.stateManager.goMeeting(this.game, meeting);
+        return this.stateManager.goMeeting(this.game, meeting);
     }
     moveTo(cell) {
         const path = this.closestPathFinder.getPath(this.cell, cell);
         if (path === null) {
             this.stateManager.reset(this.game);
-            return;
+            return false;
         }
         this.path = path;
         if (!this.moving) {
             this.popPath(null, null);
         }
+        return true;
     }
     moveToClosest(cell, entries = [Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT]) {
         const path = this.closestPathFinder.getNeighborPath(this.cell, cell, entries);
         if (path === null) {
             this.stateManager.reset(this.game);
-            return;
+            return false;
         }
         this.path = path;
         if (!this.moving) {
             this.popPath(null, null);
         }
+        return true;
     }
     animateMove(direction) {
         const isLeft = Human.isHumanLeft(direction);
@@ -157,6 +159,7 @@ class Human {
         return this.tile;
     }
     resetAStar(startPosition, endPosition) {
+        console.log('Move object -> reset');
         this.closestPathFinder.reset();
         if (this.path !== null) {
             const matchingPath = this.path.filter((cell) => {

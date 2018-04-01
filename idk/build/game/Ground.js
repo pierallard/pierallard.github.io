@@ -4,14 +4,15 @@ const Cell_1 = require("./Cell");
 const Desk_1 = require("./objects/Desk");
 const WallRepository_1 = require("./repositories/WallRepository");
 const Sofa_1 = require("./objects/Sofa");
-const GRID_WIDTH = 8;
-const GRID_HEIGHT = 8;
+const Dispenser_1 = require("./objects/Dispenser");
+const PositionTransformer_1 = require("./PositionTransformer");
+const GRID_WIDTH = 12;
+const GRID_HEIGHT = 12;
 exports.DEBUG_WORLD = false;
 class Ground {
     constructor(world) {
         this.cells = [];
-        this.desks = [];
-        this.sofas = [];
+        this.objects = [];
         this.wallRepository = new WallRepository_1.WallRepository();
         for (let y = 0; y < GRID_HEIGHT; y++) {
             for (let x = 0; x < GRID_WIDTH; x++) {
@@ -21,7 +22,9 @@ class Ground {
         if (exports.DEBUG_WORLD) {
             this.wallRepository.addWall(new PIXI.Point(5, 5));
             this.wallRepository.addWall(new PIXI.Point(6, 5));
-            this.desks.push(new Desk_1.Desk(new PIXI.Point(4, 5), world));
+            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 5), world));
+            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 6), world));
+            this.objects.push(new Dispenser_1.Dispenser(new PIXI.Point(5, 4), world));
             return;
         }
         for (let x = 0; x < GRID_WIDTH; x++) {
@@ -47,11 +50,12 @@ class Ground {
             this.wallRepository.addWall(cell);
         });
         for (let i = 0; i < 3; i++) {
-            this.desks.push(new Desk_1.Desk(this.getRandomCell(), world));
+            this.objects.push(new Desk_1.Desk(this.getRandomCell(), world));
         }
         for (let i = 0; i < 3; i++) {
-            this.sofas.push(new Sofa_1.Sofa(this.getRandomCell(), world));
+            this.objects.push(new Sofa_1.Sofa(this.getRandomCell(), world));
         }
+        this.objects.push(new Dispenser_1.Dispenser(this.getRandomCell(), world));
     }
     create(game, groups) {
         const floor = groups['floor'];
@@ -59,11 +63,8 @@ class Ground {
         this.cells.forEach((cell) => {
             cell.create(game, floor);
         });
-        this.desks.forEach((desk) => {
+        this.objects.forEach((desk) => {
             desk.create(game, noname);
-        });
-        this.sofas.forEach((sofa) => {
-            sofa.create(game, noname);
         });
         this.wallRepository.create(game, noname);
     }
@@ -80,7 +81,7 @@ class Ground {
             const position1 = this.cells[acceptableIndexes[i]].getPosition();
             for (let j = i + 1; j < acceptableIndexes.length; j++) {
                 const position2 = this.cells[acceptableIndexes[j]].getPosition();
-                if (Ground.areNeighbors(position1, position2)) {
+                if (PositionTransformer_1.PositionTransformer.isNeighbor(position1, position2)) {
                     const newDist = Ground.getDist(cells, position1);
                     if (result === null || newDist < dist) {
                         dist = newDist;
@@ -116,13 +117,8 @@ class Ground {
         if (point.x < 0 || point.y < 0 || point.x >= GRID_WIDTH || point.y >= GRID_HEIGHT) {
             return false;
         }
-        for (let j = 0; j < this.desks.length; j++) {
-            if (this.desks[j].getPosition().x === point.x && this.desks[j].getPosition().y === point.y && this.desks[j] !== object) {
-                return false;
-            }
-        }
-        for (let j = 0; j < this.sofas.length; j++) {
-            if (this.sofas[j].getPosition().x === point.x && this.sofas[j].getPosition().y === point.y && this.sofas[j] !== object) {
+        for (let j = 0; j < this.objects.length; j++) {
+            if (this.objects[j].getPosition().x === point.x && this.objects[j].getPosition().y === point.y && this.objects[j] !== object) {
                 return false;
             }
         }
@@ -135,8 +131,8 @@ class Ground {
         return this.wallRepository;
     }
     getRandomFreeSofa(humans) {
-        const freeSofas = this.sofas.filter((sofa) => {
-            return !Ground.isSittableTaken(sofa, humans);
+        const freeSofas = this.objects.filter((object) => {
+            return object.constructor.name === 'Sofa' && !Ground.isSittableTaken(object, humans);
         });
         if (freeSofas.length === 0) {
             return null;
@@ -153,25 +149,27 @@ class Ground {
         return false;
     }
     getRandomFreeDesk(humans) {
-        const freeDesks = this.desks.filter((desks) => {
-            return !Ground.isSittableTaken(desks, humans);
+        const freeDesks = this.objects.filter((object) => {
+            return object.constructor.name === 'Desk' && !Ground.isSittableTaken(object, humans);
         });
         if (freeDesks.length === 0) {
             return null;
         }
         return freeDesks[Math.floor(Math.random() * freeDesks.length)];
     }
-    static areNeighbors(position, position2) {
-        return this.dist(position, position2) === 1;
-    }
-    static dist(position, position2) {
-        return (position.x - position2.x) * (position.x - position2.x) +
-            (position.y - position2.y) * (position.y - position2.y);
+    getRandomFreeDispenser(humans) {
+        const freeDispensers = this.objects.filter((object) => {
+            return object.constructor.name === 'Dispenser' && !Ground.isSittableTaken(object, humans);
+        });
+        if (freeDispensers.length === 0) {
+            return null;
+        }
+        return freeDispensers[Math.floor(Math.random() * freeDispensers.length)];
     }
     static getDist(sources, point) {
         let dist = 0;
         sources.forEach((source) => {
-            dist += this.dist(source, point);
+            dist += PositionTransformer_1.PositionTransformer.dist(source, point);
         });
         return dist;
     }

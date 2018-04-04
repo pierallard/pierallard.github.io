@@ -1208,6 +1208,7 @@ class Preload extends Phaser.State {
         this.game.load.spritesheet('dispenser_selected', 'assets/dispenser_selected.png', 26, 35);
         this.game.load.spritesheet('sofa_selected', 'assets/sofa_selected.png', 8, 6);
         this.game.load.spritesheet('bubble', 'assets/bubble.png', 11, 13);
+        this.game.load.spritesheet('bubble_images', 'assets/bubble_images.png', 9, 7);
     }
     loadFonts() {
     }
@@ -1861,19 +1862,26 @@ class TalkBubble {
     create(humanSprite, game, group) {
         this.parent = humanSprite;
         this.sprite = game.add.sprite(this.parent.position.x, this.parent.position.y, 'bubble', 0, group);
-        this.sprite.anchor.set(1, 2.8);
-        this.hide();
+        this.sprite.anchor.set(1, 35 / this.sprite.height);
         group.add(this.sprite);
+        this.imageSprite = game.add.sprite(this.parent.position.x, this.parent.position.y, 'bubble_images', 0, group);
+        this.imageSprite.anchor.set(1.2, 64 / this.sprite.height);
+        group.add(this.imageSprite);
+        this.hide();
     }
     show() {
-        this.sprite.alpha = 0.8;
+        this.sprite.alpha = 1;
+        this.imageSprite.alpha = 1;
     }
     hide() {
         this.sprite.alpha = 0;
+        this.imageSprite.alpha = 0;
     }
     update() {
         this.sprite.position = this.parent.position;
         this.sprite.scale.x = this.parent.scale.x;
+        this.imageSprite.position = this.parent.position;
+        this.imageSprite.scale.x = this.parent.scale.x;
     }
 }
 exports.TalkBubble = TalkBubble;

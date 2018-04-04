@@ -22,9 +22,9 @@ const GAP_HORIZONTAL = -10;
  */
 const GAP_VERTICAL = -8;
 class Desk {
-    constructor(point, world) {
+    constructor(point, worldKnowledge) {
         this.position = point;
-        this.world = world;
+        this.worldKnowledge = worldKnowledge;
     }
     create(game, group) {
         const isLeftOriented = Math.random() >= 0.5;
@@ -32,9 +32,7 @@ class Desk {
         this.deskSprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM, 'desk');
         this.chairSprite.anchor.set(0.5, 1 + FAKE_ANCHOR_BOTTOM / this.chairSprite.height);
         this.deskSprite.anchor.set(0.5, 1 + FAKE_ANCHOR_BOTTOM / this.deskSprite.height);
-        console.log('chair: ' + this.chairSprite.y);
-        console.log('desk:  ' + this.deskSprite.y);
-        ObjectMover_1.ObjectMover.makeMovable(this, this.world);
+        ObjectMover_1.ObjectMover.makeMovable(this, this.worldKnowledge);
         if (isLeftOriented) {
             this.deskSprite.scale.set(-1, 1);
             this.chairSprite.scale.set(-1, 1);
@@ -63,7 +61,7 @@ class Desk {
         return [this.deskSprite, this.chairSprite];
     }
     tryToMove(point) {
-        if (this.world.isFreePosition(point, this)) {
+        if (this.worldKnowledge.isFree(point, this)) {
             this.position = point;
             this.chairSprite.position.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + (this.isLeftOriented() ? -GAP_HORIZONTAL : GAP_HORIZONTAL);
             this.chairSprite.position.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM + GAP_VERTICAL;

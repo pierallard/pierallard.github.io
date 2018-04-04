@@ -7,14 +7,14 @@ const SOFA_BOTTOM = -8;
 const SOFA_LEFT = 0;
 const SOFA_ANCHOR_BOTTOM = 3;
 class Sofa {
-    constructor(point, world) {
+    constructor(point, worldKnowledge) {
         this.position = point;
-        this.world = world;
+        this.worldKnowledge = worldKnowledge;
     }
     create(game, group) {
         this.sprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + SOFA_LEFT, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + SOFA_BOTTOM - SOFA_ANCHOR_BOTTOM, 'sofa');
         this.sprite.anchor.set(0.5, 1.0 - SOFA_ANCHOR_BOTTOM / this.sprite.height);
-        ObjectMover_1.ObjectMover.makeMovable(this, this.world);
+        ObjectMover_1.ObjectMover.makeMovable(this, this.worldKnowledge);
         group.add(this.sprite);
     }
     getPosition() {
@@ -33,7 +33,7 @@ class Sofa {
         return [this.sprite];
     }
     tryToMove(point) {
-        if (this.world.isFreePosition(point, this)) {
+        if (this.worldKnowledge.isFree(point, this)) {
             this.position = point;
             this.sprite.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + SOFA_LEFT;
             this.sprite.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + SOFA_BOTTOM - SOFA_ANCHOR_BOTTOM;

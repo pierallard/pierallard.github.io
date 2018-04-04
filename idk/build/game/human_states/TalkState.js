@@ -4,43 +4,56 @@ const HumanAnimationManager_1 = require("../human_stuff/HumanAnimationManager");
 const Meeting_1 = require("./Meeting");
 const Direction_1 = require("../Direction");
 const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
+const HUMOR_WIN = 0.5;
 class TalkState {
-    constructor(human, anotherHuman, game, world, meeting = null) {
+    constructor(human, anotherHuman, game, worldKnowledge, meeting = null) {
         this.human = human;
         this.anotherHuman = anotherHuman;
         this.game = game;
-        this.world = world;
+        this.worldKnowledge = worldKnowledge;
         this.meetingStarted = false;
         this.events = [];
         this.meeting = meeting;
     }
     isActive() {
         if (!this.meetingStarted) {
-            if (this.meeting.isReady()) {
-                this.meetingStarted = true;
-                this.game.time.events.add(this.meeting.getTime() + Math.random() * Phaser.Timer.SECOND, this.end, this);
-                let animation = HumanAnimationManager_1.ANIMATION.TALK;
-                if (Math.random() > 0.5) {
-                    animation = TalkState.otherAnimation(animation);
-                }
-                this.switchAnimation(animation);
+            if (!this.meeting.areAllHumanStillInMeeting()) {
+                this.active = false;
             }
-            else if (!this.human.isMoving()) {
-                const direction = Direction_1.Direction.getNeighborDirection(this.human.getPosition(), this.meeting.getAnotherHuman(this.human).getPosition());
-                this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE, Direction_1.Direction.isLeft(direction), Direction_1.Direction.isTop(direction));
+            else {
+                if (this.meeting.isReady()) {
+                    this.meetingStarted = true;
+                    this.game.time.events.add(this.meeting.getTime() + Math.random() * Phaser.Timer.SECOND, this.end, this);
+                    this.human.updateHumorFromState();
+                    let animation = HumanAnimationManager_1.ANIMATION.TALK;
+                    if (Math.random() > 0.5) {
+                        animation = TalkState.otherAnimation(animation);
+                    }
+                    this.switchAnimation(animation);
+                }
+                else if (!this.human.isMoving()) {
+                    const direction = Direction_1.Direction.getNeighborDirection(this.human.getPosition(), this.meeting.getAnotherHuman(this.human).getPosition());
+                    this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE, Direction_1.Direction.isLeft(direction), Direction_1.Direction.isTop(direction));
+                }
             }
         }
         return this.active;
     }
     switchAnimation(animation) {
         const direction = Direction_1.Direction.getNeighborDirection(this.human.getPosition(), this.meeting.getAnotherHuman(this.human).getPosition());
+        if (animation === HumanAnimationManager_1.ANIMATION.TALK) {
+            this.human.showTalkBubble();
+        }
+        else {
+            this.human.hideTalkBubble();
+        }
         this.human.loadAnimation(animation, Direction_1.Direction.isLeft(direction), Direction_1.Direction.isTop(direction));
         this.events.push(this.game.time.events.add(Phaser.Math.random(3, 6) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(animation), this.switchAnimation, this, TalkState.otherAnimation(animation)));
     }
     start(game) {
         this.active = true;
         if (this.meeting === null) {
-            this.meeting = new Meeting_1.Meeting([this.human, this.anotherHuman], Phaser.Math.random(8, 20) * Phaser.Timer.SECOND, this.world);
+            this.meeting = new Meeting_1.Meeting([this.human, this.anotherHuman], Phaser.Math.random(8, 20) * Phaser.Timer.SECOND, this.worldKnowledge);
             if (!this.anotherHuman.goMeeting(this.meeting)) {
                 this.end();
                 return false;
@@ -53,6 +66,7 @@ class TalkState {
         return true;
     }
     end() {
+        this.human.hideTalkBubble();
         this.events.forEach((event) => {
             this.game.time.events.remove(event);
         });

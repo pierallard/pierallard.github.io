@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const Wall_1 = require("../Wall");
+const Wall_1 = require("../objects/Wall");
 class WallRepository {
     constructor() {
         this.walls = [];

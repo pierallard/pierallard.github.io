@@ -5,31 +5,31 @@ const HumanAnimationManager_1 = require("../human_stuff/HumanAnimationManager");
 const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
 const PositionTransformer_1 = require("../PositionTransformer");
 class TypeState {
-    constructor(human, sittable, world) {
+    constructor(human, interactiveObject, worldKnowledge) {
         this.human = human;
-        this.sittable = sittable;
+        this.interactiveObject = interactiveObject;
         this.isHumanOnTheRightCell = false;
-        this.world = world;
+        this.worldKnowledge = worldKnowledge;
         this.events = [];
     }
     isActive() {
         if (!this.isHumanOnTheRightCell) {
-            if (this.world.isSittableTaken(this.sittable)) {
+            if (this.worldKnowledge.isObjectUsed(this.interactiveObject)) {
                 this.active = false;
                 return false;
             }
         }
         if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
             this.isHumanOnTheRightCell = true;
-            this.human.goToSittable(this.sittable, this.sittable.forceOrientation());
+            this.human.interactWith(this.interactiveObject, this.interactiveObject.forceOrientation());
             this.events.push(this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
-                this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN, this.sittable.forceOrientation());
+                this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN, this.interactiveObject.forceOrientation());
                 this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SIT_DOWN), () => {
                     this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.TYPE);
                     this.events.push(this.game.time.events.add(Phaser.Math.random(5, 10) * Phaser.Timer.SECOND, () => {
                         this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.STAND_UP);
                         this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.STAND_UP) + 100, () => {
-                            this.human.goToFreeCell(this.sittable.getEntries());
+                            this.human.goToFreeCell(this.interactiveObject.getEntries());
                             this.events.push(this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
                                 this.active = false;
                             }, this));
@@ -43,7 +43,7 @@ class TypeState {
     start(game) {
         this.active = true;
         this.game = game;
-        if (!this.human.moveToClosest(this.sittable.getPosition(), this.sittable.getEntries())) {
+        if (!this.human.moveToClosest(this.interactiveObject.getPosition(), this.interactiveObject.getEntries())) {
             this.active = false;
             return false;
         }
@@ -51,7 +51,7 @@ class TypeState {
     }
     isNeighborPosition() {
         return !this.human.isMoving() &&
-            PositionTransformer_1.PositionTransformer.isNeighbor(this.human.getPosition(), this.sittable.getPosition());
+            PositionTransformer_1.PositionTransformer.isNeighbor(this.human.getPosition(), this.interactiveObject.getPosition());
     }
     stop(game) {
         this.events.forEach((event) => {

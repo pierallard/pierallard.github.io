@@ -7,8 +7,8 @@ const Play_1 = require("./game/game_state/Play");
 exports.SCALE = 3;
 exports.CAMERA_WIDTH_PIXELS = 1280 / exports.SCALE;
 exports.CAMERA_HEIGHT_PIXELS = 720 / exports.SCALE;
-exports.WORLD_WIDTH = 1280 * 1.1 / exports.SCALE;
-exports.WORLD_HEIGHT = 720 * 1.1 / exports.SCALE;
+exports.WORLD_WIDTH = 1280 * 1.1 / 3;
+exports.WORLD_HEIGHT = 720 * 1.1 / 3;
 class SimpleGame extends Phaser.Game {
     constructor() {
         super(exports.CAMERA_WIDTH_PIXELS, exports.CAMERA_HEIGHT_PIXELS, Phaser.CANVAS, // Open GL for effect / shader ?

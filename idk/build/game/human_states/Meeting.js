@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
 class Meeting {
-    constructor(humans, time, world) {
-        const cells = world.getGround().getMeetingCells(humans.map((human) => {
+    constructor(humans, time, worldKnowledge) {
+        const cells = worldKnowledge.getMeetingCells(humans.map((human) => {
             return human.getPosition();
         }));
         if (cells === null) {
@@ -46,6 +47,15 @@ class Meeting {
             }
         });
         return anotherHumans[Math.floor(Math.random() * anotherHumans.length)];
+    }
+    areAllHumanStillInMeeting() {
+        for (let i = 0; i < this.places.length; i++) {
+            const human = this.places[i].human;
+            if (human.getState() !== HumanStateManager_1.STATE.TALK) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 exports.Meeting = Meeting;

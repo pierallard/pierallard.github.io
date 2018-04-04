@@ -7,14 +7,14 @@ const DISPENSER_BOTTOM = -4;
 const DISPENSER_LEFT = 4;
 const DISPENSER_ANCHOR_BOTTOM = 3;
 class Dispenser {
-    constructor(point, world) {
+    constructor(point, worldKnowledge) {
         this.position = point;
-        this.world = world;
+        this.worldKnowledge = worldKnowledge;
     }
     create(game, group) {
         this.sprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + DISPENSER_LEFT, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + DISPENSER_BOTTOM - DISPENSER_ANCHOR_BOTTOM, 'dispenser');
         this.sprite.anchor.set(0.5, 1.0 - DISPENSER_ANCHOR_BOTTOM / this.sprite.height);
-        ObjectMover_1.ObjectMover.makeMovable(this, this.world);
+        ObjectMover_1.ObjectMover.makeMovable(this, this.worldKnowledge);
         group.add(this.sprite);
     }
     getPosition() {
@@ -24,7 +24,7 @@ class Dispenser {
         return [this.sprite];
     }
     tryToMove(point) {
-        if (this.world.isFreePosition(point, this)) {
+        if (this.worldKnowledge.isFree(point, this)) {
             this.position = point;
             this.sprite.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + DISPENSER_LEFT;
             this.sprite.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + DISPENSER_BOTTOM - DISPENSER_ANCHOR_BOTTOM;

@@ -2,19 +2,28 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const Human_1 = require("../human_stuff/Human");
 class HumanRepository {
-    constructor(world) {
+    constructor(worldKnowledge) {
         this.humans = [
-            new Human_1.Human(world.getGround().getRandomCell()),
-            new Human_1.Human(world.getGround().getRandomCell()),
-            new Human_1.Human(world.getGround().getRandomCell()),
-            new Human_1.Human(world.getGround().getRandomCell()),
-            new Human_1.Human(world.getGround().getRandomCell()),
-            new Human_1.Human(world.getGround().getRandomCell())
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell())
         ];
     }
-    create(game, groups, world) {
+    create(game, groups, worldKnowledge) {
         this.humans.forEach((human) => {
-            human.create(game, groups['noname'], world);
+            human.create(game, groups, worldKnowledge);
         });
     }
     update() {

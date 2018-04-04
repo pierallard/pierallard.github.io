@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 29);
+/******/ 	return __webpack_require__(__webpack_require__.s = 31);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -103,13 +103,14 @@ exports.PositionTransformer = PositionTransformer;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const FreezeState_1 = __webpack_require__(17);
-const SmokeState_1 = __webpack_require__(21);
-const SitState_1 = __webpack_require__(20);
-const MoveRandomState_1 = __webpack_require__(19);
-const TypeState_1 = __webpack_require__(23);
-const TalkState_1 = __webpack_require__(22);
-const CoffeeState_1 = __webpack_require__(16);
+const FreezeState_1 = __webpack_require__(15);
+const SmokeState_1 = __webpack_require__(19);
+const SitState_1 = __webpack_require__(18);
+const MoveRandomState_1 = __webpack_require__(17);
+const TypeState_1 = __webpack_require__(21);
+const TalkState_1 = __webpack_require__(20);
+const CoffeeState_1 = __webpack_require__(14);
+const HumanHumorManager_1 = __webpack_require__(8);
 var STATE;
 (function (STATE) {
     STATE[STATE["SMOKE"] = 0] = "SMOKE";
@@ -125,9 +126,9 @@ class HumanStateManager {
         this.human = human;
         this.state = new FreezeState_1.FreezeState(human);
     }
-    create(game, world, animationManager) {
+    create(game, worldKnowledge, animationManager) {
         this.state.start(game);
-        this.world = world;
+        this.worldKnowledge = worldKnowledge;
         this.animationManager = animationManager;
     }
     updateState(game) {
@@ -137,19 +138,19 @@ class HumanStateManager {
                     this.state = new SmokeState_1.SmokeState(this.human);
                     break;
                 case STATE.MOVE_RANDOM:
-                    this.state = new MoveRandomState_1.MoveRandomState(this.human, this.world);
+                    this.state = new MoveRandomState_1.MoveRandomState(this.human, this.worldKnowledge);
                     break;
                 case STATE.SIT:
-                    this.state = new SitState_1.SitState(this.human, this.world.getRandomFreeSofa(), this.world);
+                    this.state = new SitState_1.SitState(this.human, this.worldKnowledge.getRandomFreeSofa(), this.worldKnowledge);
                     break;
                 case STATE.TYPE:
-                    this.state = new TypeState_1.TypeState(this.human, this.world.getRandomFreeDesk(), this.world);
+                    this.state = new TypeState_1.TypeState(this.human, this.worldKnowledge.getRandomFreeDesk(), this.worldKnowledge);
                     break;
                 case STATE.COFFEE:
-                    this.state = new CoffeeState_1.CoffeeState(this.human, this.world.getRandomFreeDispenser(), this.world);
+                    this.state = new CoffeeState_1.CoffeeState(this.human, this.worldKnowledge.getRandomFreeDispenser(), this.worldKnowledge);
                     break;
                 case STATE.TALK:
-                    this.state = new TalkState_1.TalkState(this.human, this.world.getAnotherFreeHuman(this.human), game, this.world);
+                    this.state = new TalkState_1.TalkState(this.human, this.worldKnowledge.getAnotherFreeHuman(this.human), game, this.worldKnowledge);
                     break;
                 case STATE.FREEZE:
                 default:
@@ -166,26 +167,33 @@ class HumanStateManager {
     }
     randomNextStepName() {
         const states = [];
-        states.push({ state: STATE.SMOKE, probability: 5 });
-        states.push({ state: STATE.FREEZE, probability: 1 });
-        states.push({ state: STATE.MOVE_RANDOM, probability: 2 });
-        if (this.world.getAnotherFreeHuman(this.human) !== null) {
-            states.push({ state: STATE.TALK, probability: 8 });
+        states.push({ state: STATE.SMOKE, probability: this.getProbability(STATE.SMOKE) });
+        states.push({ state: STATE.FREEZE, probability: this.getProbability(STATE.FREEZE) });
+        states.push({ state: STATE.MOVE_RANDOM, probability: this.getProbability(STATE.MOVE_RANDOM) });
+        if (this.worldKnowledge.getAnotherFreeHuman(this.human) !== null) {
+            states.push({ state: STATE.TALK, probability: this.getProbability(STATE.TALK) });
         }
-        if (this.world.getRandomFreeSofa() !== null) {
-            states.push({ state: STATE.SIT, probability: 2 });
+        if (this.worldKnowledge.getRandomFreeSofa() !== null) {
+            states.push({ state: STATE.SIT, probability: this.getProbability(STATE.SIT) });
         }
-        if (this.world.getRandomFreeDesk() !== null) {
-            states.push({ state: STATE.TYPE, probability: 25 });
+        if (this.worldKnowledge.getRandomFreeDesk() !== null) {
+            states.push({ state: STATE.TYPE, probability: this.getProbability(STATE.TYPE) });
         }
-        if (this.world.getRandomFreeDispenser() !== null) {
-            states.push({ state: STATE.COFFEE, probability: 6 });
+        if (this.worldKnowledge.getRandomFreeDispenser() !== null) {
+            states.push({ state: STATE.COFFEE, probability: this.getProbability(STATE.COFFEE) });
         }
-        states.forEach((state) => {
-            if (state.state === this.state.getState()) {
-                state.probability = state.probability / 10;
-            }
-        });
+        let debug = '';
+        debug += 'Rlx[' + Math.ceil(this.human.getHumor(HumanHumorManager_1.HUMOR.RELAXATION) * 100) + '%], ';
+        debug += 'Hng[' + Math.ceil(this.human.getHumor(HumanHumorManager_1.HUMOR.HUNGER) * 100) + '%], ';
+        debug += 'Soc[' + Math.ceil(this.human.getHumor(HumanHumorManager_1.HUMOR.SOCIAL) * 100) + '%] ---> ';
+        debug += 'Smk(' + Math.ceil(this.getProbability(STATE.SMOKE)) + '), ';
+        debug += 'Frz(' + Math.ceil(this.getProbability(STATE.FREEZE)) + '), ';
+        debug += 'MvR(' + Math.ceil(this.getProbability(STATE.MOVE_RANDOM)) + '), ';
+        debug += 'Tak(' + Math.ceil(this.getProbability(STATE.TALK)) + '), ';
+        debug += 'Sit(' + Math.ceil(this.getProbability(STATE.SIT)) + '), ';
+        debug += 'Typ(' + Math.ceil(this.getProbability(STATE.TYPE)) + '), ';
+        debug += 'Cof(' + Math.ceil(this.getProbability(STATE.COFFEE)) + '), ';
+        console.log(debug);
         const sum = states.reduce((prev, state) => {
             return prev + state.probability;
         }, 0);
@@ -198,13 +206,69 @@ class HumanStateManager {
             }
         }
     }
+    getProbability(state) {
+        let result = 1;
+        switch (state) {
+            case STATE.SMOKE:
+                result = 5;
+                break;
+            case STATE.FREEZE:
+                result = 1;
+                break;
+            case STATE.MOVE_RANDOM:
+                result = 2;
+                break;
+            case STATE.TALK:
+                result = 8;
+                break;
+            case STATE.SIT:
+                result = 2;
+                break;
+            case STATE.COFFEE:
+                result = 6;
+                break;
+            case STATE.TYPE:
+                result = 5 + 1 + 2 + 8 + 2 + 6;
+                break;
+        }
+        if (state === this.state.getState()) {
+            result = result / 10;
+        }
+        HumanHumorManager_1.HumanHumorManager.getHumors().forEach((humor) => {
+            if (this.human.getHumor(humor) < 0.5) {
+                if (HumanStateManager.getHumorGains(state)[humor] > 0) {
+                    result = result * HumanStateManager.getHumorGains(state)[humor] * 8;
+                    result = result * (1 - this.human.getHumor(humor)) * 3;
+                }
+            }
+        });
+        return result;
+    }
+    static getHumorGains(state) {
+        let result = {};
+        switch (state) {
+            case STATE.SMOKE:
+                result[HumanHumorManager_1.HUMOR.RELAXATION] = 0.4;
+                break;
+            case STATE.TALK:
+                result[HumanHumorManager_1.HUMOR.SOCIAL] = 0.5;
+                break;
+            case STATE.SIT:
+                result[HumanHumorManager_1.HUMOR.RELAXATION] = 0.2;
+                break;
+            case STATE.COFFEE:
+                result[HumanHumorManager_1.HUMOR.HUNGER] = 0.5;
+                break;
+        }
+        return result;
+    }
     reset(game) {
         this.state.stop(game);
         this.updateState(game);
     }
     goMeeting(game, meeting) {
         this.state.stop(game);
-        this.state = new TalkState_1.TalkState(this.human, null, game, this.world, meeting);
+        this.state = new TalkState_1.TalkState(this.human, null, game, this.worldKnowledge, meeting);
         return this.state.start(game);
     }
     getState() {
@@ -391,14 +455,14 @@ exports.Direction = Direction;
 /// <reference path="../lib/phaser.d.ts"/>
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Boot_1 = __webpack_require__(13);
-const Preload_1 = __webpack_require__(15);
-const Play_1 = __webpack_require__(14);
+const Boot_1 = __webpack_require__(11);
+const Preload_1 = __webpack_require__(13);
+const Play_1 = __webpack_require__(12);
 exports.SCALE = 3;
 exports.CAMERA_WIDTH_PIXELS = 1280 / exports.SCALE;
 exports.CAMERA_HEIGHT_PIXELS = 720 / exports.SCALE;
-exports.WORLD_WIDTH = 1280 * 1.1 / exports.SCALE;
-exports.WORLD_HEIGHT = 720 * 1.1 / exports.SCALE;
+exports.WORLD_WIDTH = 1280 * 1.1 / 3;
+exports.WORLD_HEIGHT = 720 * 1.1 / 3;
 class SimpleGame extends Phaser.Game {
     constructor() {
         super(exports.CAMERA_WIDTH_PIXELS, exports.CAMERA_HEIGHT_PIXELS, Phaser.CANVAS, // Open GL for effect / shader ?
@@ -423,11 +487,14 @@ window.onload = () => {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const PositionTransformer_1 = __webpack_require__(0);
-const ClosestPathFinder_1 = __webpack_require__(10);
+const ClosestPathFinder_1 = __webpack_require__(22);
 const Direction_1 = __webpack_require__(3);
 const HumanAnimationManager_1 = __webpack_require__(2);
 const HumanStateManager_1 = __webpack_require__(1);
-const ObjectSelector_1 = __webpack_require__(8);
+const ObjectSelector_1 = __webpack_require__(9);
+const TalkBubble_1 = __webpack_require__(24);
+const HumanHumorManager_1 = __webpack_require__(8);
+const HumorSprite_1 = __webpack_require__(23);
 exports.WALK_CELL_DURATION = 1200;
 const GAP_FROM_BOTTOM = -8;
 const PATH_DEBUG = false;
@@ -439,32 +506,43 @@ class Human {
         this.stateManager = new HumanStateManager_1.HumanStateManager(this);
         this.anchorPixels = new PIXI.Point(0, GAP_FROM_BOTTOM);
         this.animationManager = new HumanAnimationManager_1.HumanAnimationManager();
+        this.talkBubble = new TalkBubble_1.TalkBubble();
+        this.humorManager = new HumanHumorManager_1.HumanHumorManager();
+        this.humorSprite = new HumorSprite_1.HumorSprite();
     }
-    create(game, group, world) {
+    create(game, groups, worldKnowledge) {
         this.game = game;
-        this.world = world;
-        this.tile = game.add.tileSprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).x + this.anchorPixels.x, PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).y + this.anchorPixels.y, 24, 25, Math.random() > 0.5 ? 'human' : 'human_red');
-        this.animationManager.create(this.tile);
-        this.tile.anchor.set(0.5, 1.0);
-        ObjectSelector_1.ObjectSelector.makeSelectable([this.tile]);
-        group.add(this.tile);
-        this.pathfinder = game.plugins.add(Phaser.Plugin.PathFinderPlugin);
-        this.pathfinder.setGrid(world.getGround().getGrid(), world.getGround().getAcceptables());
+        this.worldKnowledge = worldKnowledge;
+        this.humorManager.create(game);
+        this.sprite = game.add.tileSprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).x + this.anchorPixels.x, PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).y + this.anchorPixels.y, 24, 25, Math.random() > 0.5 ? 'human' : 'human_red');
+        this.animationManager.create(this.sprite);
+        this.sprite.anchor.set(0.5, 1.0);
+        ObjectSelector_1.ObjectSelector.makeSelectable([this.sprite]);
+        groups['noname'].add(this.sprite);
         this.animationManager.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE, true, false);
-        this.closestPathFinder = new ClosestPathFinder_1.ClosestPathFinder(game, world);
-        this.stateManager.create(game, world, this.animationManager);
+        this.closestPathFinder = new ClosestPathFinder_1.ClosestPathFinder(game, worldKnowledge);
+        this.stateManager.create(game, worldKnowledge, this.animationManager);
+        this.talkBubble.create(this.sprite, this.game, groups['noname']);
+        this.humorSprite.create(this.sprite, this.game, groups['upper']);
         if (PATH_DEBUG) {
-            this.pathGraphics = game.add.graphics(0, 0, group);
-            group.add(this.pathGraphics);
+            this.pathGraphics = game.add.graphics(0, 0, groups['upper']);
+            groups['upper'].add(this.pathGraphics);
         }
     }
     update() {
+        this.talkBubble.update();
         this.stateManager.updateState(this.game);
+        this.humorManager.update();
+        this.humorSprite.update(this.humorManager.getGeneralHumor(), [
+            this.humorManager.getHumor(HumanHumorManager_1.HUMOR.HUNGER),
+            this.humorManager.getHumor(HumanHumorManager_1.HUMOR.SOCIAL),
+            this.humorManager.getHumor(HumanHumorManager_1.HUMOR.RELAXATION)
+        ]);
         if (PATH_DEBUG) {
             this.pathGraphics.clear();
             this.pathGraphics.lineStyle(2, 0x00ff00);
             if (this.path !== null && this.path.length > 0) {
-                this.pathGraphics.moveTo(this.tile.position.x, this.tile.position.y);
+                this.pathGraphics.moveTo(this.sprite.position.x, this.sprite.position.y);
                 this.path.forEach((pathItem) => {
                     this.pathGraphics.lineTo(PositionTransformer_1.PositionTransformer.getRealPosition(pathItem).x, PositionTransformer_1.PositionTransformer.getRealPosition(pathItem).y - PositionTransformer_1.CELL_HEIGHT / 2);
                 });
@@ -503,7 +581,7 @@ class Human {
         const isTop = Human.isHumanTop(direction);
         this.animationManager.loadAnimation(HumanAnimationManager_1.ANIMATION.WALK, isLeft, isTop);
         this.moving = true;
-        this.game.add.tween(this.tile.position).to({
+        this.game.add.tween(this.sprite.position).to({
             x: PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).x + this.anchorPixels.x,
             y: PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).y + this.anchorPixels.y
         }, exports.WALK_CELL_DURATION, 'Linear', true)
@@ -528,7 +606,7 @@ class Human {
             }
             humanPositions.push(this.cell);
         }
-        this.world.humanMoved(humanPositions);
+        this.worldKnowledge.humanMoved(humanPositions);
     }
     getPosition() {
         return this.cell;
@@ -536,13 +614,13 @@ class Human {
     isMoving() {
         return this.moving;
     }
-    goToSittable(sittable, isLeft = null) {
-        const direction = Direction_1.Direction.getNeighborDirection(this.cell, sittable.getPosition());
+    interactWith(interactiveObject, isLeft = null) {
+        const direction = Direction_1.Direction.getNeighborDirection(this.cell, interactiveObject.getPosition());
         const side = (isLeft !== null) ? isLeft : Human.isHumanLeft(direction);
         // Human has to gap 5px from the sofa to be sit properly, and 1px from the bottom.
-        this.anchorPixels.x = sittable.getPositionGap().x + (side ? -5 : 5);
-        this.anchorPixels.y = sittable.getPositionGap().y - 1;
-        this.cell = sittable.getPosition();
+        this.anchorPixels.x = interactiveObject.getPositionGap().x + (side ? -5 : 5);
+        this.anchorPixels.y = interactiveObject.getPositionGap().y - 1;
+        this.cell = interactiveObject.getPosition();
         this.animateMove(direction);
     }
     static isHumanLeft(direction) {
@@ -555,7 +633,7 @@ class Human {
         const cells = [];
         entries.forEach((direction) => {
             const tryCell = Direction_1.Direction.getGap(this.cell, direction);
-            if (this.world.getGround().isFree(tryCell)) {
+            if (this.worldKnowledge.isFree(tryCell)) {
                 cells.push(tryCell);
             }
         });
@@ -575,10 +653,10 @@ class Human {
         this.animationManager.loadAnimation(animation, isLeft, isTop);
     }
     isSelected() {
-        return ObjectSelector_1.ObjectSelector.isSelected(this.tile);
+        return ObjectSelector_1.ObjectSelector.isSelected(this.sprite);
     }
     getSprite() {
-        return this.tile;
+        return this.sprite;
     }
     resetAStar(startPosition, endPosition) {
         console.log('Move object -> reset');
@@ -603,6 +681,18 @@ class Human {
     getState() {
         return this.stateManager.getState();
     }
+    showTalkBubble() {
+        this.talkBubble.show();
+    }
+    hideTalkBubble() {
+        this.talkBubble.hide();
+    }
+    updateHumorFromState() {
+        this.humorManager.updateFromState(this.getState());
+    }
+    getHumor(humor) {
+        return this.humorManager.getHumor(humor);
+    }
 }
 exports.Human = Human;
 
@@ -615,18 +705,18 @@ exports.Human = Human;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const PositionTransformer_1 = __webpack_require__(0);
-const ObjectSelector_1 = __webpack_require__(8);
+const ObjectSelector_1 = __webpack_require__(9);
 class ObjectMover {
-    static makeMovable(movableObject, world) {
+    static makeMovable(movableObject, worldKnowledge) {
         movableObject.getSprites().forEach((sprite) => {
             sprite.inputEnabled = true;
             sprite.input.pixelPerfectOver = true;
             sprite.input.pixelPerfectClick = true;
             sprite.input.useHandCursor = true;
-            sprite.events.onInputDown.add(this.select, this, 0, movableObject, world);
+            sprite.events.onInputDown.add(this.select, this, 0, movableObject, worldKnowledge);
         });
     }
-    static select(sprite, _pointer, movableObject, world) {
+    static select(sprite, _pointer, movableObject, worldKnowledge) {
         const gap = new PIXI.Point(_pointer.position.x - PositionTransformer_1.PositionTransformer.getRealPosition(movableObject.getPosition()).x, _pointer.position.y - PositionTransformer_1.PositionTransformer.getRealPosition(movableObject.getPosition()).y);
         const moveCallback = (p, x, y) => {
             movableObject.tryToMove(PositionTransformer_1.PositionTransformer.getCellPosition(new PIXI.Point(x - gap.x, y - gap.y)));
@@ -635,15 +725,15 @@ class ObjectMover {
             ObjectSelector_1.ObjectSelector.setSelected(sprite, true);
         });
         _pointer.game.input.addMoveCallback(moveCallback, this);
-        sprite.events.onInputUp.add(this.unselect, this, 0, movableObject, world, movableObject.getPosition());
+        sprite.events.onInputUp.add(this.unselect, this, 0, movableObject, worldKnowledge, movableObject.getPosition());
     }
-    static unselect(sprite, _pointer, bool, movableObject, world, startPoint) {
+    static unselect(sprite, _pointer, bool, movableObject, worldKnowledge, startPoint) {
         _pointer.game.input.moveCallbacks = [];
         movableObject.getSprites().forEach((sprite) => {
             ObjectSelector_1.ObjectSelector.setSelected(sprite, false);
         });
         if (startPoint.x !== movableObject.getPosition().x || startPoint.y !== movableObject.getPosition().y) {
-            world.resetAStar(startPoint, movableObject.getPosition());
+            worldKnowledge.resetAStar(startPoint, movableObject.getPosition());
         }
     }
 }
@@ -657,62 +747,67 @@ exports.ObjectMover = ObjectMover;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Cell_1 = __webpack_require__(9);
-const Desk_1 = __webpack_require__(24);
-const WallRepository_1 = __webpack_require__(28);
-const Sofa_1 = __webpack_require__(26);
-const Dispenser_1 = __webpack_require__(25);
+const HumanRepository_1 = __webpack_require__(29);
+const Sofa_1 = __webpack_require__(27);
+const Desk_1 = __webpack_require__(25);
+const Dispenser_1 = __webpack_require__(26);
+const WallRepository_1 = __webpack_require__(30);
+const Cell_1 = __webpack_require__(10);
 const PositionTransformer_1 = __webpack_require__(0);
 const GRID_WIDTH = 12;
 const GRID_HEIGHT = 12;
 exports.DEBUG_WORLD = false;
-class Ground {
-    constructor(world) {
+class WorldKnowledge {
+    constructor() {
         this.cells = [];
         this.objects = [];
-        this.wallRepository = new WallRepository_1.WallRepository();
         for (let y = 0; y < GRID_HEIGHT; y++) {
             for (let x = 0; x < GRID_WIDTH; x++) {
                 this.cells.push(new Cell_1.Cell(new PIXI.Point(x, y)));
             }
         }
+        this.wallRepository = new WallRepository_1.WallRepository();
         if (exports.DEBUG_WORLD) {
             this.wallRepository.addWall(new PIXI.Point(5, 5));
             this.wallRepository.addWall(new PIXI.Point(6, 5));
-            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 5), world));
-            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 6), world));
-            this.objects.push(new Dispenser_1.Dispenser(new PIXI.Point(5, 4), world));
-            return;
+            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 5), this));
+            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 6), this));
+            this.objects.push(new Dispenser_1.Dispenser(new PIXI.Point(5, 4), this));
         }
-        for (let x = 0; x < GRID_WIDTH; x++) {
-            this.wallRepository.addWall(new PIXI.Point(x, 0));
-            this.wallRepository.addWall(new PIXI.Point(x, GRID_HEIGHT - 1));
+        else {
+            for (let x = 0; x < GRID_WIDTH; x++) {
+                this.wallRepository.addWall(new PIXI.Point(x, 0));
+                this.wallRepository.addWall(new PIXI.Point(x, GRID_HEIGHT - 1));
+            }
+            for (let y = 1; y < (GRID_HEIGHT - 1); y++) {
+                this.wallRepository.addWall(new PIXI.Point(0, y));
+                this.wallRepository.addWall(new PIXI.Point(GRID_WIDTH - 1, y));
+            }
+            for (let x = 1; x < 3 - 1; x++) {
+                this.wallRepository.addWall(new PIXI.Point(x, GRID_WIDTH / 2 + 1));
+            }
+            for (let x = 5; x < GRID_WIDTH - 1; x++) {
+                this.wallRepository.addWall(new PIXI.Point(x, GRID_WIDTH / 2 + 1));
+            }
+            [
+                new PIXI.Point(4, 3),
+                new PIXI.Point(4, 4),
+                new PIXI.Point(3, 4),
+                new PIXI.Point(3, 3),
+            ].forEach((cell) => {
+                this.wallRepository.addWall(cell);
+            });
+            for (let i = 0; i < 3; i++) {
+                this.objects.push(new Desk_1.Desk(this.getRandomCell(), this));
+            }
+            for (let i = 0; i < 3; i++) {
+                this.objects.push(new Sofa_1.Sofa(this.getRandomCell(), this));
+            }
+            this.objects.push(new Dispenser_1.Dispenser(this.getRandomCell(), this));
+            this.objects.push(new Dispenser_1.Dispenser(this.getRandomCell(), this));
+            this.objects.push(new Dispenser_1.Dispenser(this.getRandomCell(), this));
         }
-        for (let y = 1; y < (GRID_HEIGHT - 1); y++) {
-            this.wallRepository.addWall(new PIXI.Point(0, y));
-            this.wallRepository.addWall(new PIXI.Point(GRID_WIDTH - 1, y));
-        }
-        for (let x = 1; x < 3 - 1; x++) {
-            this.wallRepository.addWall(new PIXI.Point(x, GRID_WIDTH / 2 + 1));
-        }
-        for (let x = 5; x < GRID_WIDTH - 1; x++) {
-            this.wallRepository.addWall(new PIXI.Point(x, GRID_WIDTH / 2 + 1));
-        }
-        [
-            new PIXI.Point(4, 3),
-            new PIXI.Point(4, 4),
-            new PIXI.Point(3, 4),
-            new PIXI.Point(3, 3),
-        ].forEach((cell) => {
-            this.wallRepository.addWall(cell);
-        });
-        for (let i = 0; i < 3; i++) {
-            this.objects.push(new Desk_1.Desk(this.getRandomCell(), world));
-        }
-        for (let i = 0; i < 3; i++) {
-            this.objects.push(new Sofa_1.Sofa(this.getRandomCell(), world));
-        }
-        this.objects.push(new Dispenser_1.Dispenser(this.getRandomCell(), world));
+        this.humanRepository = new HumanRepository_1.HumanRepository(this);
     }
     create(game, groups) {
         const floor = groups['floor'];
@@ -724,11 +819,68 @@ class Ground {
             desk.create(game, noname);
         });
         this.wallRepository.create(game, noname);
+        this.humanRepository.create(game, groups, this);
+    }
+    update() {
+        this.humanRepository.update();
+    }
+    humanMoved(positions) {
+        const walls = this.wallRepository.getWalls();
+        walls.forEach((wall) => {
+            let visible = true;
+            positions.forEach((position) => {
+                if (this.anyHumanIsAboveWall(wall)) {
+                    visible = false;
+                }
+            });
+            wall.setVisibility(visible);
+        });
+    }
+    anyHumanIsAboveWall(wall) {
+        const humans = this.humanRepository.humans;
+        for (let i = 0; i < humans.length; i++) {
+            if (WorldKnowledge.humanIsAboveWall(humans[i].getPosition(), wall)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    static humanIsAboveWall(humanPosition, wall) {
+        const wallPosition = wall.getPosition();
+        return (humanPosition.x == wallPosition.x + 1 && humanPosition.y == wallPosition.y + 1) ||
+            (humanPosition.x == wallPosition.x && humanPosition.y == wallPosition.y + 1) ||
+            (humanPosition.x == wallPosition.x + 1 && humanPosition.y == wallPosition.y);
+    }
+    getSelectedHumanSprite() {
+        return this.humanRepository.getSelectedHumanSprite();
+    }
+    resetAStar(startPosition, endPosition) {
+        this.humanRepository.humans.forEach((human) => {
+            human.resetAStar(startPosition, endPosition);
+        });
+    }
+    getAnotherFreeHuman(human) {
+        const availableHumans = this.humanRepository.humans.filter((anotherHuman) => {
+            return anotherHuman !== human && anotherHuman.isFree();
+        });
+        if (availableHumans.length === 0) {
+            return null;
+        }
+        return availableHumans[Math.floor(Math.random() * availableHumans.length)];
     }
     getRandomCell() {
         const acceptableIndexes = this.getAcceptables();
         const random = Math.floor(Math.random() * acceptableIndexes.length);
         return this.cells[acceptableIndexes[random]].getPosition();
+    }
+    getAcceptables() {
+        let acceptables = [];
+        for (let i = 0; i < this.cells.length; i++) {
+            if (this.isFree(this.cells[i].getPosition())) {
+                acceptables.push(i);
+            }
+        }
+        return acceptables;
     }
     getMeetingCells(cells) {
         const acceptableIndexes = this.getAcceptables();
@@ -739,7 +891,7 @@ class Ground {
             for (let j = i + 1; j < acceptableIndexes.length; j++) {
                 const position2 = this.cells[acceptableIndexes[j]].getPosition();
                 if (PositionTransformer_1.PositionTransformer.isNeighbor(position1, position2)) {
-                    const newDist = Ground.getDist(cells, position1);
+                    const newDist = WorldKnowledge.getDist(cells, position1);
                     if (result === null || newDist < dist) {
                         dist = newDist;
                         result = [position1, position2];
@@ -761,15 +913,6 @@ class Ground {
         }
         return grid;
     }
-    getAcceptables() {
-        let acceptables = [];
-        for (let i = 0; i < this.cells.length; i++) {
-            if (this.isFree(this.cells[i].getPosition())) {
-                acceptables.push(i);
-            }
-        }
-        return acceptables;
-    }
     isFree(point, object = null) {
         if (point.x < 0 || point.y < 0 || point.x >= GRID_WIDTH || point.y >= GRID_HEIGHT) {
             return false;
@@ -784,39 +927,36 @@ class Ground {
         }
         return true;
     }
-    getWallRepository() {
-        return this.wallRepository;
-    }
-    getRandomFreeSofa(humans) {
+    getRandomFreeSofa() {
         const freeSofas = this.objects.filter((object) => {
-            return object.constructor.name === 'Sofa' && !Ground.isSittableTaken(object, humans);
+            return object.constructor.name === 'Sofa' && !this.isObjectUsed(object);
         });
         if (freeSofas.length === 0) {
             return null;
         }
         return freeSofas[Math.floor(Math.random() * freeSofas.length)];
     }
-    static isSittableTaken(sittable, humans) {
-        for (let i = 0; i < humans.length; i++) {
-            const human = humans[i];
-            if (sittable.getPosition().x === human.getPosition().x && sittable.getPosition().y === human.getPosition().y) {
+    isObjectUsed(interactiveObject) {
+        for (let i = 0; i < this.humanRepository.humans.length; i++) {
+            const human = this.humanRepository.humans[i];
+            if (interactiveObject.getPosition().x === human.getPosition().x && interactiveObject.getPosition().y === human.getPosition().y) {
                 return true;
             }
         }
         return false;
     }
-    getRandomFreeDesk(humans) {
+    getRandomFreeDesk() {
         const freeDesks = this.objects.filter((object) => {
-            return object.constructor.name === 'Desk' && !Ground.isSittableTaken(object, humans);
+            return object.constructor.name === 'Desk' && !this.isObjectUsed(object);
         });
         if (freeDesks.length === 0) {
             return null;
         }
         return freeDesks[Math.floor(Math.random() * freeDesks.length)];
     }
-    getRandomFreeDispenser(humans) {
+    getRandomFreeDispenser() {
         const freeDispensers = this.objects.filter((object) => {
-            return object.constructor.name === 'Dispenser' && !Ground.isSittableTaken(object, humans);
+            return object.constructor.name === 'Dispenser' && !this.isObjectUsed(object);
         });
         if (freeDispensers.length === 0) {
             return null;
@@ -831,11 +971,76 @@ class Ground {
         return dist;
     }
 }
-exports.Ground = Ground;
+exports.WorldKnowledge = WorldKnowledge;
 
 
 /***/ }),
 /* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const HumanStateManager_1 = __webpack_require__(1);
+const LOSS = -0.05;
+const DEFAULT = 0.75;
+var HUMOR;
+(function (HUMOR) {
+    HUMOR[HUMOR["RELAXATION"] = 0] = "RELAXATION";
+    HUMOR[HUMOR["HUNGER"] = 1] = "HUNGER";
+    HUMOR[HUMOR["SOCIAL"] = 2] = "SOCIAL";
+})(HUMOR = exports.HUMOR || (exports.HUMOR = {}));
+class HumanHumorManager {
+    constructor() {
+        this.humors = {};
+        this.humors[HUMOR.RELAXATION] = DEFAULT;
+        this.humors[HUMOR.HUNGER] = DEFAULT;
+        this.humors[HUMOR.SOCIAL] = DEFAULT;
+        this.hasToBeUpdated = true;
+    }
+    create(game) {
+        this.game = game;
+    }
+    update() {
+        if (this.hasToBeUpdated) {
+            let humorUpdate = {};
+            humorUpdate[HUMOR.RELAXATION] = LOSS;
+            humorUpdate[HUMOR.HUNGER] = LOSS;
+            humorUpdate[HUMOR.SOCIAL] = LOSS;
+            this.updateFromStateInner(humorUpdate);
+            this.hasToBeUpdated = false;
+            this.game.time.events.add(10 * Phaser.Timer.SECOND, () => {
+                this.hasToBeUpdated = true;
+            }, this);
+        }
+    }
+    updateFromState(state) {
+        this.updateFromStateInner(HumanStateManager_1.HumanStateManager.getHumorGains(state));
+    }
+    updateFromStateInner(humors) {
+        Object.keys(humors).forEach((humor) => {
+            this.humors[humor] = Math.max(0, Math.min(1, this.humors[humor] + humors[humor]));
+        });
+    }
+    static getHumors() {
+        return [
+            HUMOR.RELAXATION,
+            HUMOR.HUNGER,
+            HUMOR.SOCIAL
+        ];
+    }
+    getHumor(humor) {
+        return this.humors[humor];
+    }
+    getGeneralHumor() {
+        return (this.humors[HUMOR.RELAXATION] + this.humors[HUMOR.SOCIAL] + this.humors[HUMOR.HUNGER]) / 3;
+    }
+}
+exports.HumanHumorManager = HumanHumorManager;
+
+
+/***/ }),
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -880,20 +1085,20 @@ exports.ObjectSelector = ObjectSelector;
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const PositionTransformer_1 = __webpack_require__(0);
-const Ground_1 = __webpack_require__(7);
+const WorldKnowledge_1 = __webpack_require__(7);
 class Cell {
     constructor(point) {
         this.position = point;
     }
     create(game, group) {
-        this.sprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y, Ground_1.DEBUG_WORLD ? 'casedefault' : 'woodcell');
+        this.sprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y, WorldKnowledge_1.DEBUG_WORLD ? 'casedefault' : 'woodcell');
         this.sprite.anchor.setTo(0.5, 1);
         group.add(this.sprite);
     }
@@ -905,7 +1110,601 @@ exports.Cell = Cell;
 
 
 /***/ }),
-/* 10 */
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const app_1 = __webpack_require__(4);
+class Boot extends Phaser.State {
+    create() {
+        // this.physics.startSystem(Phaser.Physics.ARCADE);
+        this.game.scale.scaleMode = Phaser.ScaleManager.USER_SCALE;
+        this.game.scale.setUserScale(app_1.SCALE, app_1.SCALE);
+        this.game.renderer.renderSession.roundPixels = true;
+        Phaser.Canvas.setImageRenderingCrisp(this.game.canvas);
+        this.game.state.start('Preload');
+    }
+}
+exports.default = Boot;
+
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const WorldKnowledge_1 = __webpack_require__(7);
+const app_1 = __webpack_require__(4);
+class Play extends Phaser.State {
+    constructor() {
+        super();
+        this.worldKnowledge = new WorldKnowledge_1.WorldKnowledge();
+    }
+    create() {
+        this.game.stage.backgroundColor = "#4488AA";
+        this.groups = {
+            'floor': this.game.add.group(),
+            'noname': this.game.add.group(),
+            'upper': this.game.add.group(),
+        };
+        this.worldKnowledge.create(this.game, this.groups);
+        this.game.world.setBounds(0, 0, app_1.WORLD_WIDTH, app_1.WORLD_HEIGHT);
+        this.game.camera.setPosition((app_1.WORLD_WIDTH - app_1.CAMERA_WIDTH_PIXELS) / 2, (app_1.WORLD_HEIGHT - app_1.CAMERA_HEIGHT_PIXELS) / 2);
+    }
+    update(game) {
+        this.groups['noname'].sort('y', Phaser.Group.SORT_ASCENDING);
+        this.worldKnowledge.update();
+        const selected = this.worldKnowledge.getSelectedHumanSprite();
+        if (selected) {
+            this.game.camera.follow(selected, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
+        }
+    }
+}
+exports.default = Play;
+
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+class Preload extends Phaser.State {
+    preload() {
+        this.loadAudio();
+        this.loadLevels();
+        this.loadTileMaps();
+        this.loadGameImages();
+        this.loadFonts();
+    }
+    create() {
+        this.game.state.start('Play');
+    }
+    loadAudio() {
+    }
+    loadLevels() {
+    }
+    loadTileMaps() {
+    }
+    loadGameImages() {
+        this.game.load.spritesheet('human', 'assets/human.png', 24, 25);
+        this.game.load.spritesheet('human_selected', 'assets/human_selected.png', 24, 25);
+        this.game.load.spritesheet('human_red', 'assets/human_red.png', 24, 25);
+        this.game.load.spritesheet('human_red_selected', 'assets/human_red_selected.png', 24, 25);
+        this.game.load.spritesheet('casedefault', 'assets/casedefault.png', 40, 19);
+        this.game.load.spritesheet('woodcell', 'assets/woodcell.png', 40, 19);
+        this.game.load.spritesheet('chair', 'assets/chair.png', 40, 40);
+        this.game.load.spritesheet('chair_selected', 'assets/chair_selected.png', 40, 40);
+        this.game.load.spritesheet('desk', 'assets/desk.png', 40, 40);
+        this.game.load.spritesheet('desk_selected', 'assets/desk_selected.png', 40, 40);
+        this.game.load.spritesheet('wall', 'assets/wall.png', 40, 37, 16);
+        this.game.load.spritesheet('sofa', 'assets/sofa.png', 8, 6);
+        this.game.load.spritesheet('dispenser', 'assets/dispenser.png', 26, 35);
+        this.game.load.spritesheet('dispenser_selected', 'assets/dispenser_selected.png', 26, 35);
+        this.game.load.spritesheet('sofa_selected', 'assets/sofa_selected.png', 8, 6);
+        this.game.load.spritesheet('bubble', 'assets/bubble.png', 11, 13);
+    }
+    loadFonts() {
+    }
+}
+exports.default = Preload;
+
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const Human_1 = __webpack_require__(5);
+const HumanStateManager_1 = __webpack_require__(1);
+const PositionTransformer_1 = __webpack_require__(0);
+const HumanAnimationManager_1 = __webpack_require__(2);
+class CoffeeState {
+    constructor(human, dispenser, worldKnowledge) {
+        this.human = human;
+        this.dispenser = dispenser;
+        this.isHumanOnTheRightCell = false;
+        this.worldKnowledge = worldKnowledge;
+        this.events = [];
+    }
+    isActive() {
+        if (!this.isHumanOnTheRightCell) {
+            if (this.worldKnowledge.isObjectUsed(this.dispenser)) {
+                this.active = false;
+                return false;
+            }
+        }
+        if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
+            this.isHumanOnTheRightCell = true;
+            this.human.interactWith(this.dispenser, this.dispenser.forceOrientation());
+            this.events.push(this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
+                this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.DRINK);
+                this.human.updateHumorFromState();
+                this.events.push(this.game.time.events.add(Math.floor(Phaser.Math.random(2, 4)) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.DRINK), () => {
+                    this.human.goToFreeCell(this.dispenser.getEntries());
+                    this.events.push(this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
+                        this.active = false;
+                    }, this));
+                }, this));
+            }));
+        }
+        return this.active;
+    }
+    start(game) {
+        this.active = true;
+        this.game = game;
+        if (!this.human.moveToClosest(this.dispenser.getPosition(), this.dispenser.getEntries())) {
+            this.active = false;
+            this.stop(game);
+            return false;
+        }
+        return true;
+    }
+    isNeighborPosition() {
+        return !this.human.isMoving() &&
+            PositionTransformer_1.PositionTransformer.isNeighbor(this.human.getPosition(), this.dispenser.getPosition());
+    }
+    stop(game) {
+        this.events.forEach((event) => {
+            game.time.events.remove(event);
+        });
+        this.active = false;
+    }
+    getState() {
+        return HumanStateManager_1.STATE.COFFEE;
+    }
+}
+exports.CoffeeState = CoffeeState;
+
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const HumanAnimationManager_1 = __webpack_require__(2);
+const HumanStateManager_1 = __webpack_require__(1);
+class FreezeState {
+    constructor(human) {
+        this.human = human;
+    }
+    isActive() {
+        return this.active;
+    }
+    start(game) {
+        this.active = true;
+        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE);
+        this.event = game.time.events.add(Phaser.Math.random(1, 2) * Phaser.Timer.SECOND, this.end, this);
+        return true;
+    }
+    end() {
+        this.active = false;
+    }
+    stop(game) {
+        if (this.event) {
+            game.time.events.remove(this.event);
+        }
+        this.end();
+    }
+    getState() {
+        return HumanStateManager_1.STATE.FREEZE;
+    }
+}
+exports.FreezeState = FreezeState;
+
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const HumanStateManager_1 = __webpack_require__(1);
+class Meeting {
+    constructor(humans, time, worldKnowledge) {
+        const cells = worldKnowledge.getMeetingCells(humans.map((human) => {
+            return human.getPosition();
+        }));
+        if (cells === null) {
+            throw 'No meeting point found!';
+        }
+        this.time = time;
+        this.places = [];
+        for (let i = 0; i < cells.length; i++) {
+            this.places.push({
+                human: humans[i],
+                position: cells[i]
+            });
+        }
+    }
+    getCell(human) {
+        for (let i = 0; i < this.places.length; i++) {
+            if (human === this.places[i].human) {
+                return this.places[i].position;
+            }
+        }
+        return null;
+    }
+    isReady() {
+        for (let i = 0; i < this.places.length; i++) {
+            const human = this.places[i].human;
+            const position = this.places[i].position;
+            if (human.isMoving() || human.getPosition().x !== position.x || human.getPosition().y !== position.y) {
+                return false;
+            }
+        }
+        return true;
+    }
+    getTime() {
+        return this.time;
+    }
+    getAnotherHuman(human) {
+        let anotherHumans = [];
+        this.places.forEach((place) => {
+            if (place.human !== human) {
+                anotherHumans.push(place.human);
+            }
+        });
+        return anotherHumans[Math.floor(Math.random() * anotherHumans.length)];
+    }
+    areAllHumanStillInMeeting() {
+        for (let i = 0; i < this.places.length; i++) {
+            const human = this.places[i].human;
+            if (human.getState() !== HumanStateManager_1.STATE.TALK) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+exports.Meeting = Meeting;
+
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const HumanStateManager_1 = __webpack_require__(1);
+class MoveRandomState {
+    constructor(human, worldKnowledge) {
+        this.active = false;
+        this.human = human;
+        this.goal = worldKnowledge.getRandomCell();
+        while (this.human.getPosition().x === this.goal.x && this.human.getPosition().y === this.goal.y) {
+            this.goal = worldKnowledge.getRandomCell();
+        }
+    }
+    isActive() {
+        return this.active && this.human.getPosition().x !== this.goal.x ||
+            this.human.getPosition().y !== this.goal.y ||
+            this.human.isMoving();
+    }
+    start(game) {
+        this.active = true;
+        if (!this.human.moveTo(this.goal)) {
+            this.stop(game);
+            return false;
+        }
+        return true;
+    }
+    stop(game) {
+        this.active = false;
+    }
+    getState() {
+        return HumanStateManager_1.STATE.MOVE_RANDOM;
+    }
+}
+exports.MoveRandomState = MoveRandomState;
+
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const Human_1 = __webpack_require__(5);
+const HumanAnimationManager_1 = __webpack_require__(2);
+const HumanStateManager_1 = __webpack_require__(1);
+const PositionTransformer_1 = __webpack_require__(0);
+class SitState {
+    constructor(human, interactiveObject, worldKnowledge) {
+        this.human = human;
+        this.interactiveObject = interactiveObject;
+        this.isHumanOnTheRightCell = false;
+        this.worldKnowledge = worldKnowledge;
+        this.events = [];
+    }
+    isActive() {
+        if (!this.isHumanOnTheRightCell) {
+            if (this.worldKnowledge.isObjectUsed(this.interactiveObject)) {
+                this.active = false;
+                return false;
+            }
+        }
+        if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
+            this.isHumanOnTheRightCell = true;
+            this.human.interactWith(this.interactiveObject);
+            this.events.push(this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
+                this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN);
+                this.human.updateHumorFromState();
+                this.events.push(this.game.time.events.add(Phaser.Math.random(3, 10) * Phaser.Timer.SECOND + HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SIT_DOWN), () => {
+                    this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.STAND_UP);
+                    this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.STAND_UP) + 100, () => {
+                        this.human.goToFreeCell(this.interactiveObject.getEntries());
+                        this.events.push(this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
+                            this.active = false;
+                        }, this));
+                    }, this));
+                }, this));
+            }, this));
+        }
+        return this.active;
+    }
+    start(game) {
+        this.active = true;
+        this.game = game;
+        if (!this.human.moveToClosest(this.interactiveObject.getPosition(), this.interactiveObject.getEntries())) {
+            this.active = false;
+            this.stop(game);
+            return false;
+        }
+        return true;
+    }
+    isNeighborPosition() {
+        return !this.human.isMoving() &&
+            PositionTransformer_1.PositionTransformer.isNeighbor(this.human.getPosition(), this.interactiveObject.getPosition());
+    }
+    stop(game) {
+        this.events.forEach((event) => {
+            game.time.events.remove(event);
+        });
+        this.active = false;
+    }
+    getState() {
+        return HumanStateManager_1.STATE.SIT;
+    }
+}
+exports.SitState = SitState;
+
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const HumanAnimationManager_1 = __webpack_require__(2);
+const HumanStateManager_1 = __webpack_require__(1);
+class SmokeState {
+    constructor(human) {
+        this.human = human;
+    }
+    isActive() {
+        return this.active;
+    }
+    start(game) {
+        game.time.events.add(Phaser.Math.random(1, 3) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SMOKE), this.end, this);
+        this.active = true;
+        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SMOKE);
+        this.human.updateHumorFromState();
+        return true;
+    }
+    end() {
+        this.active = false;
+    }
+    stop(game) {
+        this.active = false;
+    }
+    getState() {
+        return HumanStateManager_1.STATE.SMOKE;
+    }
+}
+exports.SmokeState = SmokeState;
+
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const HumanAnimationManager_1 = __webpack_require__(2);
+const Meeting_1 = __webpack_require__(16);
+const Direction_1 = __webpack_require__(3);
+const HumanStateManager_1 = __webpack_require__(1);
+const HUMOR_WIN = 0.5;
+class TalkState {
+    constructor(human, anotherHuman, game, worldKnowledge, meeting = null) {
+        this.human = human;
+        this.anotherHuman = anotherHuman;
+        this.game = game;
+        this.worldKnowledge = worldKnowledge;
+        this.meetingStarted = false;
+        this.events = [];
+        this.meeting = meeting;
+    }
+    isActive() {
+        if (!this.meetingStarted) {
+            if (!this.meeting.areAllHumanStillInMeeting()) {
+                this.active = false;
+            }
+            else {
+                if (this.meeting.isReady()) {
+                    this.meetingStarted = true;
+                    this.game.time.events.add(this.meeting.getTime() + Math.random() * Phaser.Timer.SECOND, this.end, this);
+                    this.human.updateHumorFromState();
+                    let animation = HumanAnimationManager_1.ANIMATION.TALK;
+                    if (Math.random() > 0.5) {
+                        animation = TalkState.otherAnimation(animation);
+                    }
+                    this.switchAnimation(animation);
+                }
+                else if (!this.human.isMoving()) {
+                    const direction = Direction_1.Direction.getNeighborDirection(this.human.getPosition(), this.meeting.getAnotherHuman(this.human).getPosition());
+                    this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE, Direction_1.Direction.isLeft(direction), Direction_1.Direction.isTop(direction));
+                }
+            }
+        }
+        return this.active;
+    }
+    switchAnimation(animation) {
+        const direction = Direction_1.Direction.getNeighborDirection(this.human.getPosition(), this.meeting.getAnotherHuman(this.human).getPosition());
+        if (animation === HumanAnimationManager_1.ANIMATION.TALK) {
+            this.human.showTalkBubble();
+        }
+        else {
+            this.human.hideTalkBubble();
+        }
+        this.human.loadAnimation(animation, Direction_1.Direction.isLeft(direction), Direction_1.Direction.isTop(direction));
+        this.events.push(this.game.time.events.add(Phaser.Math.random(3, 6) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(animation), this.switchAnimation, this, TalkState.otherAnimation(animation)));
+    }
+    start(game) {
+        this.active = true;
+        if (this.meeting === null) {
+            this.meeting = new Meeting_1.Meeting([this.human, this.anotherHuman], Phaser.Math.random(8, 20) * Phaser.Timer.SECOND, this.worldKnowledge);
+            if (!this.anotherHuman.goMeeting(this.meeting)) {
+                this.end();
+                return false;
+            }
+        }
+        if (!this.human.moveTo(this.meeting.getCell(this.human))) {
+            this.end();
+            return false;
+        }
+        return true;
+    }
+    end() {
+        this.human.hideTalkBubble();
+        this.events.forEach((event) => {
+            this.game.time.events.remove(event);
+        });
+        this.active = false;
+    }
+    stop(game) {
+        this.end();
+    }
+    getState() {
+        return HumanStateManager_1.STATE.TALK;
+    }
+    static otherAnimation(animation) {
+        return animation === HumanAnimationManager_1.ANIMATION.TALK ? HumanAnimationManager_1.ANIMATION.FREEZE : HumanAnimationManager_1.ANIMATION.TALK;
+    }
+}
+exports.TalkState = TalkState;
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const Human_1 = __webpack_require__(5);
+const HumanAnimationManager_1 = __webpack_require__(2);
+const HumanStateManager_1 = __webpack_require__(1);
+const PositionTransformer_1 = __webpack_require__(0);
+class TypeState {
+    constructor(human, interactiveObject, worldKnowledge) {
+        this.human = human;
+        this.interactiveObject = interactiveObject;
+        this.isHumanOnTheRightCell = false;
+        this.worldKnowledge = worldKnowledge;
+        this.events = [];
+    }
+    isActive() {
+        if (!this.isHumanOnTheRightCell) {
+            if (this.worldKnowledge.isObjectUsed(this.interactiveObject)) {
+                this.active = false;
+                return false;
+            }
+        }
+        if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
+            this.isHumanOnTheRightCell = true;
+            this.human.interactWith(this.interactiveObject, this.interactiveObject.forceOrientation());
+            this.events.push(this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
+                this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN, this.interactiveObject.forceOrientation());
+                this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SIT_DOWN), () => {
+                    this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.TYPE);
+                    this.events.push(this.game.time.events.add(Phaser.Math.random(5, 10) * Phaser.Timer.SECOND, () => {
+                        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.STAND_UP);
+                        this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.STAND_UP) + 100, () => {
+                            this.human.goToFreeCell(this.interactiveObject.getEntries());
+                            this.events.push(this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
+                                this.active = false;
+                            }, this));
+                        }, this));
+                    }, this));
+                }));
+            }, this));
+        }
+        return this.active;
+    }
+    start(game) {
+        this.active = true;
+        this.game = game;
+        if (!this.human.moveToClosest(this.interactiveObject.getPosition(), this.interactiveObject.getEntries())) {
+            this.active = false;
+            return false;
+        }
+        return true;
+    }
+    isNeighborPosition() {
+        return !this.human.isMoving() &&
+            PositionTransformer_1.PositionTransformer.isNeighbor(this.human.getPosition(), this.interactiveObject.getPosition());
+    }
+    stop(game) {
+        this.events.forEach((event) => {
+            game.time.events.remove(event);
+        });
+        this.active = false;
+    }
+    getState() {
+        return HumanStateManager_1.STATE.TYPE;
+    }
+}
+exports.TypeState = TypeState;
+
+
+/***/ }),
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -913,11 +1712,11 @@ exports.Cell = Cell;
 Object.defineProperty(exports, "__esModule", { value: true });
 const Direction_1 = __webpack_require__(3);
 class ClosestPathFinder {
-    constructor(game, world) {
+    constructor(game, worldKnowledge) {
         this.finders = {};
-        this.world = world;
-        const grid = world.getGround().getGrid();
-        const acceptables = world.getGround().getAcceptables();
+        this.worldKnowledge = worldKnowledge;
+        const grid = worldKnowledge.getGrid();
+        const acceptables = worldKnowledge.getAcceptables();
         Direction_1.Direction.neighborDirections().concat([Direction_1.DIRECTION.CURRENT]).forEach((direction) => {
             this.finders[direction] = game.plugins.add(Phaser.Plugin.PathFinderPlugin);
             this.finders[direction].setGrid(grid, acceptables);
@@ -996,8 +1795,8 @@ class ClosestPathFinder {
         }
     }
     reset() {
-        const grid = this.world.getGround().getGrid();
-        const acceptables = this.world.getGround().getAcceptables();
+        const grid = this.worldKnowledge.getGrid();
+        const acceptables = this.worldKnowledge.getAcceptables();
         Object.keys(this.finders).forEach((key) => {
             this.finders[key].setGrid(grid, acceptables);
         });
@@ -1007,7 +1806,261 @@ exports.ClosestPathFinder = ClosestPathFinder;
 
 
 /***/ }),
-/* 11 */
+/* 23 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const GAP_X = -7;
+const GAP_Y = 1;
+const DEBUG = false;
+class HumorSprite {
+    constructor() {
+    }
+    create(humanSprite, game, group) {
+        this.parent = humanSprite;
+        this.sprite = game.add.graphics(this.parent.position.x, this.parent.position.y, group);
+        group.add(this.sprite);
+    }
+    update(generalHumor, humors) {
+        this.sprite.position.x = Math.ceil(this.parent.position.x + GAP_X);
+        this.sprite.position.y = Math.ceil(this.parent.position.y + GAP_Y);
+        this.sprite.clear();
+        if (!DEBUG) {
+            humors = [generalHumor];
+        }
+        for (let i = 0; i < humors.length; i++) {
+            this.sprite.moveTo(0, i * 2);
+            if (humors[i] < 0.1) {
+                this.sprite.lineStyle(2, 0xff004d);
+            }
+            else if (humors[i] < 0.5) {
+                this.sprite.lineStyle(2, 0xfca203);
+            }
+            else {
+                this.sprite.lineStyle(2, 0x00de2d);
+            }
+            this.sprite.lineTo(humors[i] * 15 + 1, i * 2);
+        }
+    }
+}
+exports.HumorSprite = HumorSprite;
+
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+class TalkBubble {
+    constructor() {
+    }
+    create(humanSprite, game, group) {
+        this.parent = humanSprite;
+        this.sprite = game.add.sprite(this.parent.position.x, this.parent.position.y, 'bubble', 0, group);
+        this.sprite.anchor.set(1, 2.8);
+        this.hide();
+        group.add(this.sprite);
+    }
+    show() {
+        this.sprite.alpha = 0.8;
+    }
+    hide() {
+        this.sprite.alpha = 0;
+    }
+    update() {
+        this.sprite.position = this.parent.position;
+        this.sprite.scale.x = this.parent.scale.x;
+    }
+}
+exports.TalkBubble = TalkBubble;
+
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const PositionTransformer_1 = __webpack_require__(0);
+const Direction_1 = __webpack_require__(3);
+const ObjectMover_1 = __webpack_require__(6);
+/**
+ * This variable will fake the position of the sprite without changing it for the enduser.
+ * A negative number (e.g. -10) will draw the object 10 pixels on the top but will update the anchor to put it back
+ * to its position.
+ * If the Human is not seen because the object is in front of it, you have to put a more negative number.
+ * @type {number}
+ */
+const FAKE_ANCHOR_BOTTOM = -4;
+/**
+ * Negative : will display the object to the left
+ * @type {number}
+ */
+const GAP_HORIZONTAL = -10;
+/**
+ * Negative: Will display the object to the top
+ * @type {number}
+ */
+const GAP_VERTICAL = -8;
+class Desk {
+    constructor(point, worldKnowledge) {
+        this.position = point;
+        this.worldKnowledge = worldKnowledge;
+    }
+    create(game, group) {
+        const isLeftOriented = Math.random() >= 0.5;
+        this.chairSprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + (isLeftOriented ? -GAP_HORIZONTAL : GAP_HORIZONTAL), PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM + GAP_VERTICAL, 'chair');
+        this.deskSprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM, 'desk');
+        this.chairSprite.anchor.set(0.5, 1 + FAKE_ANCHOR_BOTTOM / this.chairSprite.height);
+        this.deskSprite.anchor.set(0.5, 1 + FAKE_ANCHOR_BOTTOM / this.deskSprite.height);
+        ObjectMover_1.ObjectMover.makeMovable(this, this.worldKnowledge);
+        if (isLeftOriented) {
+            this.deskSprite.scale.set(-1, 1);
+            this.chairSprite.scale.set(-1, 1);
+        }
+        group.add(this.chairSprite);
+        group.add(this.deskSprite);
+    }
+    getPosition() {
+        return this.position;
+    }
+    getPositionGap() {
+        return new PIXI.Point(this.isLeftOriented() ? -GAP_HORIZONTAL : GAP_HORIZONTAL, GAP_VERTICAL - 2);
+    }
+    getEntries() {
+        return this.isLeftOriented() ?
+            [Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.TOP] :
+            [Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT];
+    }
+    isLeftOriented() {
+        return this.deskSprite.scale.x === -1;
+    }
+    forceOrientation() {
+        return this.isLeftOriented();
+    }
+    getSprites() {
+        return [this.deskSprite, this.chairSprite];
+    }
+    tryToMove(point) {
+        if (this.worldKnowledge.isFree(point, this)) {
+            this.position = point;
+            this.chairSprite.position.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + (this.isLeftOriented() ? -GAP_HORIZONTAL : GAP_HORIZONTAL);
+            this.chairSprite.position.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM + GAP_VERTICAL;
+            this.deskSprite.position.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x;
+            this.deskSprite.position.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM;
+        }
+    }
+}
+exports.Desk = Desk;
+
+
+/***/ }),
+/* 26 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const PositionTransformer_1 = __webpack_require__(0);
+const ObjectMover_1 = __webpack_require__(6);
+const Direction_1 = __webpack_require__(3);
+const DISPENSER_BOTTOM = -4;
+const DISPENSER_LEFT = 4;
+const DISPENSER_ANCHOR_BOTTOM = 3;
+class Dispenser {
+    constructor(point, worldKnowledge) {
+        this.position = point;
+        this.worldKnowledge = worldKnowledge;
+    }
+    create(game, group) {
+        this.sprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + DISPENSER_LEFT, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + DISPENSER_BOTTOM - DISPENSER_ANCHOR_BOTTOM, 'dispenser');
+        this.sprite.anchor.set(0.5, 1.0 - DISPENSER_ANCHOR_BOTTOM / this.sprite.height);
+        ObjectMover_1.ObjectMover.makeMovable(this, this.worldKnowledge);
+        group.add(this.sprite);
+    }
+    getPosition() {
+        return this.position;
+    }
+    getSprites() {
+        return [this.sprite];
+    }
+    tryToMove(point) {
+        if (this.worldKnowledge.isFree(point, this)) {
+            this.position = point;
+            this.sprite.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + DISPENSER_LEFT;
+            this.sprite.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + DISPENSER_BOTTOM - DISPENSER_ANCHOR_BOTTOM;
+        }
+    }
+    getEntries() {
+        return [Direction_1.DIRECTION.BOTTOM];
+    }
+    getPositionGap() {
+        return new PIXI.Point(0, 0);
+    }
+    forceOrientation() {
+        return true;
+    }
+}
+exports.Dispenser = Dispenser;
+
+
+/***/ }),
+/* 27 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const PositionTransformer_1 = __webpack_require__(0);
+const Direction_1 = __webpack_require__(3);
+const ObjectMover_1 = __webpack_require__(6);
+const SOFA_BOTTOM = -8;
+const SOFA_LEFT = 0;
+const SOFA_ANCHOR_BOTTOM = 3;
+class Sofa {
+    constructor(point, worldKnowledge) {
+        this.position = point;
+        this.worldKnowledge = worldKnowledge;
+    }
+    create(game, group) {
+        this.sprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + SOFA_LEFT, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + SOFA_BOTTOM - SOFA_ANCHOR_BOTTOM, 'sofa');
+        this.sprite.anchor.set(0.5, 1.0 - SOFA_ANCHOR_BOTTOM / this.sprite.height);
+        ObjectMover_1.ObjectMover.makeMovable(this, this.worldKnowledge);
+        group.add(this.sprite);
+    }
+    getPosition() {
+        return this.position;
+    }
+    getPositionGap() {
+        return new PIXI.Point(SOFA_LEFT, SOFA_BOTTOM);
+    }
+    getEntries() {
+        return [Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.BOTTOM];
+    }
+    forceOrientation() {
+        return null;
+    }
+    getSprites() {
+        return [this.sprite];
+    }
+    tryToMove(point) {
+        if (this.worldKnowledge.isFree(point, this)) {
+            this.position = point;
+            this.sprite.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + SOFA_LEFT;
+            this.sprite.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + SOFA_BOTTOM - SOFA_ANCHOR_BOTTOM;
+        }
+    }
+}
+exports.Sofa = Sofa;
+
+
+/***/ }),
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1044,841 +2097,7 @@ exports.Wall = Wall;
 
 
 /***/ }),
-/* 12 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const Ground_1 = __webpack_require__(7);
-const HumanRepository_1 = __webpack_require__(27);
-class World {
-    constructor() {
-        this.ground = new Ground_1.Ground(this);
-        this.humanRepository = new HumanRepository_1.HumanRepository(this);
-    }
-    create(game, groups) {
-        this.ground.create(game, groups);
-        this.humanRepository.create(game, groups, this);
-    }
-    update() {
-        this.humanRepository.update();
-    }
-    getGround() {
-        return this.ground;
-    }
-    humanMoved(positions) {
-        const walls = this.ground.getWallRepository().getWalls();
-        walls.forEach((wall) => {
-            let visible = true;
-            positions.forEach((position) => {
-                if (this.anyHumanIsAboveWall(wall)) {
-                    visible = false;
-                }
-            });
-            wall.setVisibility(visible);
-        });
-    }
-    anyHumanIsAboveWall(wall) {
-        const humans = this.humanRepository.humans;
-        for (let i = 0; i < humans.length; i++) {
-            if (World.humanIsAboveWall(humans[i].getPosition(), wall)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    static humanIsAboveWall(humanPosition, wall) {
-        const wallPosition = wall.getPosition();
-        return (humanPosition.x == wallPosition.x + 1 && humanPosition.y == wallPosition.y + 1) ||
-            (humanPosition.x == wallPosition.x && humanPosition.y == wallPosition.y + 1) ||
-            (humanPosition.x == wallPosition.x + 1 && humanPosition.y == wallPosition.y);
-    }
-    getRandomFreeSofa() {
-        return this.ground.getRandomFreeSofa(this.humanRepository.humans);
-    }
-    isSittableTaken(sittable) {
-        return Ground_1.Ground.isSittableTaken(sittable, this.humanRepository.humans);
-    }
-    getRandomFreeDesk() {
-        return this.ground.getRandomFreeDesk(this.humanRepository.humans);
-    }
-    getRandomFreeDispenser() {
-        return this.ground.getRandomFreeDispenser(this.humanRepository.humans);
-    }
-    getSelectedHumanSprite() {
-        return this.humanRepository.getSelectedHumanSprite();
-    }
-    isFreePosition(tryPosition, object) {
-        return this.ground.isFree(tryPosition, object);
-    }
-    resetAStar(startPosition, endPosition) {
-        this.humanRepository.humans.forEach((human) => {
-            human.resetAStar(startPosition, endPosition);
-        });
-    }
-    getAnotherFreeHuman(human) {
-        const availableHumans = this.humanRepository.humans.filter((anotherHuman) => {
-            return anotherHuman !== human && anotherHuman.isFree();
-        });
-        if (availableHumans.length === 0) {
-            return null;
-        }
-        return availableHumans[Math.floor(Math.random() * availableHumans.length)];
-    }
-}
-exports.World = World;
-
-
-/***/ }),
-/* 13 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const app_1 = __webpack_require__(4);
-class Boot extends Phaser.State {
-    create() {
-        // this.physics.startSystem(Phaser.Physics.ARCADE);
-        this.game.scale.scaleMode = Phaser.ScaleManager.USER_SCALE;
-        this.game.scale.setUserScale(app_1.SCALE, app_1.SCALE);
-        this.game.renderer.renderSession.roundPixels = true;
-        Phaser.Canvas.setImageRenderingCrisp(this.game.canvas);
-        this.game.state.start('Preload');
-    }
-}
-exports.default = Boot;
-
-
-/***/ }),
-/* 14 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const World_1 = __webpack_require__(12);
-const app_1 = __webpack_require__(4);
-class Play extends Phaser.State {
-    constructor() {
-        super();
-        this.worldKnowledge = new World_1.World();
-    }
-    create() {
-        this.game.stage.backgroundColor = "#4488AA";
-        this.groups = {
-            'floor': this.game.add.group(),
-            'noname': this.game.add.group()
-        };
-        this.worldKnowledge.create(this.game, this.groups);
-        this.game.world.setBounds(0, 0, app_1.WORLD_WIDTH, app_1.WORLD_HEIGHT);
-        this.game.camera.setPosition((app_1.WORLD_WIDTH - app_1.CAMERA_WIDTH_PIXELS) / 2, (app_1.WORLD_HEIGHT - app_1.CAMERA_HEIGHT_PIXELS) / 2);
-    }
-    update(game) {
-        this.groups['noname'].sort('y', Phaser.Group.SORT_ASCENDING);
-        this.worldKnowledge.update();
-        const selected = this.worldKnowledge.getSelectedHumanSprite();
-        if (selected) {
-            this.game.camera.follow(selected, Phaser.Camera.FOLLOW_LOCKON, 0.02, 0.02);
-        }
-    }
-}
-exports.default = Play;
-
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-class Preload extends Phaser.State {
-    preload() {
-        this.loadAudio();
-        this.loadLevels();
-        this.loadTileMaps();
-        this.loadGameImages();
-        this.loadFonts();
-    }
-    create() {
-        this.game.state.start('Play');
-    }
-    loadAudio() {
-    }
-    loadLevels() {
-    }
-    loadTileMaps() {
-    }
-    loadGameImages() {
-        this.game.load.spritesheet('human', 'assets/human.png', 24, 25);
-        this.game.load.spritesheet('human_selected', 'assets/human_selected.png', 24, 25);
-        this.game.load.spritesheet('human_red', 'assets/human_red.png', 24, 25);
-        this.game.load.spritesheet('human_red_selected', 'assets/human_red_selected.png', 24, 25);
-        this.game.load.spritesheet('casedefault', 'assets/casedefault.png', 40, 19);
-        this.game.load.spritesheet('woodcell', 'assets/woodcell.png', 40, 19);
-        this.game.load.spritesheet('chair', 'assets/chair.png', 40, 40);
-        this.game.load.spritesheet('chair_selected', 'assets/chair_selected.png', 40, 40);
-        this.game.load.spritesheet('desk', 'assets/desk.png', 40, 40);
-        this.game.load.spritesheet('desk_selected', 'assets/desk_selected.png', 40, 40);
-        this.game.load.spritesheet('wall', 'assets/wall.png', 40, 37, 16);
-        this.game.load.spritesheet('sofa', 'assets/sofa.png', 8, 6);
-        this.game.load.spritesheet('dispenser', 'assets/dispenser.png', 26, 35);
-        this.game.load.spritesheet('dispenser_selected', 'assets/dispenser_selected.png', 26, 35);
-        this.game.load.spritesheet('sofa_selected', 'assets/sofa_selected.png', 8, 6);
-    }
-    loadFonts() {
-    }
-}
-exports.default = Preload;
-
-
-/***/ }),
-/* 16 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const Human_1 = __webpack_require__(5);
-const HumanStateManager_1 = __webpack_require__(1);
-const PositionTransformer_1 = __webpack_require__(0);
-const HumanAnimationManager_1 = __webpack_require__(2);
-class CoffeeState {
-    constructor(human, dispenser, world) {
-        this.human = human;
-        this.dispenser = dispenser;
-        this.isHumanOnTheRightCell = false;
-        this.world = world;
-        this.events = [];
-    }
-    isActive() {
-        if (!this.isHumanOnTheRightCell) {
-            if (this.world.isSittableTaken(this.dispenser)) {
-                this.active = false;
-                return false;
-            }
-        }
-        if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
-            this.isHumanOnTheRightCell = true;
-            this.human.goToSittable(this.dispenser, this.dispenser.forceOrientation());
-            this.events.push(this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
-                this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.DRINK);
-                this.events.push(this.game.time.events.add(Math.floor(Phaser.Math.random(2, 4)) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.DRINK), () => {
-                    this.human.goToFreeCell(this.dispenser.getEntries());
-                    this.events.push(this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
-                        this.active = false;
-                    }, this));
-                }, this));
-            }));
-        }
-        return this.active;
-    }
-    start(game) {
-        this.active = true;
-        this.game = game;
-        if (!this.human.moveToClosest(this.dispenser.getPosition(), this.dispenser.getEntries())) {
-            this.active = false;
-            this.stop(game);
-            return false;
-        }
-        return true;
-    }
-    isNeighborPosition() {
-        return !this.human.isMoving() &&
-            PositionTransformer_1.PositionTransformer.isNeighbor(this.human.getPosition(), this.dispenser.getPosition());
-    }
-    stop(game) {
-        this.events.forEach((event) => {
-            game.time.events.remove(event);
-        });
-        this.active = false;
-    }
-    getState() {
-        return HumanStateManager_1.STATE.COFFEE;
-    }
-}
-exports.CoffeeState = CoffeeState;
-
-
-/***/ }),
-/* 17 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(2);
-const HumanStateManager_1 = __webpack_require__(1);
-class FreezeState {
-    constructor(human) {
-        this.human = human;
-    }
-    isActive() {
-        return this.active;
-    }
-    start(game) {
-        this.active = true;
-        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE);
-        this.event = game.time.events.add(Phaser.Math.random(1, 2) * Phaser.Timer.SECOND, this.end, this);
-        return true;
-    }
-    end() {
-        this.active = false;
-    }
-    stop(game) {
-        if (this.event) {
-            game.time.events.remove(this.event);
-        }
-        this.end();
-    }
-    getState() {
-        return HumanStateManager_1.STATE.FREEZE;
-    }
-}
-exports.FreezeState = FreezeState;
-
-
-/***/ }),
-/* 18 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-class Meeting {
-    constructor(humans, time, world) {
-        const cells = world.getGround().getMeetingCells(humans.map((human) => {
-            return human.getPosition();
-        }));
-        if (cells === null) {
-            throw 'No meeting point found!';
-        }
-        this.time = time;
-        this.places = [];
-        for (let i = 0; i < cells.length; i++) {
-            this.places.push({
-                human: humans[i],
-                position: cells[i]
-            });
-        }
-    }
-    getCell(human) {
-        for (let i = 0; i < this.places.length; i++) {
-            if (human === this.places[i].human) {
-                return this.places[i].position;
-            }
-        }
-        return null;
-    }
-    isReady() {
-        for (let i = 0; i < this.places.length; i++) {
-            const human = this.places[i].human;
-            const position = this.places[i].position;
-            if (human.isMoving() || human.getPosition().x !== position.x || human.getPosition().y !== position.y) {
-                return false;
-            }
-        }
-        return true;
-    }
-    getTime() {
-        return this.time;
-    }
-    getAnotherHuman(human) {
-        let anotherHumans = [];
-        this.places.forEach((place) => {
-            if (place.human !== human) {
-                anotherHumans.push(place.human);
-            }
-        });
-        return anotherHumans[Math.floor(Math.random() * anotherHumans.length)];
-    }
-}
-exports.Meeting = Meeting;
-
-
-/***/ }),
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const HumanStateManager_1 = __webpack_require__(1);
-class MoveRandomState {
-    constructor(human, world) {
-        this.active = false;
-        this.human = human;
-        this.goal = world.getGround().getRandomCell();
-        while (this.human.getPosition().x === this.goal.x && this.human.getPosition().y === this.goal.y) {
-            this.goal = world.getGround().getRandomCell();
-        }
-    }
-    isActive() {
-        return this.active && this.human.getPosition().x !== this.goal.x ||
-            this.human.getPosition().y !== this.goal.y ||
-            this.human.isMoving();
-    }
-    start(game) {
-        this.active = true;
-        if (!this.human.moveTo(this.goal)) {
-            this.stop(game);
-            return false;
-        }
-        return true;
-    }
-    stop(game) {
-        this.active = false;
-    }
-    getState() {
-        return HumanStateManager_1.STATE.MOVE_RANDOM;
-    }
-}
-exports.MoveRandomState = MoveRandomState;
-
-
-/***/ }),
-/* 20 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const Human_1 = __webpack_require__(5);
-const HumanAnimationManager_1 = __webpack_require__(2);
-const HumanStateManager_1 = __webpack_require__(1);
-const PositionTransformer_1 = __webpack_require__(0);
-class SitState {
-    constructor(human, sittable, world) {
-        this.human = human;
-        this.sittable = sittable;
-        this.isHumanOnTheRightCell = false;
-        this.world = world;
-        this.events = [];
-    }
-    isActive() {
-        if (!this.isHumanOnTheRightCell) {
-            if (this.world.isSittableTaken(this.sittable)) {
-                this.active = false;
-                return false;
-            }
-        }
-        if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
-            this.isHumanOnTheRightCell = true;
-            this.human.goToSittable(this.sittable);
-            this.events.push(this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
-                this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN);
-                this.events.push(this.game.time.events.add(Phaser.Math.random(3, 10) * Phaser.Timer.SECOND + HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SIT_DOWN), () => {
-                    this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.STAND_UP);
-                    this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.STAND_UP) + 100, () => {
-                        this.human.goToFreeCell(this.sittable.getEntries());
-                        this.events.push(this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
-                            this.active = false;
-                        }, this));
-                    }, this));
-                }, this));
-            }, this));
-        }
-        return this.active;
-    }
-    start(game) {
-        this.active = true;
-        this.game = game;
-        if (!this.human.moveToClosest(this.sittable.getPosition(), this.sittable.getEntries())) {
-            this.active = false;
-            this.stop(game);
-            return false;
-        }
-        return true;
-    }
-    isNeighborPosition() {
-        return !this.human.isMoving() &&
-            PositionTransformer_1.PositionTransformer.isNeighbor(this.human.getPosition(), this.sittable.getPosition());
-    }
-    stop(game) {
-        this.events.forEach((event) => {
-            game.time.events.remove(event);
-        });
-        this.active = false;
-    }
-    getState() {
-        return HumanStateManager_1.STATE.SIT;
-    }
-}
-exports.SitState = SitState;
-
-
-/***/ }),
-/* 21 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(2);
-const HumanStateManager_1 = __webpack_require__(1);
-class SmokeState {
-    constructor(human) {
-        this.human = human;
-    }
-    isActive() {
-        return this.active;
-    }
-    start(game) {
-        game.time.events.add(Phaser.Math.random(1, 3) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SMOKE), this.end, this);
-        this.active = true;
-        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SMOKE);
-        return true;
-    }
-    end() {
-        this.active = false;
-    }
-    stop(game) {
-        this.active = false;
-    }
-    getState() {
-        return HumanStateManager_1.STATE.SMOKE;
-    }
-}
-exports.SmokeState = SmokeState;
-
-
-/***/ }),
-/* 22 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(2);
-const Meeting_1 = __webpack_require__(18);
-const Direction_1 = __webpack_require__(3);
-const HumanStateManager_1 = __webpack_require__(1);
-class TalkState {
-    constructor(human, anotherHuman, game, world, meeting = null) {
-        this.human = human;
-        this.anotherHuman = anotherHuman;
-        this.game = game;
-        this.world = world;
-        this.meetingStarted = false;
-        this.events = [];
-        this.meeting = meeting;
-    }
-    isActive() {
-        if (!this.meetingStarted) {
-            if (this.meeting.isReady()) {
-                this.meetingStarted = true;
-                this.game.time.events.add(this.meeting.getTime() + Math.random() * Phaser.Timer.SECOND, this.end, this);
-                let animation = HumanAnimationManager_1.ANIMATION.TALK;
-                if (Math.random() > 0.5) {
-                    animation = TalkState.otherAnimation(animation);
-                }
-                this.switchAnimation(animation);
-            }
-            else if (!this.human.isMoving()) {
-                const direction = Direction_1.Direction.getNeighborDirection(this.human.getPosition(), this.meeting.getAnotherHuman(this.human).getPosition());
-                this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE, Direction_1.Direction.isLeft(direction), Direction_1.Direction.isTop(direction));
-            }
-        }
-        return this.active;
-    }
-    switchAnimation(animation) {
-        const direction = Direction_1.Direction.getNeighborDirection(this.human.getPosition(), this.meeting.getAnotherHuman(this.human).getPosition());
-        this.human.loadAnimation(animation, Direction_1.Direction.isLeft(direction), Direction_1.Direction.isTop(direction));
-        this.events.push(this.game.time.events.add(Phaser.Math.random(3, 6) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(animation), this.switchAnimation, this, TalkState.otherAnimation(animation)));
-    }
-    start(game) {
-        this.active = true;
-        if (this.meeting === null) {
-            this.meeting = new Meeting_1.Meeting([this.human, this.anotherHuman], Phaser.Math.random(8, 20) * Phaser.Timer.SECOND, this.world);
-            if (!this.anotherHuman.goMeeting(this.meeting)) {
-                this.end();
-                return false;
-            }
-        }
-        if (!this.human.moveTo(this.meeting.getCell(this.human))) {
-            this.end();
-            return false;
-        }
-        return true;
-    }
-    end() {
-        this.events.forEach((event) => {
-            this.game.time.events.remove(event);
-        });
-        this.active = false;
-    }
-    stop(game) {
-        this.end();
-    }
-    getState() {
-        return HumanStateManager_1.STATE.TALK;
-    }
-    static otherAnimation(animation) {
-        return animation === HumanAnimationManager_1.ANIMATION.TALK ? HumanAnimationManager_1.ANIMATION.FREEZE : HumanAnimationManager_1.ANIMATION.TALK;
-    }
-}
-exports.TalkState = TalkState;
-
-
-/***/ }),
-/* 23 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const Human_1 = __webpack_require__(5);
-const HumanAnimationManager_1 = __webpack_require__(2);
-const HumanStateManager_1 = __webpack_require__(1);
-const PositionTransformer_1 = __webpack_require__(0);
-class TypeState {
-    constructor(human, sittable, world) {
-        this.human = human;
-        this.sittable = sittable;
-        this.isHumanOnTheRightCell = false;
-        this.world = world;
-        this.events = [];
-    }
-    isActive() {
-        if (!this.isHumanOnTheRightCell) {
-            if (this.world.isSittableTaken(this.sittable)) {
-                this.active = false;
-                return false;
-            }
-        }
-        if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
-            this.isHumanOnTheRightCell = true;
-            this.human.goToSittable(this.sittable, this.sittable.forceOrientation());
-            this.events.push(this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
-                this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN, this.sittable.forceOrientation());
-                this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SIT_DOWN), () => {
-                    this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.TYPE);
-                    this.events.push(this.game.time.events.add(Phaser.Math.random(5, 10) * Phaser.Timer.SECOND, () => {
-                        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.STAND_UP);
-                        this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.STAND_UP) + 100, () => {
-                            this.human.goToFreeCell(this.sittable.getEntries());
-                            this.events.push(this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
-                                this.active = false;
-                            }, this));
-                        }, this));
-                    }, this));
-                }));
-            }, this));
-        }
-        return this.active;
-    }
-    start(game) {
-        this.active = true;
-        this.game = game;
-        if (!this.human.moveToClosest(this.sittable.getPosition(), this.sittable.getEntries())) {
-            this.active = false;
-            return false;
-        }
-        return true;
-    }
-    isNeighborPosition() {
-        return !this.human.isMoving() &&
-            PositionTransformer_1.PositionTransformer.isNeighbor(this.human.getPosition(), this.sittable.getPosition());
-    }
-    stop(game) {
-        this.events.forEach((event) => {
-            game.time.events.remove(event);
-        });
-        this.active = false;
-    }
-    getState() {
-        return HumanStateManager_1.STATE.TYPE;
-    }
-}
-exports.TypeState = TypeState;
-
-
-/***/ }),
-/* 24 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(0);
-const Direction_1 = __webpack_require__(3);
-const ObjectMover_1 = __webpack_require__(6);
-/**
- * This variable will fake the position of the sprite without changing it for the enduser.
- * A negative number (e.g. -10) will draw the object 10 pixels on the top but will update the anchor to put it back
- * to its position.
- * If the Human is not seen because the object is in front of it, you have to put a more negative number.
- * @type {number}
- */
-const FAKE_ANCHOR_BOTTOM = -4;
-/**
- * Negative : will display the object to the left
- * @type {number}
- */
-const GAP_HORIZONTAL = -10;
-/**
- * Negative: Will display the object to the top
- * @type {number}
- */
-const GAP_VERTICAL = -8;
-class Desk {
-    constructor(point, world) {
-        this.position = point;
-        this.world = world;
-    }
-    create(game, group) {
-        const isLeftOriented = Math.random() >= 0.5;
-        this.chairSprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + (isLeftOriented ? -GAP_HORIZONTAL : GAP_HORIZONTAL), PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM + GAP_VERTICAL, 'chair');
-        this.deskSprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM, 'desk');
-        this.chairSprite.anchor.set(0.5, 1 + FAKE_ANCHOR_BOTTOM / this.chairSprite.height);
-        this.deskSprite.anchor.set(0.5, 1 + FAKE_ANCHOR_BOTTOM / this.deskSprite.height);
-        console.log('chair: ' + this.chairSprite.y);
-        console.log('desk:  ' + this.deskSprite.y);
-        ObjectMover_1.ObjectMover.makeMovable(this, this.world);
-        if (isLeftOriented) {
-            this.deskSprite.scale.set(-1, 1);
-            this.chairSprite.scale.set(-1, 1);
-        }
-        group.add(this.chairSprite);
-        group.add(this.deskSprite);
-    }
-    getPosition() {
-        return this.position;
-    }
-    getPositionGap() {
-        return new PIXI.Point(this.isLeftOriented() ? -GAP_HORIZONTAL : GAP_HORIZONTAL, GAP_VERTICAL - 2);
-    }
-    getEntries() {
-        return this.isLeftOriented() ?
-            [Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.TOP] :
-            [Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT];
-    }
-    isLeftOriented() {
-        return this.deskSprite.scale.x === -1;
-    }
-    forceOrientation() {
-        return this.isLeftOriented();
-    }
-    getSprites() {
-        return [this.deskSprite, this.chairSprite];
-    }
-    tryToMove(point) {
-        if (this.world.isFreePosition(point, this)) {
-            this.position = point;
-            this.chairSprite.position.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + (this.isLeftOriented() ? -GAP_HORIZONTAL : GAP_HORIZONTAL);
-            this.chairSprite.position.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM + GAP_VERTICAL;
-            this.deskSprite.position.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x;
-            this.deskSprite.position.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM;
-        }
-    }
-}
-exports.Desk = Desk;
-
-
-/***/ }),
-/* 25 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(0);
-const ObjectMover_1 = __webpack_require__(6);
-const Direction_1 = __webpack_require__(3);
-const DISPENSER_BOTTOM = -4;
-const DISPENSER_LEFT = 4;
-const DISPENSER_ANCHOR_BOTTOM = 3;
-class Dispenser {
-    constructor(point, world) {
-        this.position = point;
-        this.world = world;
-    }
-    create(game, group) {
-        this.sprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + DISPENSER_LEFT, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + DISPENSER_BOTTOM - DISPENSER_ANCHOR_BOTTOM, 'dispenser');
-        this.sprite.anchor.set(0.5, 1.0 - DISPENSER_ANCHOR_BOTTOM / this.sprite.height);
-        ObjectMover_1.ObjectMover.makeMovable(this, this.world);
-        group.add(this.sprite);
-    }
-    getPosition() {
-        return this.position;
-    }
-    getSprites() {
-        return [this.sprite];
-    }
-    tryToMove(point) {
-        if (this.world.isFreePosition(point, this)) {
-            this.position = point;
-            this.sprite.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + DISPENSER_LEFT;
-            this.sprite.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + DISPENSER_BOTTOM - DISPENSER_ANCHOR_BOTTOM;
-        }
-    }
-    getEntries() {
-        return [Direction_1.DIRECTION.BOTTOM];
-    }
-    getPositionGap() {
-        return new PIXI.Point(0, 0);
-    }
-    forceOrientation() {
-        return true;
-    }
-}
-exports.Dispenser = Dispenser;
-
-
-/***/ }),
-/* 26 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(0);
-const Direction_1 = __webpack_require__(3);
-const ObjectMover_1 = __webpack_require__(6);
-const SOFA_BOTTOM = -8;
-const SOFA_LEFT = 0;
-const SOFA_ANCHOR_BOTTOM = 3;
-class Sofa {
-    constructor(point, world) {
-        this.position = point;
-        this.world = world;
-    }
-    create(game, group) {
-        this.sprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + SOFA_LEFT, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + SOFA_BOTTOM - SOFA_ANCHOR_BOTTOM, 'sofa');
-        this.sprite.anchor.set(0.5, 1.0 - SOFA_ANCHOR_BOTTOM / this.sprite.height);
-        ObjectMover_1.ObjectMover.makeMovable(this, this.world);
-        group.add(this.sprite);
-    }
-    getPosition() {
-        return this.position;
-    }
-    getPositionGap() {
-        return new PIXI.Point(SOFA_LEFT, SOFA_BOTTOM);
-    }
-    getEntries() {
-        return [Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.BOTTOM];
-    }
-    forceOrientation() {
-        return null;
-    }
-    getSprites() {
-        return [this.sprite];
-    }
-    tryToMove(point) {
-        if (this.world.isFreePosition(point, this)) {
-            this.position = point;
-            this.sprite.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + SOFA_LEFT;
-            this.sprite.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + SOFA_BOTTOM - SOFA_ANCHOR_BOTTOM;
-        }
-    }
-}
-exports.Sofa = Sofa;
-
-
-/***/ }),
-/* 27 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1886,19 +2105,28 @@ exports.Sofa = Sofa;
 Object.defineProperty(exports, "__esModule", { value: true });
 const Human_1 = __webpack_require__(5);
 class HumanRepository {
-    constructor(world) {
+    constructor(worldKnowledge) {
         this.humans = [
-            new Human_1.Human(world.getGround().getRandomCell()),
-            new Human_1.Human(world.getGround().getRandomCell()),
-            new Human_1.Human(world.getGround().getRandomCell()),
-            new Human_1.Human(world.getGround().getRandomCell()),
-            new Human_1.Human(world.getGround().getRandomCell()),
-            new Human_1.Human(world.getGround().getRandomCell())
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell()),
+            new Human_1.Human(worldKnowledge.getRandomCell())
         ];
     }
-    create(game, groups, world) {
+    create(game, groups, worldKnowledge) {
         this.humans.forEach((human) => {
-            human.create(game, groups['noname'], world);
+            human.create(game, groups, worldKnowledge);
         });
     }
     update() {
@@ -1919,13 +2147,13 @@ exports.HumanRepository = HumanRepository;
 
 
 /***/ }),
-/* 28 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Wall_1 = __webpack_require__(11);
+const Wall_1 = __webpack_require__(28);
 class WallRepository {
     constructor() {
         this.walls = [];
@@ -1957,7 +2185,7 @@ exports.WallRepository = WallRepository;
 
 
 /***/ }),
-/* 29 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(4);

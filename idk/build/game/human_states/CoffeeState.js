@@ -5,25 +5,26 @@ const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
 const PositionTransformer_1 = require("../PositionTransformer");
 const HumanAnimationManager_1 = require("../human_stuff/HumanAnimationManager");
 class CoffeeState {
-    constructor(human, dispenser, world) {
+    constructor(human, dispenser, worldKnowledge) {
         this.human = human;
         this.dispenser = dispenser;
         this.isHumanOnTheRightCell = false;
-        this.world = world;
+        this.worldKnowledge = worldKnowledge;
         this.events = [];
     }
     isActive() {
         if (!this.isHumanOnTheRightCell) {
-            if (this.world.isSittableTaken(this.dispenser)) {
+            if (this.worldKnowledge.isObjectUsed(this.dispenser)) {
                 this.active = false;
                 return false;
             }
         }
         if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
             this.isHumanOnTheRightCell = true;
-            this.human.goToSittable(this.dispenser, this.dispenser.forceOrientation());
+            this.human.interactWith(this.dispenser, this.dispenser.forceOrientation());
             this.events.push(this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
                 this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.DRINK);
+                this.human.updateHumorFromState();
                 this.events.push(this.game.time.events.add(Math.floor(Phaser.Math.random(2, 4)) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.DRINK), () => {
                     this.human.goToFreeCell(this.dispenser.getEntries());
                     this.events.push(this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {

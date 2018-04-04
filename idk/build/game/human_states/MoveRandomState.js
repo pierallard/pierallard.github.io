@@ -2,12 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
 class MoveRandomState {
-    constructor(human, world) {
+    constructor(human, worldKnowledge) {
         this.active = false;
         this.human = human;
-        this.goal = world.getGround().getRandomCell();
+        this.goal = worldKnowledge.getRandomCell();
         while (this.human.getPosition().x === this.goal.x && this.human.getPosition().y === this.goal.y) {
-            this.goal = world.getGround().getRandomCell();
+            this.goal = worldKnowledge.getRandomCell();
         }
     }
     isActive() {

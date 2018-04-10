@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const PositionTransformer_1 = require("../PositionTransformer");
 const Direction_1 = require("../Direction");
 const ObjectMover_1 = require("./ObjectMover");
+const Play_1 = require("../game_state/Play");
 /**
  * This variable will fake the position of the sprite without changing it for the enduser.
  * A negative number (e.g. -10) will draw the object 10 pixels on the top but will update the anchor to put it back
@@ -26,7 +27,7 @@ class Desk {
         this.position = point;
         this.worldKnowledge = worldKnowledge;
     }
-    create(game, group) {
+    create(game, groups) {
         const isLeftOriented = Math.random() >= 0.5;
         this.chairSprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + (isLeftOriented ? -GAP_HORIZONTAL : GAP_HORIZONTAL), PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM + GAP_VERTICAL, 'chair');
         this.deskSprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM, 'desk');
@@ -37,8 +38,8 @@ class Desk {
             this.deskSprite.scale.set(-1, 1);
             this.chairSprite.scale.set(-1, 1);
         }
-        group.add(this.chairSprite);
-        group.add(this.deskSprite);
+        groups[Play_1.GROUP_OBJECTS_AND_HUMANS].add(this.chairSprite);
+        groups[Play_1.GROUP_OBJECTS_AND_HUMANS].add(this.deskSprite);
     }
     getPosition() {
         return this.position;

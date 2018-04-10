@@ -7,7 +7,7 @@ const MoveRandomState_1 = require("../human_states/MoveRandomState");
 const TypeState_1 = require("../human_states/TypeState");
 const TalkState_1 = require("../human_states/TalkState");
 const CoffeeState_1 = require("../human_states/CoffeeState");
-const HumanHumorManager_1 = require("./HumanHumorManager");
+const HumanMoodManager_1 = require("./HumanMoodManager");
 var STATE;
 (function (STATE) {
     STATE[STATE["SMOKE"] = 0] = "SMOKE";
@@ -80,9 +80,9 @@ class HumanStateManager {
             states.push({ state: STATE.COFFEE, probability: this.getProbability(STATE.COFFEE) });
         }
         let debug = '';
-        debug += 'Rlx[' + Math.ceil(this.human.getHumor(HumanHumorManager_1.HUMOR.RELAXATION) * 100) + '%], ';
-        debug += 'Hng[' + Math.ceil(this.human.getHumor(HumanHumorManager_1.HUMOR.HUNGER) * 100) + '%], ';
-        debug += 'Soc[' + Math.ceil(this.human.getHumor(HumanHumorManager_1.HUMOR.SOCIAL) * 100) + '%] ---> ';
+        debug += 'Rlx[' + Math.ceil(this.human.getMood(HumanMoodManager_1.MOOD.RELAXATION) * 100) + '%], ';
+        debug += 'Hng[' + Math.ceil(this.human.getMood(HumanMoodManager_1.MOOD.HUNGER) * 100) + '%], ';
+        debug += 'Soc[' + Math.ceil(this.human.getMood(HumanMoodManager_1.MOOD.SOCIAL) * 100) + '%] ---> ';
         debug += 'Smk(' + Math.ceil(this.getProbability(STATE.SMOKE)) + '), ';
         debug += 'Frz(' + Math.ceil(this.getProbability(STATE.FREEZE)) + '), ';
         debug += 'MvR(' + Math.ceil(this.getProbability(STATE.MOVE_RANDOM)) + '), ';
@@ -131,30 +131,30 @@ class HumanStateManager {
         if (state === this.state.getState()) {
             result = result / 10;
         }
-        HumanHumorManager_1.HumanHumorManager.getHumors().forEach((humor) => {
-            if (this.human.getHumor(humor) < 0.5) {
-                if (HumanStateManager.getHumorGains(state)[humor] > 0) {
-                    result = result * HumanStateManager.getHumorGains(state)[humor] * 8;
-                    result = result * (1 - this.human.getHumor(humor)) * 3;
+        HumanMoodManager_1.HumanMoodManager.getMoods().forEach((mood) => {
+            if (this.human.getMood(mood) < 0.5) {
+                if (HumanStateManager.getMoodGains(state)[mood] > 0) {
+                    result = result * HumanStateManager.getMoodGains(state)[mood] * 8;
+                    result = result * (1 - this.human.getMood(mood)) * 3;
                 }
             }
         });
         return result;
     }
-    static getHumorGains(state) {
+    static getMoodGains(state) {
         let result = {};
         switch (state) {
             case STATE.SMOKE:
-                result[HumanHumorManager_1.HUMOR.RELAXATION] = 0.4;
+                result[HumanMoodManager_1.MOOD.RELAXATION] = 0.4;
                 break;
             case STATE.TALK:
-                result[HumanHumorManager_1.HUMOR.SOCIAL] = 0.5;
+                result[HumanMoodManager_1.MOOD.SOCIAL] = 0.5;
                 break;
             case STATE.SIT:
-                result[HumanHumorManager_1.HUMOR.RELAXATION] = 0.2;
+                result[HumanMoodManager_1.MOOD.RELAXATION] = 0.2;
                 break;
             case STATE.COFFEE:
-                result[HumanHumorManager_1.HUMOR.HUNGER] = 0.5;
+                result[HumanMoodManager_1.MOOD.HUNGER] = 0.5;
                 break;
         }
         return result;

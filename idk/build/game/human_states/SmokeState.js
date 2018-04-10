@@ -13,7 +13,7 @@ class SmokeState {
         game.time.events.add(Phaser.Math.random(1, 3) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SMOKE), this.end, this);
         this.active = true;
         this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SMOKE);
-        this.human.updateHumorFromState();
+        this.human.updateMoodFromState();
         return true;
     }
     end() {

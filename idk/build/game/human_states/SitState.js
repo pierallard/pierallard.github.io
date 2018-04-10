@@ -24,7 +24,7 @@ class SitState {
             this.human.interactWith(this.interactiveObject);
             this.events.push(this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
                 this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN);
-                this.human.updateHumorFromState();
+                this.human.updateMoodFromState();
                 this.events.push(this.game.time.events.add(Phaser.Math.random(3, 10) * Phaser.Timer.SECOND + HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SIT_DOWN), () => {
                     this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.STAND_UP);
                     this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.STAND_UP) + 100, () => {

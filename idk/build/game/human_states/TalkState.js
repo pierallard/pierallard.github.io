@@ -4,7 +4,6 @@ const HumanAnimationManager_1 = require("../human_stuff/HumanAnimationManager");
 const Meeting_1 = require("./Meeting");
 const Direction_1 = require("../Direction");
 const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
-const HUMOR_WIN = 0.5;
 class TalkState {
     constructor(human, anotherHuman, game, worldKnowledge, meeting = null) {
         this.human = human;
@@ -24,7 +23,7 @@ class TalkState {
                 if (this.meeting.isReady()) {
                     this.meetingStarted = true;
                     this.game.time.events.add(this.meeting.getTime() + Math.random() * Phaser.Timer.SECOND, this.end, this);
-                    this.human.updateHumorFromState();
+                    this.human.updateMoodFromState();
                     let animation = HumanAnimationManager_1.ANIMATION.TALK;
                     if (Math.random() > 0.5) {
                         animation = TalkState.otherAnimation(animation);

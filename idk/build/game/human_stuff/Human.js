@@ -7,8 +7,9 @@ const HumanAnimationManager_1 = require("./HumanAnimationManager");
 const HumanStateManager_1 = require("./HumanStateManager");
 const ObjectSelector_1 = require("../objects/ObjectSelector");
 const TalkBubble_1 = require("./TalkBubble");
-const HumanHumorManager_1 = require("./HumanHumorManager");
-const HumorSprite_1 = require("./HumorSprite");
+const HumanMoodManager_1 = require("./HumanMoodManager");
+const MoodSprite_1 = require("./MoodSprite");
+const Play_1 = require("../game_state/Play");
 exports.WALK_CELL_DURATION = 1200;
 const GAP_FROM_BOTTOM = -8;
 const PATH_DEBUG = false;
@@ -21,36 +22,36 @@ class Human {
         this.anchorPixels = new PIXI.Point(0, GAP_FROM_BOTTOM);
         this.animationManager = new HumanAnimationManager_1.HumanAnimationManager();
         this.talkBubble = new TalkBubble_1.TalkBubble();
-        this.humorManager = new HumanHumorManager_1.HumanHumorManager();
-        this.humorSprite = new HumorSprite_1.HumorSprite();
+        this.moodManager = new HumanMoodManager_1.HumanMoodManager();
+        this.moodSprite = new MoodSprite_1.MoodSprite();
     }
     create(game, groups, worldKnowledge) {
         this.game = game;
         this.worldKnowledge = worldKnowledge;
-        this.humorManager.create(game);
+        this.moodManager.create(game);
         this.sprite = game.add.tileSprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).x + this.anchorPixels.x, PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).y + this.anchorPixels.y, 24, 25, Math.random() > 0.5 ? 'human' : 'human_red');
         this.animationManager.create(this.sprite);
         this.sprite.anchor.set(0.5, 1.0);
         ObjectSelector_1.ObjectSelector.makeSelectable([this.sprite]);
-        groups['noname'].add(this.sprite);
+        groups[Play_1.GROUP_OBJECTS_AND_HUMANS].add(this.sprite);
         this.animationManager.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE, true, false);
         this.closestPathFinder = new ClosestPathFinder_1.ClosestPathFinder(game, worldKnowledge);
         this.stateManager.create(game, worldKnowledge, this.animationManager);
-        this.talkBubble.create(this.sprite, this.game, groups['noname']);
-        this.humorSprite.create(this.sprite, this.game, groups['upper']);
+        this.talkBubble.create(this.sprite, this.game, groups[Play_1.GROUP_OBJECTS_AND_HUMANS]);
+        this.moodSprite.create(this.sprite, this.game, groups[Play_1.GROUP_INFOS]);
         if (PATH_DEBUG) {
-            this.pathGraphics = game.add.graphics(0, 0, groups['upper']);
-            groups['upper'].add(this.pathGraphics);
+            this.pathGraphics = game.add.graphics(0, 0, groups[Play_1.GROUP_INFOS]);
+            groups[Play_1.GROUP_INFOS].add(this.pathGraphics);
         }
     }
     update() {
         this.talkBubble.update();
         this.stateManager.updateState(this.game);
-        this.humorManager.update();
-        this.humorSprite.update(this.humorManager.getGeneralHumor(), [
-            this.humorManager.getHumor(HumanHumorManager_1.HUMOR.HUNGER),
-            this.humorManager.getHumor(HumanHumorManager_1.HUMOR.SOCIAL),
-            this.humorManager.getHumor(HumanHumorManager_1.HUMOR.RELAXATION)
+        this.moodManager.update();
+        this.moodSprite.update(this.moodManager.getGeneralMood(), [
+            this.moodManager.getMood(HumanMoodManager_1.MOOD.HUNGER),
+            this.moodManager.getMood(HumanMoodManager_1.MOOD.SOCIAL),
+            this.moodManager.getMood(HumanMoodManager_1.MOOD.RELAXATION)
         ]);
         if (PATH_DEBUG) {
             this.pathGraphics.clear();
@@ -201,11 +202,11 @@ class Human {
     hideTalkBubble() {
         this.talkBubble.hide();
     }
-    updateHumorFromState() {
-        this.humorManager.updateFromState(this.getState());
+    updateMoodFromState() {
+        this.moodManager.updateFromState(this.getState());
     }
-    getHumor(humor) {
-        return this.humorManager.getHumor(humor);
+    getMood(mmod) {
+        return this.moodManager.getMood(mmod);
     }
 }
 exports.Human = Human;

@@ -24,7 +24,7 @@ class CoffeeState {
             this.human.interactWith(this.dispenser, this.dispenser.forceOrientation());
             this.events.push(this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {
                 this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.DRINK);
-                this.human.updateHumorFromState();
+                this.human.updateMoodFromState();
                 this.events.push(this.game.time.events.add(Math.floor(Phaser.Math.random(2, 4)) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.DRINK), () => {
                     this.human.goToFreeCell(this.dispenser.getEntries());
                     this.events.push(this.game.time.events.add(Human_1.WALK_CELL_DURATION + 100, () => {

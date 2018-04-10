@@ -7,6 +7,8 @@ const Dispenser_1 = require("./objects/Dispenser");
 const WallRepository_1 = require("./repositories/WallRepository");
 const Cell_1 = require("./Cell");
 const PositionTransformer_1 = require("./PositionTransformer");
+const Play_1 = require("./game_state/Play");
+const Depot_1 = require("./objects/Depot");
 const GRID_WIDTH = 12;
 const GRID_HEIGHT = 12;
 exports.DEBUG_WORLD = false;
@@ -20,6 +22,7 @@ class WorldKnowledge {
             }
         }
         this.wallRepository = new WallRepository_1.WallRepository();
+        this.depot = new Depot_1.Depot();
         if (exports.DEBUG_WORLD) {
             this.wallRepository.addWall(new PIXI.Point(5, 5));
             this.wallRepository.addWall(new PIXI.Point(6, 5));
@@ -50,26 +53,27 @@ class WorldKnowledge {
             ].forEach((cell) => {
                 this.wallRepository.addWall(cell);
             });
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < 10; i++) {
                 this.objects.push(new Desk_1.Desk(this.getRandomCell(), this));
             }
             for (let i = 0; i < 3; i++) {
                 this.objects.push(new Sofa_1.Sofa(this.getRandomCell(), this));
             }
-            this.objects.push(new Dispenser_1.Dispenser(this.getRandomCell(), this));
-            this.objects.push(new Dispenser_1.Dispenser(this.getRandomCell(), this));
-            this.objects.push(new Dispenser_1.Dispenser(this.getRandomCell(), this));
+            for (let i = 0; i < 10; i++) {
+                this.objects.push(new Dispenser_1.Dispenser(this.getRandomCell(), this));
+            }
         }
         this.humanRepository = new HumanRepository_1.HumanRepository(this);
     }
     create(game, groups) {
-        const floor = groups['floor'];
-        const noname = groups['noname'];
+        console.log(Play_1.GROUP_OBJECTS_AND_HUMANS);
+        const floor = groups[Play_1.GROUP_FLOOR];
+        const noname = groups[Play_1.GROUP_OBJECTS_AND_HUMANS];
         this.cells.forEach((cell) => {
             cell.create(game, floor);
         });
-        this.objects.forEach((desk) => {
-            desk.create(game, noname);
+        this.objects.forEach((object) => {
+            object.create(game, groups);
         });
         this.wallRepository.create(game, noname);
         this.humanRepository.create(game, groups, this);
@@ -222,6 +226,16 @@ class WorldKnowledge {
             dist += PositionTransformer_1.PositionTransformer.dist(source, point);
         });
         return dist;
+    }
+    moveToDepot(object) {
+        const index = this.objects.indexOf(object, 0);
+        if (index > -1) {
+            this.objects.splice(index, 1);
+        }
+        this.depot.add(object.constructor.name);
+    }
+    getDepot() {
+        return this.depot;
     }
 }
 exports.WorldKnowledge = WorldKnowledge;

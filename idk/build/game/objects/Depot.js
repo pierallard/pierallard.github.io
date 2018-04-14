@@ -16,6 +16,12 @@ class Depot {
         }
         return this.objects[name];
     }
+    remove(name) {
+        if (this.objects[name] === undefined) {
+            this.objects[name] = 0;
+        }
+        this.objects[name]--;
+    }
 }
 exports.Depot = Depot;
 //# sourceMappingURL=Depot.js.map

@@ -49,6 +49,15 @@ class Direction {
     static isTop(direction) {
         return direction === DIRECTION.TOP || direction === DIRECTION.LEFT;
     }
+    static getHorizontalMirror(direction) {
+        switch (direction) {
+            case DIRECTION.TOP: return DIRECTION.LEFT;
+            case DIRECTION.BOTTOM: return DIRECTION.RIGHT;
+            case DIRECTION.LEFT: return DIRECTION.TOP;
+            case DIRECTION.RIGHT: return DIRECTION.BOTTOM;
+            case DIRECTION.CURRENT: return DIRECTION.CURRENT;
+        }
+    }
 }
 exports.Direction = Direction;
 //# sourceMappingURL=Direction.js.map

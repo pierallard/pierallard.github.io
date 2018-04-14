@@ -4,20 +4,6 @@ const Human_1 = require("../human_stuff/Human");
 class HumanRepository {
     constructor(worldKnowledge) {
         this.humans = [
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
             new Human_1.Human(worldKnowledge.getRandomCell())
         ];
     }

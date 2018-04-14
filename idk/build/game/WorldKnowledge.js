@@ -9,6 +9,7 @@ const Cell_1 = require("./Cell");
 const PositionTransformer_1 = require("./PositionTransformer");
 const Play_1 = require("./game_state/Play");
 const Depot_1 = require("./objects/Depot");
+const Direction_1 = require("./Direction");
 const GRID_WIDTH = 12;
 const GRID_HEIGHT = 12;
 exports.DEBUG_WORLD = false;
@@ -26,9 +27,9 @@ class WorldKnowledge {
         if (exports.DEBUG_WORLD) {
             this.wallRepository.addWall(new PIXI.Point(5, 5));
             this.wallRepository.addWall(new PIXI.Point(6, 5));
-            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 5), this));
-            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 6), this));
-            this.objects.push(new Dispenser_1.Dispenser(new PIXI.Point(5, 4), this));
+            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 5), this, false));
+            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 6), this, false));
+            this.objects.push(new Dispenser_1.Dispenser(new PIXI.Point(5, 4), this, false));
         }
         else {
             for (let x = 0; x < GRID_WIDTH; x++) {
@@ -53,19 +54,12 @@ class WorldKnowledge {
             ].forEach((cell) => {
                 this.wallRepository.addWall(cell);
             });
-            for (let i = 0; i < 10; i++) {
-                this.objects.push(new Desk_1.Desk(this.getRandomCell(), this));
-            }
-            for (let i = 0; i < 3; i++) {
-                this.objects.push(new Sofa_1.Sofa(this.getRandomCell(), this));
-            }
-            for (let i = 0; i < 10; i++) {
-                this.objects.push(new Dispenser_1.Dispenser(this.getRandomCell(), this));
-            }
         }
         this.humanRepository = new HumanRepository_1.HumanRepository(this);
     }
     create(game, groups) {
+        this.game = game;
+        this.groups = groups;
         console.log(Play_1.GROUP_OBJECTS_AND_HUMANS);
         const floor = groups[Play_1.GROUP_FLOOR];
         const noname = groups[Play_1.GROUP_OBJECTS_AND_HUMANS];
@@ -111,9 +105,14 @@ class WorldKnowledge {
     getSelectedHumanSprite() {
         return this.humanRepository.getSelectedHumanSprite();
     }
-    resetAStar(startPosition, endPosition) {
+    resetAStar(position) {
         this.humanRepository.humans.forEach((human) => {
-            human.resetAStar(startPosition, endPosition);
+            human.resetAStar(position);
+        });
+    }
+    resetStates(position) {
+        this.humanRepository.humans.forEach((human) => {
+            human.resetStateIfCellEmpty(position);
         });
     }
     getAnotherFreeHuman(human) {
@@ -228,14 +227,71 @@ class WorldKnowledge {
         return dist;
     }
     moveToDepot(object) {
+        this.resetStates(object.getPosition());
         const index = this.objects.indexOf(object, 0);
         if (index > -1) {
             this.objects.splice(index, 1);
+        }
+        else {
+            throw "Impossible to delete the object!";
         }
         this.depot.add(object.constructor.name);
     }
     getDepot() {
         return this.depot;
+    }
+    canPutHere(phantom) {
+        // Check if there is nothing in the cell
+        if (!this.isFree(phantom.getPosition())) {
+            return false;
+        }
+        // Check if the human can enter the interactive object by at least one of the entries
+        let isEntryPossible = false;
+        phantom.getEntries().forEach((entry) => {
+            isEntryPossible = isEntryPossible || this.isEntryAccessibleForObject(phantom, entry);
+        });
+        if (isEntryPossible === false) {
+            return false;
+        }
+        // Check that if we put an object here, every other objects have at least one possible entry.
+        let doNotBlockOthers = true;
+        this.objects.forEach((object) => {
+            let isEntryPossible = false;
+            object.getEntries().forEach((entry) => {
+                const out = Direction_1.Direction.getGap(object.getPosition(), entry);
+                if (this.isFree(out) && !(out.x === phantom.getPosition().x && out.y === phantom.getPosition().y)) {
+                    isEntryPossible = true;
+                }
+            });
+            if (!isEntryPossible) {
+                doNotBlockOthers = false;
+            }
+        });
+        if (!doNotBlockOthers) {
+            return false;
+        }
+        return true;
+    }
+    isEntryAccessibleForObject(phantom, entry) {
+        return this.isFree(Direction_1.Direction.getGap(phantom.getPosition(), entry));
+    }
+    add(name, position, leftOriented) {
+        let object = null;
+        switch (name) {
+            case 'Desk':
+                object = new Desk_1.Desk(position, this, leftOriented);
+                break;
+            case 'Sofa':
+                object = new Sofa_1.Sofa(position, this, leftOriented);
+                break;
+            case 'Dispenser':
+                object = new Dispenser_1.Dispenser(position, this, leftOriented);
+                break;
+            default: throw 'Unknown object ' + name;
+        }
+        this.objects.push(object);
+        object.create(this.game, this.groups);
+        this.resetAStar(position);
     }
 }
 exports.WorldKnowledge = WorldKnowledge;

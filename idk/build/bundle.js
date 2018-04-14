@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 35);
+/******/ 	return __webpack_require__(__webpack_require__.s = 39);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -73,27 +73,60 @@
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const app_1 = __webpack_require__(4);
-exports.CELL_WIDTH = 40;
-exports.CELL_HEIGHT = 20;
-class PositionTransformer {
-    static getRealPosition(point) {
-        return new PIXI.Point(app_1.WORLD_WIDTH / 2 - (point.x - point.y) * exports.CELL_WIDTH / 2, app_1.WORLD_HEIGHT - (point.x + point.y) * exports.CELL_HEIGHT / 2);
+const WorldKnowledge_1 = __webpack_require__(10);
+const app_1 = __webpack_require__(5);
+const UserInterface_1 = __webpack_require__(12);
+exports.GROUP_FLOOR = 'floor';
+exports.GROUP_OBJECTS_AND_HUMANS = 'objects_and_humans';
+exports.GROUP_INFOS = 'infos';
+exports.GROUP_INTERFACE = 'interface';
+exports.CAMERA_GAP = 1.5;
+class Play extends Phaser.State {
+    constructor() {
+        super();
+        this.worldKnowledge = new WorldKnowledge_1.WorldKnowledge();
+        this.userInterface = new UserInterface_1.UserInterface(this.worldKnowledge);
     }
-    static getCellPosition(point) {
-        return new PIXI.Point(Math.floor((point.y - app_1.WORLD_HEIGHT) / (2 * (-exports.CELL_HEIGHT / 2)) +
-            (point.x - (app_1.WORLD_WIDTH / 2)) / (2 * (-exports.CELL_WIDTH / 2))), Math.floor((point.y - app_1.WORLD_HEIGHT) / (2 * (-exports.CELL_HEIGHT / 2)) -
-            (point.x - (app_1.WORLD_WIDTH / 2)) / (2 * (-exports.CELL_WIDTH / 2))));
+    create() {
+        this.game.stage.backgroundColor = "#494947";
+        this.groups = {};
+        this.groups[exports.GROUP_FLOOR] = this.game.add.group();
+        this.groups[exports.GROUP_OBJECTS_AND_HUMANS] = this.game.add.group();
+        this.groups[exports.GROUP_INFOS] = this.game.add.group();
+        this.groups[exports.GROUP_INTERFACE] = this.game.add.group();
+        this.groups[exports.GROUP_INTERFACE].fixedToCamera = true;
+        this.worldKnowledge.create(this.game, this.groups);
+        this.userInterface.create(this.game, this.groups);
+        this.game.world.setBounds(0, 0, app_1.WORLD_WIDTH + UserInterface_1.INTERFACE_WIDTH, app_1.WORLD_HEIGHT);
+        this.game.camera.setPosition((app_1.WORLD_WIDTH - app_1.CAMERA_WIDTH_PIXELS) / 2, (app_1.WORLD_HEIGHT - app_1.CAMERA_HEIGHT_PIXELS) / 2);
+        this.upKey = this.game.input.keyboard.addKey(Phaser.Keyboard.UP);
+        this.downKey = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
+        this.leftKey = this.game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
+        this.rightKey = this.game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
     }
-    static dist(position1, position2) {
-        return (position1.x - position2.x) * (position1.x - position2.x) +
-            (position1.y - position2.y) * (position1.y - position2.y);
-    }
-    static isNeighbor(position1, position2) {
-        return this.dist(position1, position2) === 1;
+    update(game) {
+        this.groups[exports.GROUP_OBJECTS_AND_HUMANS].sort('y', Phaser.Group.SORT_ASCENDING);
+        this.worldKnowledge.update();
+        this.userInterface.update();
+        if (this.upKey.isDown) {
+            this.game.camera.setPosition(this.game.camera.position.x, this.game.camera.position.y - exports.CAMERA_GAP);
+        }
+        else if (this.downKey.isDown) {
+            this.game.camera.setPosition(this.game.camera.position.x, this.game.camera.position.y + exports.CAMERA_GAP);
+        }
+        if (this.leftKey.isDown) {
+            this.game.camera.setPosition(this.game.camera.position.x - exports.CAMERA_GAP, this.game.camera.position.y);
+        }
+        else if (this.rightKey.isDown) {
+            this.game.camera.setPosition(this.game.camera.position.x + exports.CAMERA_GAP, this.game.camera.position.y);
+        }
+        const selected = this.worldKnowledge.getSelectedHumanSprite();
+        if (null !== selected) {
+            this.game.camera.follow(selected, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
+        }
     }
 }
-exports.PositionTransformer = PositionTransformer;
+exports.default = Play;
 
 
 /***/ }),
@@ -103,14 +136,14 @@ exports.PositionTransformer = PositionTransformer;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const FreezeState_1 = __webpack_require__(16);
-const SmokeState_1 = __webpack_require__(20);
-const SitState_1 = __webpack_require__(19);
-const MoveRandomState_1 = __webpack_require__(18);
-const TypeState_1 = __webpack_require__(22);
-const TalkState_1 = __webpack_require__(21);
-const CoffeeState_1 = __webpack_require__(15);
-const HumanMoodManager_1 = __webpack_require__(8);
+const FreezeState_1 = __webpack_require__(17);
+const SmokeState_1 = __webpack_require__(21);
+const SitState_1 = __webpack_require__(20);
+const MoveRandomState_1 = __webpack_require__(19);
+const TypeState_1 = __webpack_require__(23);
+const TalkState_1 = __webpack_require__(22);
+const CoffeeState_1 = __webpack_require__(16);
+const HumanMoodManager_1 = __webpack_require__(11);
 var STATE;
 (function (STATE) {
     STATE[STATE["SMOKE"] = 0] = "SMOKE";
@@ -285,64 +318,100 @@ exports.HumanStateManager = HumanStateManager;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const WorldKnowledge_1 = __webpack_require__(7);
-const app_1 = __webpack_require__(4);
-const UserInterface_1 = __webpack_require__(11);
-exports.GROUP_FLOOR = 'floor';
-exports.GROUP_OBJECTS_AND_HUMANS = 'objects_and_humans';
-exports.GROUP_INFOS = 'infos';
-exports.GROUP_INTERFACE = 'interface';
-exports.CAMERA_GAP = 1.5;
-class Play extends Phaser.State {
-    constructor() {
-        super();
-        this.worldKnowledge = new WorldKnowledge_1.WorldKnowledge();
-        this.userInterface = new UserInterface_1.UserInterface(this.worldKnowledge);
+const app_1 = __webpack_require__(5);
+exports.CELL_WIDTH = 40;
+exports.CELL_HEIGHT = 20;
+class PositionTransformer {
+    static getRealPosition(point) {
+        return new PIXI.Point(app_1.WORLD_WIDTH / 2 - (point.x - point.y) * exports.CELL_WIDTH / 2, app_1.WORLD_HEIGHT - (point.x + point.y) * exports.CELL_HEIGHT / 2);
     }
-    create() {
-        this.game.stage.backgroundColor = "#494947";
-        this.groups = {};
-        this.groups[exports.GROUP_FLOOR] = this.game.add.group();
-        this.groups[exports.GROUP_OBJECTS_AND_HUMANS] = this.game.add.group();
-        this.groups[exports.GROUP_INFOS] = this.game.add.group();
-        this.groups[exports.GROUP_INTERFACE] = this.game.add.group();
-        this.groups[exports.GROUP_INTERFACE].fixedToCamera = true;
-        this.worldKnowledge.create(this.game, this.groups);
-        this.userInterface.create(this.game, this.groups);
-        this.game.world.setBounds(0, 0, app_1.WORLD_WIDTH + UserInterface_1.INTERFACE_WIDTH, app_1.WORLD_HEIGHT);
-        this.game.camera.setPosition((app_1.WORLD_WIDTH - app_1.CAMERA_WIDTH_PIXELS) / 2, (app_1.WORLD_HEIGHT - app_1.CAMERA_HEIGHT_PIXELS) / 2);
-        this.upKey = this.game.input.keyboard.addKey(Phaser.Keyboard.UP);
-        this.downKey = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
-        this.leftKey = this.game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
-        this.rightKey = this.game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
+    static getCellPosition(point) {
+        return new PIXI.Point(Math.floor((point.y - app_1.WORLD_HEIGHT) / (2 * (-exports.CELL_HEIGHT / 2)) +
+            (point.x - (app_1.WORLD_WIDTH / 2)) / (2 * (-exports.CELL_WIDTH / 2))), Math.floor((point.y - app_1.WORLD_HEIGHT) / (2 * (-exports.CELL_HEIGHT / 2)) -
+            (point.x - (app_1.WORLD_WIDTH / 2)) / (2 * (-exports.CELL_WIDTH / 2))));
     }
-    update(game) {
-        this.groups[exports.GROUP_OBJECTS_AND_HUMANS].sort('y', Phaser.Group.SORT_ASCENDING);
-        this.worldKnowledge.update();
-        this.userInterface.update();
-        if (this.upKey.isDown) {
-            this.game.camera.setPosition(this.game.camera.position.x, this.game.camera.position.y - exports.CAMERA_GAP);
-        }
-        else if (this.downKey.isDown) {
-            this.game.camera.setPosition(this.game.camera.position.x, this.game.camera.position.y + exports.CAMERA_GAP);
-        }
-        if (this.leftKey.isDown) {
-            this.game.camera.setPosition(this.game.camera.position.x - exports.CAMERA_GAP, this.game.camera.position.y);
-        }
-        else if (this.rightKey.isDown) {
-            this.game.camera.setPosition(this.game.camera.position.x + exports.CAMERA_GAP, this.game.camera.position.y);
-        }
-        const selected = this.worldKnowledge.getSelectedHumanSprite();
-        if (null !== selected) {
-            this.game.camera.follow(selected, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
-        }
+    static dist(position1, position2) {
+        return (position1.x - position2.x) * (position1.x - position2.x) +
+            (position1.y - position2.y) * (position1.y - position2.y);
+    }
+    static isNeighbor(position1, position2) {
+        return this.dist(position1, position2) === 1;
     }
 }
-exports.default = Play;
+exports.PositionTransformer = PositionTransformer;
 
 
 /***/ }),
 /* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var DIRECTION;
+(function (DIRECTION) {
+    DIRECTION[DIRECTION["CURRENT"] = 0] = "CURRENT";
+    DIRECTION[DIRECTION["TOP"] = 1] = "TOP";
+    DIRECTION[DIRECTION["BOTTOM"] = 2] = "BOTTOM";
+    DIRECTION[DIRECTION["LEFT"] = 3] = "LEFT";
+    DIRECTION[DIRECTION["RIGHT"] = 4] = "RIGHT";
+})(DIRECTION = exports.DIRECTION || (exports.DIRECTION = {}));
+class Direction {
+    static neighborDirections() {
+        return [
+            DIRECTION.TOP,
+            DIRECTION.BOTTOM,
+            DIRECTION.LEFT,
+            DIRECTION.RIGHT
+        ];
+    }
+    static getGap(point, direction) {
+        switch (direction) {
+            case DIRECTION.TOP: return new PIXI.Point(point.x, point.y + 1);
+            case DIRECTION.BOTTOM: return new PIXI.Point(point.x, point.y - 1);
+            case DIRECTION.LEFT: return new PIXI.Point(point.x + 1, point.y);
+            case DIRECTION.RIGHT: return new PIXI.Point(point.x - 1, point.y);
+            case DIRECTION.CURRENT: return point;
+        }
+    }
+    static getNeighborDirection(originPoint, goalPoint) {
+        if (goalPoint.x > originPoint.x) {
+            return DIRECTION.LEFT;
+        }
+        else if (goalPoint.x < originPoint.x) {
+            return DIRECTION.RIGHT;
+        }
+        else if (goalPoint.y > originPoint.y) {
+            return DIRECTION.TOP;
+        }
+        else if (goalPoint.y < originPoint.y) {
+            return DIRECTION.BOTTOM;
+        }
+        else {
+            return DIRECTION.CURRENT;
+        }
+    }
+    static isLeft(direction) {
+        return direction === DIRECTION.LEFT || direction === DIRECTION.BOTTOM;
+    }
+    static isTop(direction) {
+        return direction === DIRECTION.TOP || direction === DIRECTION.LEFT;
+    }
+    static getHorizontalMirror(direction) {
+        switch (direction) {
+            case DIRECTION.TOP: return DIRECTION.LEFT;
+            case DIRECTION.BOTTOM: return DIRECTION.RIGHT;
+            case DIRECTION.LEFT: return DIRECTION.TOP;
+            case DIRECTION.RIGHT: return DIRECTION.BOTTOM;
+            case DIRECTION.CURRENT: return DIRECTION.CURRENT;
+        }
+    }
+}
+exports.Direction = Direction;
+
+
+/***/ }),
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -451,16 +520,16 @@ exports.HumanAnimationManager = HumanAnimationManager;
 
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /// <reference path="../lib/phaser.d.ts"/>
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Boot_1 = __webpack_require__(13);
-const Preload_1 = __webpack_require__(14);
-const Play_1 = __webpack_require__(2);
+const Boot_1 = __webpack_require__(14);
+const Preload_1 = __webpack_require__(15);
+const Play_1 = __webpack_require__(0);
 exports.SCALE = 3;
 exports.CAMERA_WIDTH_PIXELS = 1280 / exports.SCALE;
 exports.CAMERA_HEIGHT_PIXELS = 720 / exports.SCALE;
@@ -483,82 +552,22 @@ window.onload = () => {
 
 
 /***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var DIRECTION;
-(function (DIRECTION) {
-    DIRECTION[DIRECTION["CURRENT"] = 0] = "CURRENT";
-    DIRECTION[DIRECTION["TOP"] = 1] = "TOP";
-    DIRECTION[DIRECTION["BOTTOM"] = 2] = "BOTTOM";
-    DIRECTION[DIRECTION["LEFT"] = 3] = "LEFT";
-    DIRECTION[DIRECTION["RIGHT"] = 4] = "RIGHT";
-})(DIRECTION = exports.DIRECTION || (exports.DIRECTION = {}));
-class Direction {
-    static neighborDirections() {
-        return [
-            DIRECTION.TOP,
-            DIRECTION.BOTTOM,
-            DIRECTION.LEFT,
-            DIRECTION.RIGHT
-        ];
-    }
-    static getGap(point, direction) {
-        switch (direction) {
-            case DIRECTION.TOP: return new PIXI.Point(point.x, point.y + 1);
-            case DIRECTION.BOTTOM: return new PIXI.Point(point.x, point.y - 1);
-            case DIRECTION.LEFT: return new PIXI.Point(point.x + 1, point.y);
-            case DIRECTION.RIGHT: return new PIXI.Point(point.x - 1, point.y);
-            case DIRECTION.CURRENT: return point;
-        }
-    }
-    static getNeighborDirection(originPoint, goalPoint) {
-        if (goalPoint.x > originPoint.x) {
-            return DIRECTION.LEFT;
-        }
-        else if (goalPoint.x < originPoint.x) {
-            return DIRECTION.RIGHT;
-        }
-        else if (goalPoint.y > originPoint.y) {
-            return DIRECTION.TOP;
-        }
-        else if (goalPoint.y < originPoint.y) {
-            return DIRECTION.BOTTOM;
-        }
-        else {
-            return DIRECTION.CURRENT;
-        }
-    }
-    static isLeft(direction) {
-        return direction === DIRECTION.LEFT || direction === DIRECTION.BOTTOM;
-    }
-    static isTop(direction) {
-        return direction === DIRECTION.TOP || direction === DIRECTION.LEFT;
-    }
-}
-exports.Direction = Direction;
-
-
-/***/ }),
 /* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(0);
-const ClosestPathFinder_1 = __webpack_require__(23);
-const Direction_1 = __webpack_require__(5);
-const HumanAnimationManager_1 = __webpack_require__(3);
+const PositionTransformer_1 = __webpack_require__(2);
+const ClosestPathFinder_1 = __webpack_require__(24);
+const Direction_1 = __webpack_require__(3);
+const HumanAnimationManager_1 = __webpack_require__(4);
 const HumanStateManager_1 = __webpack_require__(1);
-const ObjectSelector_1 = __webpack_require__(10);
-const TalkBubble_1 = __webpack_require__(25);
-const HumanMoodManager_1 = __webpack_require__(8);
-const MoodSprite_1 = __webpack_require__(24);
-const Play_1 = __webpack_require__(2);
+const ObjectSelector_1 = __webpack_require__(32);
+const TalkBubble_1 = __webpack_require__(26);
+const HumanMoodManager_1 = __webpack_require__(11);
+const MoodSprite_1 = __webpack_require__(25);
+const Play_1 = __webpack_require__(0);
 exports.WALK_CELL_DURATION = 1200;
 const GAP_FROM_BOTTOM = -8;
 const PATH_DEBUG = false;
@@ -722,12 +731,12 @@ class Human {
     getSprite() {
         return this.sprite;
     }
-    resetAStar(startPosition, endPosition) {
-        console.log('Move object -> reset');
+    resetAStar(newNonEmptyCell) {
         this.closestPathFinder.reset();
         if (this.path !== null) {
+            // If human wants to go to a non-empty cell
             const matchingPath = this.path.filter((cell) => {
-                return cell.x === endPosition.x && cell.y === endPosition.y;
+                return cell.x === newNonEmptyCell.x && cell.y === newNonEmptyCell.y;
             });
             if (matchingPath.length > 0) {
                 const goal = this.path[this.path.length - 1];
@@ -735,7 +744,9 @@ class Human {
                 return;
             }
         }
-        if (this.cell.x == startPosition.x && this.cell.y == startPosition.y) {
+    }
+    resetStateIfCellEmpty(newEmptyCell) {
+        if (this.cell.x == newEmptyCell.x && this.cell.y == newEmptyCell.y) {
             this.stateManager.reset(this.game);
         }
     }
@@ -768,15 +779,211 @@ exports.Human = Human;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanRepository_1 = __webpack_require__(32);
-const Sofa_1 = __webpack_require__(30);
-const Desk_1 = __webpack_require__(27);
-const Dispenser_1 = __webpack_require__(28);
-const WallRepository_1 = __webpack_require__(33);
-const Cell_1 = __webpack_require__(12);
-const PositionTransformer_1 = __webpack_require__(0);
-const Play_1 = __webpack_require__(2);
-const Depot_1 = __webpack_require__(26);
+const POINTS = 20;
+const RADIUS = 6;
+const DELAY = 1500;
+class ObjectDeleter {
+    static makeDeletable(object, game, group) {
+        const circle = new PartialCircle(game, this.getPosition(object).x, this.getPosition(object).y, group);
+        game.add.existing(circle);
+        group.add(circle);
+        object.getSprites().forEach((sprite) => {
+            sprite.inputEnabled = true;
+            sprite.input.pixelPerfectOver = true;
+            sprite.input.pixelPerfectClick = true;
+            sprite.input.useHandCursor = true;
+            sprite.events.onInputDown.add(this.select, this, 0, game, object, circle);
+        });
+    }
+    static select(sprite, _pointer, game, object, circle) {
+        circle.alpha = 1;
+        circle.percentage = 1.0;
+        const tween = game.add.tween(circle).to({
+            percentage: 0
+        }, DELAY, 'Linear', true, 0, 0, false);
+        const event = game.time.events.add(DELAY, this.removeObject, this, object);
+        sprite.events.onInputUp.add(this.cancelRemoval, this, 0, game, tween, event, circle);
+    }
+    static cancelRemoval(sprite, _pointer, _boolean, game, tween, event, circle) {
+        tween.stop(false);
+        game.time.events.remove(event);
+        game.time.events.clearPendingEvents();
+        sprite.events.onInputUp.removeAll();
+        circle.alpha = 0;
+    }
+    static removeObject(object) {
+        object.remove();
+    }
+    static getPosition(object) {
+        return this.getCenterOfSprites(object.getSprites());
+    }
+    static getCenterOfSprites(sprites) {
+        const xMin = sprites.map((sprite) => {
+            return (sprite.position.x - sprite.width / 2);
+        }).reduce((a, b) => {
+            return Math.min(a, b);
+        });
+        const xMax = sprites.map((sprite) => {
+            return (sprite.position.x + sprite.width / 2);
+        }).reduce((a, b) => {
+            return Math.max(a, b);
+        });
+        const yMin = sprites.map((sprite) => {
+            return (sprite.position.y);
+        }).reduce((a, b) => {
+            return Math.min(a, b);
+        });
+        const yMax = sprites.map((sprite) => {
+            return (sprite.position.y - sprite.height);
+        }).reduce((a, b) => {
+            return Math.max(a, b);
+        });
+        return new PIXI.Point(xMin + (xMax - xMin) / 2, yMin + (yMax - yMin) / 2);
+    }
+}
+exports.ObjectDeleter = ObjectDeleter;
+class PartialCircle extends Phaser.Graphics {
+    constructor(game, x, y, group) {
+        super(game, x, y);
+        this.percentage = 1.0;
+        game.add.existing(this);
+        group.add(this);
+        this.alpha = 0;
+    }
+    update() {
+        if (this.alpha > 0) {
+            this.redraw();
+        }
+    }
+    redraw() {
+        this.clear();
+        this.lineStyle(3, 0xff004d);
+        this.moveTo(0, -RADIUS);
+        for (let i = 0; i < POINTS * this.percentage; i++) {
+            const angle = Math.PI * 2 / POINTS * (i + 1) + Math.PI;
+            this.lineTo(-Math.sin(angle) * RADIUS, Math.cos(angle) * RADIUS);
+        }
+    }
+}
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const Play_1 = __webpack_require__(0);
+const ObjectInfoRegistry_1 = __webpack_require__(9);
+class AbstractObject {
+    constructor(point, worldKnowledge, leftOriented) {
+        this.position = point;
+        this.leftOriented = leftOriented;
+        this.worldKnowledge = worldKnowledge;
+    }
+    create(game, groups) {
+        const infos = ObjectInfoRegistry_1.ObjectInfoRegistry.getObjectInfo(this.constructor.name);
+        this.sprites = [];
+        infos.getSpriteInfos().forEach((spriteInfo) => {
+            const sprite = game.add.sprite(spriteInfo.getRealPosition(this.position, this.leftOriented).x, spriteInfo.getRealPosition(this.position, this.leftOriented).y, spriteInfo.getSpriteName());
+            sprite.anchor.set(spriteInfo.getAnchor(sprite).x, spriteInfo.getAnchor(sprite).y);
+            if (this.leftOriented) {
+                sprite.scale.set(-1, 1);
+            }
+            this.sprites.push(sprite);
+            groups[Play_1.GROUP_OBJECTS_AND_HUMANS].add(sprite);
+        });
+    }
+    getPositionGap() {
+        const sittableObjectInfos = ObjectInfoRegistry_1.ObjectInfoRegistry.getObjectInfo(this.constructor.name).getSpriteInfos()[0];
+        return sittableObjectInfos.getSittablePosition(this.leftOriented);
+    }
+    getEntries() {
+        return ObjectInfoRegistry_1.ObjectInfoRegistry.getObjectInfo(this.constructor.name).getEntryPoints(this.leftOriented);
+    }
+    getPosition() {
+        return this.position;
+    }
+    getSprites() {
+        return this.sprites;
+    }
+    remove() {
+        this.worldKnowledge.moveToDepot(this);
+        this.getSprites().forEach((sprite) => {
+            sprite.destroy(true);
+        });
+    }
+    forceOrientation() {
+        return this.leftOriented;
+    }
+}
+exports.AbstractObject = AbstractObject;
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const ObjectInfo_1 = __webpack_require__(30);
+const SpriteInfo_1 = __webpack_require__(34);
+const Direction_1 = __webpack_require__(3);
+class ObjectInfoRegistry {
+    static getObjectInfo(name) {
+        if (this.objectInfos === null) {
+            this.generateObjectInfos();
+        }
+        for (let i = 0; i < this.objectInfos.length; i++) {
+            if (this.objectInfos[i].getName() === name) {
+                return this.objectInfos[i];
+            }
+        }
+        throw "Impossible to find info for " + name;
+    }
+    static generateObjectInfos() {
+        this.objectInfos = [];
+        this.objectInfos.push(new ObjectInfo_1.ObjectInfo('Dispenser', [
+            new SpriteInfo_1.SpriteInfo('dispenser', 4, -4, 3, -13)
+        ], [Direction_1.DIRECTION.BOTTOM]));
+        this.objectInfos.push(new ObjectInfo_1.ObjectInfo('Sofa', [
+            new SpriteInfo_1.SpriteInfo('sofa', 0, -8, 3, 0)
+        ], [Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.BOTTOM]));
+        this.objectInfos.push(new ObjectInfo_1.ObjectInfo('Desk', [
+            new SpriteInfo_1.SpriteInfo('chair', -10, -8, 5, 0),
+            new SpriteInfo_1.SpriteInfo('desk', 0, 0, 4, 0)
+        ], [Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT]));
+    }
+    static getSellableObjects() {
+        if (this.objectInfos === null) {
+            this.generateObjectInfos();
+        }
+        return this.objectInfos;
+    }
+}
+ObjectInfoRegistry.objectInfos = null;
+exports.ObjectInfoRegistry = ObjectInfoRegistry;
+
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const HumanRepository_1 = __webpack_require__(36);
+const Sofa_1 = __webpack_require__(33);
+const Desk_1 = __webpack_require__(28);
+const Dispenser_1 = __webpack_require__(29);
+const WallRepository_1 = __webpack_require__(37);
+const Cell_1 = __webpack_require__(13);
+const PositionTransformer_1 = __webpack_require__(2);
+const Play_1 = __webpack_require__(0);
+const Depot_1 = __webpack_require__(27);
+const Direction_1 = __webpack_require__(3);
 const GRID_WIDTH = 12;
 const GRID_HEIGHT = 12;
 exports.DEBUG_WORLD = false;
@@ -794,9 +1001,9 @@ class WorldKnowledge {
         if (exports.DEBUG_WORLD) {
             this.wallRepository.addWall(new PIXI.Point(5, 5));
             this.wallRepository.addWall(new PIXI.Point(6, 5));
-            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 5), this));
-            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 6), this));
-            this.objects.push(new Dispenser_1.Dispenser(new PIXI.Point(5, 4), this));
+            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 5), this, false));
+            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 6), this, false));
+            this.objects.push(new Dispenser_1.Dispenser(new PIXI.Point(5, 4), this, false));
         }
         else {
             for (let x = 0; x < GRID_WIDTH; x++) {
@@ -821,19 +1028,12 @@ class WorldKnowledge {
             ].forEach((cell) => {
                 this.wallRepository.addWall(cell);
             });
-            for (let i = 0; i < 10; i++) {
-                this.objects.push(new Desk_1.Desk(this.getRandomCell(), this));
-            }
-            for (let i = 0; i < 3; i++) {
-                this.objects.push(new Sofa_1.Sofa(this.getRandomCell(), this));
-            }
-            for (let i = 0; i < 10; i++) {
-                this.objects.push(new Dispenser_1.Dispenser(this.getRandomCell(), this));
-            }
         }
         this.humanRepository = new HumanRepository_1.HumanRepository(this);
     }
     create(game, groups) {
+        this.game = game;
+        this.groups = groups;
         console.log(Play_1.GROUP_OBJECTS_AND_HUMANS);
         const floor = groups[Play_1.GROUP_FLOOR];
         const noname = groups[Play_1.GROUP_OBJECTS_AND_HUMANS];
@@ -879,9 +1079,14 @@ class WorldKnowledge {
     getSelectedHumanSprite() {
         return this.humanRepository.getSelectedHumanSprite();
     }
-    resetAStar(startPosition, endPosition) {
+    resetAStar(position) {
         this.humanRepository.humans.forEach((human) => {
-            human.resetAStar(startPosition, endPosition);
+            human.resetAStar(position);
+        });
+    }
+    resetStates(position) {
+        this.humanRepository.humans.forEach((human) => {
+            human.resetStateIfCellEmpty(position);
         });
     }
     getAnotherFreeHuman(human) {
@@ -996,21 +1201,78 @@ class WorldKnowledge {
         return dist;
     }
     moveToDepot(object) {
+        this.resetStates(object.getPosition());
         const index = this.objects.indexOf(object, 0);
         if (index > -1) {
             this.objects.splice(index, 1);
+        }
+        else {
+            throw "Impossible to delete the object!";
         }
         this.depot.add(object.constructor.name);
     }
     getDepot() {
         return this.depot;
     }
+    canPutHere(phantom) {
+        // Check if there is nothing in the cell
+        if (!this.isFree(phantom.getPosition())) {
+            return false;
+        }
+        // Check if the human can enter the interactive object by at least one of the entries
+        let isEntryPossible = false;
+        phantom.getEntries().forEach((entry) => {
+            isEntryPossible = isEntryPossible || this.isEntryAccessibleForObject(phantom, entry);
+        });
+        if (isEntryPossible === false) {
+            return false;
+        }
+        // Check that if we put an object here, every other objects have at least one possible entry.
+        let doNotBlockOthers = true;
+        this.objects.forEach((object) => {
+            let isEntryPossible = false;
+            object.getEntries().forEach((entry) => {
+                const out = Direction_1.Direction.getGap(object.getPosition(), entry);
+                if (this.isFree(out) && !(out.x === phantom.getPosition().x && out.y === phantom.getPosition().y)) {
+                    isEntryPossible = true;
+                }
+            });
+            if (!isEntryPossible) {
+                doNotBlockOthers = false;
+            }
+        });
+        if (!doNotBlockOthers) {
+            return false;
+        }
+        return true;
+    }
+    isEntryAccessibleForObject(phantom, entry) {
+        return this.isFree(Direction_1.Direction.getGap(phantom.getPosition(), entry));
+    }
+    add(name, position, leftOriented) {
+        let object = null;
+        switch (name) {
+            case 'Desk':
+                object = new Desk_1.Desk(position, this, leftOriented);
+                break;
+            case 'Sofa':
+                object = new Sofa_1.Sofa(position, this, leftOriented);
+                break;
+            case 'Dispenser':
+                object = new Dispenser_1.Dispenser(position, this, leftOriented);
+                break;
+            default: throw 'Unknown object ' + name;
+        }
+        this.objects.push(object);
+        object.create(this.game, this.groups);
+        this.resetAStar(position);
+    }
 }
 exports.WorldKnowledge = WorldKnowledge;
 
 
 /***/ }),
-/* 8 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1075,103 +1337,15 @@ exports.HumanMoodManager = HumanMoodManager;
 
 
 /***/ }),
-/* 9 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(0);
-const ObjectSelector_1 = __webpack_require__(10);
-class ObjectMover {
-    static makeMovable(movableObject, worldKnowledge) {
-        movableObject.getSprites().forEach((sprite) => {
-            sprite.inputEnabled = true;
-            sprite.input.pixelPerfectOver = true;
-            sprite.input.pixelPerfectClick = true;
-            sprite.input.useHandCursor = true;
-            sprite.events.onInputDown.add(this.select, this, 0, movableObject, worldKnowledge);
-        });
-    }
-    static select(sprite, _pointer, movableObject, worldKnowledge) {
-        const gap = new PIXI.Point(_pointer.position.x - PositionTransformer_1.PositionTransformer.getRealPosition(movableObject.getPosition()).x, _pointer.position.y - PositionTransformer_1.PositionTransformer.getRealPosition(movableObject.getPosition()).y);
-        const moveCallback = (p, x, y) => {
-            movableObject.tryToMove(PositionTransformer_1.PositionTransformer.getCellPosition(new PIXI.Point(x - gap.x, y - gap.y)));
-        };
-        movableObject.getSprites().forEach((sprite) => {
-            ObjectSelector_1.ObjectSelector.setSelected(sprite, true);
-        });
-        _pointer.game.input.addMoveCallback(moveCallback, this);
-        sprite.events.onInputUp.add(this.unselect, this, 0, movableObject, worldKnowledge, movableObject.getPosition());
-    }
-    static unselect(sprite, _pointer, bool, movableObject, worldKnowledge, startPoint) {
-        _pointer.game.input.moveCallbacks = [];
-        movableObject.getSprites().forEach((sprite) => {
-            ObjectSelector_1.ObjectSelector.setSelected(sprite, false);
-        });
-        if (startPoint.x !== movableObject.getPosition().x || startPoint.y !== movableObject.getPosition().y) {
-            worldKnowledge.resetAStar(startPoint, movableObject.getPosition());
-        }
-    }
-}
-exports.ObjectMover = ObjectMover;
-
-
-/***/ }),
-/* 10 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const SELECTED = '_selected';
-class ObjectSelector {
-    static makeSelectable(sprites) {
-        sprites.forEach((sprite) => {
-            sprite.inputEnabled = true;
-            sprite.input.pixelPerfectOver = true;
-            sprite.input.pixelPerfectClick = true;
-            sprite.input.useHandCursor = true;
-            sprite.events.onInputDown.add(this.click, this, 0, sprites);
-        });
-    }
-    static setSelected(sprite, selected) {
-        sprite.loadTexture(selected ?
-            this.getSelectedKey(sprite.key) :
-            this.getNonSelectedKey(sprite.key), sprite.frame, false);
-    }
-    static isSelected(tile) {
-        return tile.key.indexOf(SELECTED) > -1;
-    }
-    static click(sprite, _pointer, sprites) {
-        const isSelected = this.isSelected(sprite);
-        sprites.forEach((sprite) => {
-            this.setSelected(sprite, !isSelected);
-        });
-    }
-    static getNonSelectedKey(key) {
-        return key.replace(SELECTED, '');
-    }
-    static getSelectedKey(key) {
-        if (key.indexOf(SELECTED) > -1) {
-            return key;
-        }
-        return key + SELECTED;
-    }
-}
-exports.ObjectSelector = ObjectSelector;
-
-
-/***/ }),
-/* 11 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const Play_1 = __webpack_require__(2);
-const app_1 = __webpack_require__(4);
-const ObjectSeller_1 = __webpack_require__(34);
+const Play_1 = __webpack_require__(0);
+const app_1 = __webpack_require__(5);
+const ObjectSeller_1 = __webpack_require__(38);
 exports.INTERFACE_WIDTH = 100;
 class UserInterface {
     constructor(worldKnowledge) {
@@ -1188,7 +1362,7 @@ class UserInterface {
             this.backgroundGraphics.lineStyle(1, 0xffffff);
             this.backgroundGraphics.drawRect(0, 10 + i * ObjectSeller_1.OBJECT_SELLER_CELL_SIZE, ObjectSeller_1.OBJECT_SELLER_CELL_SIZE, ObjectSeller_1.OBJECT_SELLER_CELL_SIZE);
         }
-        this.objectSeller.create(game, interfaceGroup);
+        this.objectSeller.create(game, groups);
     }
     update() {
         this.objectSeller.update();
@@ -1198,14 +1372,14 @@ exports.UserInterface = UserInterface;
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(0);
-const WorldKnowledge_1 = __webpack_require__(7);
+const PositionTransformer_1 = __webpack_require__(2);
+const WorldKnowledge_1 = __webpack_require__(10);
 class Cell {
     constructor(point) {
         this.position = point;
@@ -1223,13 +1397,13 @@ exports.Cell = Cell;
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const app_1 = __webpack_require__(4);
+const app_1 = __webpack_require__(5);
 class Boot extends Phaser.State {
     create() {
         // this.physics.startSystem(Phaser.Physics.ARCADE);
@@ -1244,7 +1418,7 @@ exports.default = Boot;
 
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1285,6 +1459,7 @@ class Preload extends Phaser.State {
         this.game.load.spritesheet('sofa_selected', 'assets/sofa_selected.png', 8, 6);
         this.game.load.spritesheet('bubble', 'assets/bubble.png', 13, 15);
         this.game.load.spritesheet('bubble_images', 'assets/bubble_images.png', 9, 7);
+        this.game.load.spritesheet('forbidden', 'assets/forbidden.png', 12, 12);
     }
     loadFonts() {
     }
@@ -1293,7 +1468,7 @@ exports.default = Preload;
 
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1301,8 +1476,8 @@ exports.default = Preload;
 Object.defineProperty(exports, "__esModule", { value: true });
 const Human_1 = __webpack_require__(6);
 const HumanStateManager_1 = __webpack_require__(1);
-const PositionTransformer_1 = __webpack_require__(0);
-const HumanAnimationManager_1 = __webpack_require__(3);
+const PositionTransformer_1 = __webpack_require__(2);
+const HumanAnimationManager_1 = __webpack_require__(4);
 class CoffeeState {
     constructor(human, dispenser, worldKnowledge) {
         this.human = human;
@@ -1362,13 +1537,13 @@ exports.CoffeeState = CoffeeState;
 
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(3);
+const HumanAnimationManager_1 = __webpack_require__(4);
 const HumanStateManager_1 = __webpack_require__(1);
 class FreezeState {
     constructor(human) {
@@ -1400,7 +1575,7 @@ exports.FreezeState = FreezeState;
 
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1468,7 +1643,7 @@ exports.Meeting = Meeting;
 
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1508,16 +1683,16 @@ exports.MoveRandomState = MoveRandomState;
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Human_1 = __webpack_require__(6);
-const HumanAnimationManager_1 = __webpack_require__(3);
+const HumanAnimationManager_1 = __webpack_require__(4);
 const HumanStateManager_1 = __webpack_require__(1);
-const PositionTransformer_1 = __webpack_require__(0);
+const PositionTransformer_1 = __webpack_require__(2);
 class SitState {
     constructor(human, interactiveObject, worldKnowledge) {
         this.human = human;
@@ -1580,13 +1755,13 @@ exports.SitState = SitState;
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(3);
+const HumanAnimationManager_1 = __webpack_require__(4);
 const HumanStateManager_1 = __webpack_require__(1);
 class SmokeState {
     constructor(human) {
@@ -1616,15 +1791,15 @@ exports.SmokeState = SmokeState;
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(3);
-const Meeting_1 = __webpack_require__(17);
-const Direction_1 = __webpack_require__(5);
+const HumanAnimationManager_1 = __webpack_require__(4);
+const Meeting_1 = __webpack_require__(18);
+const Direction_1 = __webpack_require__(3);
 const HumanStateManager_1 = __webpack_require__(1);
 class TalkState {
     constructor(human, anotherHuman, game, worldKnowledge, meeting = null) {
@@ -1707,16 +1882,16 @@ exports.TalkState = TalkState;
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Human_1 = __webpack_require__(6);
-const HumanAnimationManager_1 = __webpack_require__(3);
+const HumanAnimationManager_1 = __webpack_require__(4);
 const HumanStateManager_1 = __webpack_require__(1);
-const PositionTransformer_1 = __webpack_require__(0);
+const PositionTransformer_1 = __webpack_require__(2);
 class TypeState {
     constructor(human, interactiveObject, worldKnowledge) {
         this.human = human;
@@ -1780,13 +1955,13 @@ exports.TypeState = TypeState;
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Direction_1 = __webpack_require__(5);
+const Direction_1 = __webpack_require__(3);
 class ClosestPathFinder {
     constructor(game, worldKnowledge) {
         this.finders = {};
@@ -1882,7 +2057,7 @@ exports.ClosestPathFinder = ClosestPathFinder;
 
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1925,7 +2100,7 @@ exports.MoodSprite = MoodSprite;
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1971,7 +2146,7 @@ exports.TalkBubble = TalkBubble;
 
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1993,89 +2168,14 @@ class Depot {
         }
         return this.objects[name];
     }
+    remove(name) {
+        if (this.objects[name] === undefined) {
+            this.objects[name] = 0;
+        }
+        this.objects[name]--;
+    }
 }
 exports.Depot = Depot;
-
-
-/***/ }),
-/* 27 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(0);
-const Direction_1 = __webpack_require__(5);
-const ObjectMover_1 = __webpack_require__(9);
-const Play_1 = __webpack_require__(2);
-/**
- * This variable will fake the position of the sprite without changing it for the enduser.
- * A negative number (e.g. -10) will draw the object 10 pixels on the top but will update the anchor to put it back
- * to its position.
- * If the Human is not seen because the object is in front of it, you have to put a more negative number.
- * @type {number}
- */
-const FAKE_ANCHOR_BOTTOM = -4;
-/**
- * Negative : will display the object to the left
- * @type {number}
- */
-const GAP_HORIZONTAL = -10;
-/**
- * Negative: Will display the object to the top
- * @type {number}
- */
-const GAP_VERTICAL = -8;
-class Desk {
-    constructor(point, worldKnowledge) {
-        this.position = point;
-        this.worldKnowledge = worldKnowledge;
-    }
-    create(game, groups) {
-        const isLeftOriented = Math.random() >= 0.5;
-        this.chairSprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + (isLeftOriented ? -GAP_HORIZONTAL : GAP_HORIZONTAL), PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM + GAP_VERTICAL, 'chair');
-        this.deskSprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM, 'desk');
-        this.chairSprite.anchor.set(0.5, 1 + FAKE_ANCHOR_BOTTOM / this.chairSprite.height);
-        this.deskSprite.anchor.set(0.5, 1 + FAKE_ANCHOR_BOTTOM / this.deskSprite.height);
-        ObjectMover_1.ObjectMover.makeMovable(this, this.worldKnowledge);
-        if (isLeftOriented) {
-            this.deskSprite.scale.set(-1, 1);
-            this.chairSprite.scale.set(-1, 1);
-        }
-        groups[Play_1.GROUP_OBJECTS_AND_HUMANS].add(this.chairSprite);
-        groups[Play_1.GROUP_OBJECTS_AND_HUMANS].add(this.deskSprite);
-    }
-    getPosition() {
-        return this.position;
-    }
-    getPositionGap() {
-        return new PIXI.Point(this.isLeftOriented() ? -GAP_HORIZONTAL : GAP_HORIZONTAL, GAP_VERTICAL - 2);
-    }
-    getEntries() {
-        return this.isLeftOriented() ?
-            [Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.TOP] :
-            [Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT];
-    }
-    isLeftOriented() {
-        return this.deskSprite.scale.x === -1;
-    }
-    forceOrientation() {
-        return this.isLeftOriented();
-    }
-    getSprites() {
-        return [this.deskSprite, this.chairSprite];
-    }
-    tryToMove(point) {
-        if (this.worldKnowledge.isFree(point, this)) {
-            this.position = point;
-            this.chairSprite.position.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + (this.isLeftOriented() ? -GAP_HORIZONTAL : GAP_HORIZONTAL);
-            this.chairSprite.position.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM + GAP_VERTICAL;
-            this.deskSprite.position.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x;
-            this.deskSprite.position.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + FAKE_ANCHOR_BOTTOM;
-        }
-    }
-}
-exports.Desk = Desk;
 
 
 /***/ }),
@@ -2085,46 +2185,16 @@ exports.Desk = Desk;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(0);
-const Direction_1 = __webpack_require__(5);
-const ObjectDeleter_1 = __webpack_require__(29);
-const Play_1 = __webpack_require__(2);
-const DISPENSER_BOTTOM = -4;
-const DISPENSER_LEFT = 4;
-const DISPENSER_ANCHOR_BOTTOM = 3;
-class Dispenser {
-    constructor(point, worldKnowledge) {
-        this.position = point;
-        this.worldKnowledge = worldKnowledge;
-    }
+const Play_1 = __webpack_require__(0);
+const AbstractObject_1 = __webpack_require__(8);
+const ObjectDeleter_1 = __webpack_require__(7);
+class Desk extends AbstractObject_1.AbstractObject {
     create(game, groups) {
-        this.sprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + DISPENSER_LEFT, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + DISPENSER_BOTTOM - DISPENSER_ANCHOR_BOTTOM, 'dispenser');
-        this.sprite.anchor.set(0.5, 1.0 - DISPENSER_ANCHOR_BOTTOM / this.sprite.height);
-        // ObjectMover.makeMovable(this, this.worldKnowledge);
+        super.create(game, groups);
         ObjectDeleter_1.ObjectDeleter.makeDeletable(this, game, groups[Play_1.GROUP_INFOS]);
-        groups[Play_1.GROUP_OBJECTS_AND_HUMANS].add(this.sprite);
-    }
-    getPosition() {
-        return this.position;
-    }
-    getSprites() {
-        return [this.sprite];
-    }
-    getEntries() {
-        return [Direction_1.DIRECTION.BOTTOM];
-    }
-    getPositionGap() {
-        return new PIXI.Point(0, 0);
-    }
-    forceOrientation() {
-        return true;
-    }
-    remove() {
-        this.worldKnowledge.moveToDepot(this);
-        this.sprite.destroy(true);
     }
 }
-exports.Dispenser = Dispenser;
+exports.Desk = Desk;
 
 
 /***/ }),
@@ -2134,89 +2204,16 @@ exports.Dispenser = Dispenser;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const POINTS = 20;
-const RADIUS = 6;
-const DELAY = 1500;
-class ObjectDeleter {
-    static makeDeletable(object, game, group) {
-        const circle = new PartialCircle(game, this.getPosition(object).x, this.getPosition(object).y, group);
-        game.add.existing(circle);
-        group.add(circle);
-        object.getSprites().forEach((sprite) => {
-            sprite.inputEnabled = true;
-            sprite.input.pixelPerfectOver = true;
-            sprite.input.pixelPerfectClick = true;
-            sprite.input.useHandCursor = true;
-            sprite.events.onInputDown.add(this.select, this, 0, game, object, circle);
-        });
-    }
-    static select(sprite, _pointer, game, object, circle) {
-        circle.alpha = 1;
-        circle.percentage = 1.0;
-        const tween = game.add.tween(circle).to({
-            percentage: 0
-        }, DELAY, 'Linear', true, 0, 0, false);
-        const event = game.time.events.add(DELAY, this.removeObject, this, object);
-        sprite.events.onInputUp.add(this.cancelRemoval, this, 0, game, tween, event, circle);
-    }
-    static cancelRemoval(sprite, _pointer, _boolean, game, tween, event, circle) {
-        tween.stop(false);
-        game.time.events.remove(event);
-        game.time.events.clearPendingEvents();
-        sprite.events.onInputUp.removeAll();
-        circle.alpha = 0;
-    }
-    static removeObject(object) {
-        object.remove();
-    }
-    static getPosition(object) {
-        const xMin = object.getSprites().map((sprite) => {
-            return (sprite.position.x - sprite.width / 2);
-        }).reduce((a, b) => {
-            return Math.min(a, b);
-        });
-        const xMax = object.getSprites().map((sprite) => {
-            return (sprite.position.x + sprite.width / 2);
-        }).reduce((a, b) => {
-            return Math.max(a, b);
-        });
-        const yMin = object.getSprites().map((sprite) => {
-            return (sprite.position.y);
-        }).reduce((a, b) => {
-            return Math.min(a, b);
-        });
-        const yMax = object.getSprites().map((sprite) => {
-            return (sprite.position.y - sprite.width);
-        }).reduce((a, b) => {
-            return Math.max(a, b);
-        });
-        return new PIXI.Point(xMin + (xMax - xMin) / 2, yMin + (yMax - yMin) / 2);
+const AbstractObject_1 = __webpack_require__(8);
+const ObjectDeleter_1 = __webpack_require__(7);
+const Play_1 = __webpack_require__(0);
+class Dispenser extends AbstractObject_1.AbstractObject {
+    create(game, groups) {
+        super.create(game, groups);
+        ObjectDeleter_1.ObjectDeleter.makeDeletable(this, game, groups[Play_1.GROUP_INFOS]);
     }
 }
-exports.ObjectDeleter = ObjectDeleter;
-class PartialCircle extends Phaser.Graphics {
-    constructor(game, x, y, group) {
-        super(game, x, y);
-        this.percentage = 1.0;
-        game.add.existing(this);
-        group.add(this);
-        this.alpha = 0;
-    }
-    update() {
-        if (this.alpha > 0) {
-            this.redraw();
-        }
-    }
-    redraw() {
-        this.clear();
-        this.lineStyle(3, 0xff004d);
-        this.moveTo(0, -RADIUS);
-        for (let i = 0; i < POINTS * this.percentage; i++) {
-            const angle = Math.PI * 2 / POINTS * (i + 1) + Math.PI;
-            this.lineTo(-Math.sin(angle) * RADIUS, Math.cos(angle) * RADIUS);
-        }
-    }
-}
+exports.Dispenser = Dispenser;
 
 
 /***/ }),
@@ -2226,48 +2223,31 @@ class PartialCircle extends Phaser.Graphics {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(0);
-const Direction_1 = __webpack_require__(5);
-const ObjectMover_1 = __webpack_require__(9);
-const Play_1 = __webpack_require__(2);
-const SOFA_BOTTOM = -8;
-const SOFA_LEFT = 0;
-const SOFA_ANCHOR_BOTTOM = 3;
-class Sofa {
-    constructor(point, worldKnowledge) {
-        this.position = point;
-        this.worldKnowledge = worldKnowledge;
+const Direction_1 = __webpack_require__(3);
+class ObjectInfo {
+    constructor(name, spriteInfos, entryPoints) {
+        this.name = name;
+        this.sprites = spriteInfos;
+        this.entryPoints = entryPoints;
     }
-    create(game, groups) {
-        this.sprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + SOFA_LEFT, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + SOFA_BOTTOM - SOFA_ANCHOR_BOTTOM, 'sofa');
-        this.sprite.anchor.set(0.5, 1.0 - SOFA_ANCHOR_BOTTOM / this.sprite.height);
-        ObjectMover_1.ObjectMover.makeMovable(this, this.worldKnowledge);
-        groups[Play_1.GROUP_OBJECTS_AND_HUMANS].add(this.sprite);
+    getName() {
+        return this.name;
     }
-    getPosition() {
-        return this.position;
+    getSpriteInfos() {
+        return this.sprites;
     }
-    getPositionGap() {
-        return new PIXI.Point(SOFA_LEFT, SOFA_BOTTOM);
-    }
-    getEntries() {
-        return [Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.BOTTOM];
-    }
-    forceOrientation() {
-        return null;
-    }
-    getSprites() {
-        return [this.sprite];
-    }
-    tryToMove(point) {
-        if (this.worldKnowledge.isFree(point, this)) {
-            this.position = point;
-            this.sprite.x = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x + SOFA_LEFT;
-            this.sprite.y = PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y + SOFA_BOTTOM - SOFA_ANCHOR_BOTTOM;
+    getEntryPoints(leftOriented) {
+        if (!leftOriented) {
+            return this.entryPoints;
+        }
+        else {
+            return this.entryPoints.map((entryPoint) => {
+                return Direction_1.Direction.getHorizontalMirror(entryPoint);
+            });
         }
     }
 }
-exports.Sofa = Sofa;
+exports.ObjectInfo = ObjectInfo;
 
 
 /***/ }),
@@ -2277,7 +2257,305 @@ exports.Sofa = Sofa;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(0);
+const ObjectInfoRegistry_1 = __webpack_require__(9);
+const PositionTransformer_1 = __webpack_require__(2);
+const ObjectDeleter_1 = __webpack_require__(7);
+const Direction_1 = __webpack_require__(3);
+const Play_1 = __webpack_require__(0);
+const ARROW_SIZE = 0.9;
+const GAP = 4;
+const SPRITE_OPACITY = 0.7;
+class ObjectPhantom {
+    constructor(name, game, worldKnowledge) {
+        this.phantomSprites = [];
+        this.leftOriented = false;
+        this.worldKnowledge = worldKnowledge;
+        this.position = new PIXI.Point(-10, -10);
+        this.objectInfo = ObjectInfoRegistry_1.ObjectInfoRegistry.getObjectInfo(name);
+        this.objectInfo.getSpriteInfos().forEach((spriteInfo) => {
+            this.phantomSprites.push(new PhantomSprite(spriteInfo));
+        });
+        this.directionsSprite = new DirectionsSprite(this);
+        game.input.addMoveCallback((_pointer, x, y) => {
+            this.updatePosition(new PIXI.Point(x, y), game.camera);
+        }, this);
+        this.putEvent = () => {
+            debugger;
+            if (this.worldKnowledge.canPutHere(this)) {
+                this.put(game);
+            }
+        };
+        game.input.activePointer.leftButton.onDown.add(this.putEvent);
+        game.input.keyboard.onUpCallback = (event) => {
+            if (event.keyCode == Phaser.Keyboard.ESC) {
+                this.cancel(game);
+                game.input.moveCallbacks = [];
+            }
+            else if (event.keyCode === Phaser.Keyboard.SPACEBAR) {
+                this.switchOrientation();
+            }
+        };
+    }
+    create(game, groups) {
+        this.directionsSprite.create(game, groups[Play_1.GROUP_INFOS]);
+        this.directionsSprite.setPosition(this.position);
+        this.phantomSprites.forEach((phantomSprite) => {
+            phantomSprite.create(game, groups[Play_1.GROUP_INFOS]);
+            phantomSprite.setPosition(this.position);
+        });
+        this.forbiddenSprite = game.add.sprite(0, 0, 'forbidden');
+        this.forbiddenSprite.anchor.setTo(0.5, 0.5);
+        groups[Play_1.GROUP_INFOS].add(this.forbiddenSprite);
+    }
+    cancel(game) {
+        this.destroy();
+        this.worldKnowledge.getDepot().add(this.objectInfo.getName());
+        game.input.activePointer.leftButton.onDown.remove(this.putEvent);
+    }
+    destroy() {
+        this.phantomSprites.forEach((phantomSprite) => {
+            phantomSprite.destroy();
+        });
+        this.forbiddenSprite.destroy(true);
+        this.directionsSprite.destroy();
+    }
+    updatePosition(point, camera) {
+        const gappedPoint = new PIXI.Point(point.x + camera.x, point.y + camera.y);
+        this.position = PositionTransformer_1.PositionTransformer.getCellPosition(gappedPoint);
+        this.phantomSprites.forEach((phantomSprite) => {
+            phantomSprite.setPosition(this.position);
+        });
+        this.directionsSprite.setPosition(this.position);
+        this.updateForbiddenSprite();
+    }
+    switchOrientation() {
+        this.leftOriented = !this.leftOriented;
+        this.phantomSprites.forEach((phantomSprite) => {
+            phantomSprite.updateOrientation(this.leftOriented);
+            phantomSprite.setPosition(this.position);
+        });
+        this.updateForbiddenSprite();
+        this.directionsSprite.updatePolygons();
+    }
+    getPosition() {
+        return this.position;
+    }
+    getEntries() {
+        return this.objectInfo.getEntryPoints(this.leftOriented);
+    }
+    updateForbiddenSprite() {
+        const center = ObjectDeleter_1.ObjectDeleter.getCenterOfSprites(this.phantomSprites.map((phantomSprite) => {
+            return phantomSprite.getSprite();
+        }));
+        this.forbiddenSprite.position.set(center.x, center.y);
+        this.forbiddenSprite.alpha = this.worldKnowledge.canPutHere(this) ? 0 : 1;
+    }
+    put(game) {
+        game.input.activePointer.leftButton.onDown.remove(this.putEvent);
+        this.worldKnowledge.add(this.objectInfo.getName(), this.getPosition(), this.leftOriented);
+        this.destroy();
+    }
+    getInfo() {
+        return this.objectInfo;
+    }
+    getLeftOriented() {
+        return this.leftOriented;
+    }
+    isEntryAccessible(direction) {
+        return this.worldKnowledge.isEntryAccessibleForObject(this, direction);
+    }
+    isCellFree() {
+        return this.worldKnowledge.isFree(this.getPosition());
+    }
+}
+exports.ObjectPhantom = ObjectPhantom;
+class DirectionsSprite {
+    constructor(phantom) {
+        this.phantom = phantom;
+    }
+    create(game, group) {
+        this.graphics = game.add.graphics(0, 0, group);
+        this.updatePolygons();
+        group.add(this.graphics);
+    }
+    updatePolygons() {
+        this.graphics.clear();
+        Direction_1.Direction.neighborDirections().forEach((direction) => {
+            if (this.phantom.getInfo().getEntryPoints(this.phantom.getLeftOriented()).indexOf(direction) <= -1) {
+                this.graphics.beginFill(0x494947); // Grey
+            }
+            else if (this.phantom.isEntryAccessible(direction)) {
+                this.graphics.beginFill(0x00de2d); // Green
+            }
+            else {
+                this.graphics.beginFill(0xff004d); // Red
+            }
+            switch (direction) {
+                case Direction_1.DIRECTION.BOTTOM:
+                    this.graphics.drawPolygon(new PIXI.Point(-GAP, PositionTransformer_1.CELL_HEIGHT / 2), new PIXI.Point(-PositionTransformer_1.CELL_WIDTH / 2, GAP), new PIXI.Point(-PositionTransformer_1.CELL_WIDTH / 2 * ARROW_SIZE, PositionTransformer_1.CELL_HEIGHT / 2 * ARROW_SIZE));
+                    break;
+                case Direction_1.DIRECTION.LEFT:
+                    this.graphics.drawPolygon(new PIXI.Point(-PositionTransformer_1.CELL_WIDTH / 2, -GAP), new PIXI.Point(-GAP, -PositionTransformer_1.CELL_HEIGHT / 2), new PIXI.Point(-PositionTransformer_1.CELL_WIDTH / 2 * ARROW_SIZE, -PositionTransformer_1.CELL_HEIGHT / 2 * ARROW_SIZE));
+                    break;
+                case Direction_1.DIRECTION.TOP:
+                    this.graphics.drawPolygon(new PIXI.Point(PositionTransformer_1.CELL_WIDTH / 2, -GAP), new PIXI.Point(GAP, -PositionTransformer_1.CELL_HEIGHT / 2), new PIXI.Point(PositionTransformer_1.CELL_WIDTH / 2 * ARROW_SIZE, -PositionTransformer_1.CELL_HEIGHT / 2 * ARROW_SIZE));
+                    break;
+                case Direction_1.DIRECTION.RIGHT:
+                    this.graphics.drawPolygon(new PIXI.Point(GAP, PositionTransformer_1.CELL_HEIGHT / 2), new PIXI.Point(PositionTransformer_1.CELL_WIDTH / 2, GAP), new PIXI.Point(PositionTransformer_1.CELL_WIDTH / 2 * ARROW_SIZE, PositionTransformer_1.CELL_HEIGHT / 2 * ARROW_SIZE));
+            }
+        });
+        this.graphics.beginFill(this.phantom.isCellFree() ? 0x00de2d : 0xff004d);
+        this.graphics.drawPolygon(new PIXI.Point(-PositionTransformer_1.CELL_WIDTH / 2, 0), new PIXI.Point(0, PositionTransformer_1.CELL_HEIGHT / 2), new PIXI.Point(PositionTransformer_1.CELL_WIDTH / 2, 0), new PIXI.Point(0, -PositionTransformer_1.CELL_HEIGHT / 2));
+    }
+    setPosition(position) {
+        this.graphics.x = PositionTransformer_1.PositionTransformer.getRealPosition(position).x;
+        this.graphics.y = PositionTransformer_1.PositionTransformer.getRealPosition(position).y - PositionTransformer_1.CELL_HEIGHT / 2;
+        this.updatePolygons();
+    }
+    destroy() {
+        this.graphics.destroy(true);
+    }
+}
+class PhantomSprite {
+    constructor(infos) {
+        this.spriteInfo = infos;
+        this.leftOriented = false;
+    }
+    create(game, group) {
+        this.sprite = game.add.sprite(0, 0, this.spriteInfo.getSpriteName(), 0, group);
+        this.sprite.anchor.set(0.5, 1.0 - this.spriteInfo.getAnchorBottom() / this.sprite.height);
+        this.sprite.alpha = SPRITE_OPACITY;
+    }
+    setPosition(position) {
+        this.sprite.x = this.spriteInfo.getRealPosition(position, this.leftOriented).x;
+        this.sprite.y = this.spriteInfo.getRealPosition(position, this.leftOriented).y;
+    }
+    destroy() {
+        this.sprite.destroy(true);
+    }
+    updateOrientation(leftOriented) {
+        this.leftOriented = leftOriented;
+        this.sprite.scale.set(this.leftOriented ? -1 : 1, 1);
+    }
+    getSprite() {
+        return this.sprite;
+    }
+}
+
+
+/***/ }),
+/* 32 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const SELECTED = '_selected';
+class ObjectSelector {
+    static makeSelectable(sprites) {
+        sprites.forEach((sprite) => {
+            sprite.inputEnabled = true;
+            sprite.input.pixelPerfectOver = true;
+            sprite.input.pixelPerfectClick = true;
+            sprite.input.useHandCursor = true;
+            sprite.events.onInputDown.add(this.click, this, 0, sprites);
+        });
+    }
+    static setSelected(sprite, selected) {
+        sprite.loadTexture(selected ?
+            this.getSelectedKey(sprite.key) :
+            this.getNonSelectedKey(sprite.key), sprite.frame, false);
+    }
+    static isSelected(tile) {
+        return tile.key.indexOf(SELECTED) > -1;
+    }
+    static click(sprite, _pointer, sprites) {
+        const isSelected = this.isSelected(sprite);
+        sprites.forEach((sprite) => {
+            this.setSelected(sprite, !isSelected);
+        });
+    }
+    static getNonSelectedKey(key) {
+        return key.replace(SELECTED, '');
+    }
+    static getSelectedKey(key) {
+        if (key.indexOf(SELECTED) > -1) {
+            return key;
+        }
+        return key + SELECTED;
+    }
+}
+exports.ObjectSelector = ObjectSelector;
+
+
+/***/ }),
+/* 33 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const AbstractObject_1 = __webpack_require__(8);
+const ObjectDeleter_1 = __webpack_require__(7);
+const Play_1 = __webpack_require__(0);
+class Sofa extends AbstractObject_1.AbstractObject {
+    create(game, groups) {
+        super.create(game, groups);
+        ObjectDeleter_1.ObjectDeleter.makeDeletable(this, game, groups[Play_1.GROUP_INFOS]);
+    }
+    forceOrientation() {
+        return null;
+    }
+}
+exports.Sofa = Sofa;
+
+
+/***/ }),
+/* 34 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const PositionTransformer_1 = __webpack_require__(2);
+class SpriteInfo {
+    constructor(name, left, bottom, anchorBottom, gapLeft) {
+        this.name = name;
+        this.left = left;
+        this.bottom = bottom;
+        this.anchorBottom = anchorBottom;
+        this.gapLeft = gapLeft;
+    }
+    getSpriteName() {
+        return this.name;
+    }
+    getAnchorBottom() {
+        return this.anchorBottom;
+    }
+    getRealPosition(position, leftOriented) {
+        return this.getRealPositionFromOrigin(PositionTransformer_1.PositionTransformer.getRealPosition(position), leftOriented);
+    }
+    getSittablePosition(leftOriented) {
+        return new PIXI.Point(leftOriented ? -(this.left + this.gapLeft) : (this.left + this.gapLeft), this.bottom - this.anchorBottom + 3);
+    }
+    getRealPositionFromOrigin(spriteSource, leftOriented) {
+        return new PIXI.Point(spriteSource.x + (leftOriented ? -this.left : this.left), spriteSource.y + this.bottom - this.anchorBottom);
+    }
+    getAnchor(sprite) {
+        return new PIXI.Point(0.5, 1.0 - this.anchorBottom / sprite.height);
+    }
+}
+exports.SpriteInfo = SpriteInfo;
+
+
+/***/ }),
+/* 35 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const PositionTransformer_1 = __webpack_require__(2);
 const FAKE_MACHIN = -4;
 class Wall {
     constructor(position) {
@@ -2308,7 +2586,7 @@ exports.Wall = Wall;
 
 
 /***/ }),
-/* 32 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2318,20 +2596,6 @@ const Human_1 = __webpack_require__(6);
 class HumanRepository {
     constructor(worldKnowledge) {
         this.humans = [
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
-            new Human_1.Human(worldKnowledge.getRandomCell()),
             new Human_1.Human(worldKnowledge.getRandomCell())
         ];
     }
@@ -2358,13 +2622,13 @@ exports.HumanRepository = HumanRepository;
 
 
 /***/ }),
-/* 33 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Wall_1 = __webpack_require__(31);
+const Wall_1 = __webpack_require__(35);
 class WallRepository {
     constructor() {
         this.walls = [];
@@ -2396,90 +2660,78 @@ exports.WallRepository = WallRepository;
 
 
 /***/ }),
-/* 34 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const UserInterface_1 = __webpack_require__(11);
-const app_1 = __webpack_require__(4);
-exports.OBJECT_SELLER_CELL_SIZE = 35;
-var OBJECT;
-(function (OBJECT) {
-    OBJECT[OBJECT["SOFA"] = 0] = "SOFA";
-    OBJECT[OBJECT["DESK"] = 1] = "DESK";
-    OBJECT[OBJECT["DISPENSER"] = 2] = "DISPENSER";
-})(OBJECT || (OBJECT = {}));
+const UserInterface_1 = __webpack_require__(12);
+const app_1 = __webpack_require__(5);
+const ObjectInfoRegistry_1 = __webpack_require__(9);
+const ObjectPhantom_1 = __webpack_require__(31);
+const Play_1 = __webpack_require__(0);
+exports.OBJECT_SELLER_CELL_SIZE = 42;
 class ObjectSeller {
     constructor(worldKnowledge) {
         this.sellerButtons = [];
         this.worldKnowledge = worldKnowledge;
-        ObjectSeller.objectProperties().forEach((objectProperties) => {
-            this.sellerButtons.push(new SellerButton(objectProperties.type, objectProperties.class, objectProperties.sprite));
+        ObjectInfoRegistry_1.ObjectInfoRegistry.getSellableObjects().forEach((object) => {
+            this.sellerButtons.push(new SellerButton(object, this.worldKnowledge));
         });
     }
-    create(game, interfaceGroup) {
+    create(game, groups) {
         let i = 0;
         this.sellerButtons.forEach((sellerButton) => {
-            sellerButton.create(game, interfaceGroup, i);
+            sellerButton.create(game, groups, i);
             i++;
         });
     }
     update() {
         this.sellerButtons.forEach((sellerButton) => {
-            sellerButton.updateCount(this.getCount(sellerButton.getKlass()));
+            sellerButton.updateCount(this.getCount(sellerButton.getName()));
         });
     }
-    static objectProperties() {
-        let result = [];
-        result.push({
-            type: OBJECT.SOFA,
-            class: 'Sofa',
-            sprite: 'sofa'
-        });
-        result.push({
-            type: OBJECT.DESK,
-            class: 'Desk',
-            sprite: 'desk'
-        });
-        result.push({
-            type: OBJECT.DISPENSER,
-            class: 'Dispenser',
-            sprite: 'dispenser'
-        });
-        return result;
-    }
-    getCount(klass) {
-        return this.worldKnowledge.getDepot().getCount(klass);
+    getCount(name) {
+        return this.worldKnowledge.getDepot().getCount(name);
     }
 }
 exports.ObjectSeller = ObjectSeller;
 class SellerButton {
-    constructor(type, klass, sprite) {
-        this.type = type;
-        this.klass = klass;
-        this.sprite = sprite;
+    constructor(objectInfo, worldKnowledge) {
+        this.objectInfo = objectInfo;
+        this.worldKnowledge = worldKnowledge;
     }
-    create(game, interfaceGroup, index) {
+    create(game, groups, index) {
         const left = app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH;
-        const seller = game.add.sprite(left + exports.OBJECT_SELLER_CELL_SIZE / 2, 10 + (index + 1) * exports.OBJECT_SELLER_CELL_SIZE - exports.OBJECT_SELLER_CELL_SIZE / 2, this.sprite);
-        seller.anchor.set(0.5, 0.5);
-        interfaceGroup.add(seller);
-        const circle = game.add.graphics(left, index * exports.OBJECT_SELLER_CELL_SIZE + 10, interfaceGroup);
+        const spriteSource = new PIXI.Point(left + exports.OBJECT_SELLER_CELL_SIZE / 2, 10 + (index + 1) * exports.OBJECT_SELLER_CELL_SIZE);
+        const fakeCell = game.add.sprite(spriteSource.x, spriteSource.y, 'casedefault');
+        fakeCell.anchor.set(0.5, 1);
+        groups[Play_1.GROUP_INTERFACE].add(fakeCell);
+        this.objectInfo.getSpriteInfos().forEach((spriteInfo) => {
+            const seller = game.add.sprite(spriteInfo.getRealPositionFromOrigin(spriteSource, false).x, spriteInfo.getRealPositionFromOrigin(spriteSource, false).y, spriteInfo.getSpriteName());
+            seller.anchor.set(spriteInfo.getAnchor(seller).x, spriteInfo.getAnchor(seller).y);
+            seller.inputEnabled = true;
+            seller.input.pixelPerfectOver = true;
+            seller.input.pixelPerfectClick = true;
+            seller.input.useHandCursor = true;
+            seller.events.onInputDown.add(this.createPhantom, this, 0, game, groups);
+            groups[Play_1.GROUP_INTERFACE].add(seller);
+        });
+        const circle = game.add.graphics(left, index * exports.OBJECT_SELLER_CELL_SIZE + 10, groups[Play_1.GROUP_INTERFACE]);
         circle.beginFill(0xff0000);
         circle.drawCircle(exports.OBJECT_SELLER_CELL_SIZE, 0, 10);
-        interfaceGroup.add(circle);
+        groups[Play_1.GROUP_INTERFACE].add(circle);
         this.counter = game.add.text(left + exports.OBJECT_SELLER_CELL_SIZE - 4, index * exports.OBJECT_SELLER_CELL_SIZE + 10 - 6, '', {
             align: 'center',
             fill: "#ffffff",
             font: '16px 000webfont'
-        }, interfaceGroup);
-        interfaceGroup.add(this.counter);
+        }, groups[Play_1.GROUP_INTERFACE]);
+        groups[Play_1.GROUP_INTERFACE].add(this.counter);
         this.updateCount(0);
     }
-    getKlass() {
-        return this.klass;
+    getName() {
+        return this.objectInfo.getName();
     }
     updateCount(count) {
         const str = count + '';
@@ -2491,14 +2743,19 @@ class SellerButton {
             this.counter.position.set(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + exports.OBJECT_SELLER_CELL_SIZE - 1, this.counter.position.y);
         }
     }
+    createPhantom(sprite, pointer, game, groups) {
+        this.worldKnowledge.getDepot().remove(this.objectInfo.getName());
+        const phantom = new ObjectPhantom_1.ObjectPhantom(this.objectInfo.getName(), game, this.worldKnowledge);
+        phantom.create(game, groups);
+    }
 }
 
 
 /***/ }),
-/* 35 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(4);
+module.exports = __webpack_require__(5);
 
 
 /***/ })

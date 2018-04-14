@@ -36,23 +36,26 @@ class ObjectDeleter {
         object.remove();
     }
     static getPosition(object) {
-        const xMin = object.getSprites().map((sprite) => {
+        return this.getCenterOfSprites(object.getSprites());
+    }
+    static getCenterOfSprites(sprites) {
+        const xMin = sprites.map((sprite) => {
             return (sprite.position.x - sprite.width / 2);
         }).reduce((a, b) => {
             return Math.min(a, b);
         });
-        const xMax = object.getSprites().map((sprite) => {
+        const xMax = sprites.map((sprite) => {
             return (sprite.position.x + sprite.width / 2);
         }).reduce((a, b) => {
             return Math.max(a, b);
         });
-        const yMin = object.getSprites().map((sprite) => {
+        const yMin = sprites.map((sprite) => {
             return (sprite.position.y);
         }).reduce((a, b) => {
             return Math.min(a, b);
         });
-        const yMax = object.getSprites().map((sprite) => {
-            return (sprite.position.y - sprite.width);
+        const yMax = sprites.map((sprite) => {
+            return (sprite.position.y - sprite.height);
         }).reduce((a, b) => {
             return Math.max(a, b);
         });

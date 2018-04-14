@@ -19,7 +19,7 @@ class UserInterface {
             this.backgroundGraphics.lineStyle(1, 0xffffff);
             this.backgroundGraphics.drawRect(0, 10 + i * ObjectSeller_1.OBJECT_SELLER_CELL_SIZE, ObjectSeller_1.OBJECT_SELLER_CELL_SIZE, ObjectSeller_1.OBJECT_SELLER_CELL_SIZE);
         }
-        this.objectSeller.create(game, interfaceGroup);
+        this.objectSeller.create(game, groups);
     }
     update() {
         this.objectSeller.update();

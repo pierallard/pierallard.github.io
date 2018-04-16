@@ -27,6 +27,10 @@ class ObjectInfoRegistry {
             new SpriteInfo_1.SpriteInfo('chair', -10, -8, 5, 0),
             new SpriteInfo_1.SpriteInfo('desk', 0, 0, 4, 0)
         ], [Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT]));
+        this.objectInfos.push(new ObjectInfo_1.ObjectInfo('Table', [
+            new SpriteInfo_1.SpriteInfo('chair2', -8, -9, 5, 0),
+            new SpriteInfo_1.SpriteInfo('table', 0, 0, 4, 0)
+        ], [Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT]));
     }
     static getSellableObjects() {
         if (this.objectInfos === null) {

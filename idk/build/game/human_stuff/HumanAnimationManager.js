@@ -12,6 +12,7 @@ var ANIMATION;
     ANIMATION[ANIMATION["TYPE"] = 5] = "TYPE";
     ANIMATION[ANIMATION["TALK"] = 6] = "TALK";
     ANIMATION[ANIMATION["DRINK"] = 7] = "DRINK";
+    ANIMATION[ANIMATION["RAGE"] = 8] = "RAGE";
 })(ANIMATION = exports.ANIMATION || (exports.ANIMATION = {}));
 class HumanAnimationManager {
     create(humanTile) {
@@ -55,6 +56,12 @@ class HumanAnimationManager {
             case ANIMATION.STAND_UP: return [39, 38, 37, 36, 12];
             case ANIMATION.TYPE: return [42, 43, 44, 45];
             case ANIMATION.TALK: return topOriented ? [54, 55, 56, 57, 58, 59] : [48, 49, 50, 51, 52, 53];
+            case ANIMATION.RAGE:
+                let rage_frames = [66, 67, 68, 69];
+                for (let i = 0; i < 4; i++) {
+                    rage_frames = rage_frames.concat([70, 71, 72, 73, 74, 73]);
+                }
+                return rage_frames.concat([74, 75, 76]);
             case ANIMATION.DRINK:
                 return [60, 61, 60, 60, 60, 62, 63, 63, 64, 63, 63, 64, 63, 62, 60, 60, 60, 60, 60, 60, 60];
             case ANIMATION.SMOKE:
@@ -70,7 +77,7 @@ class HumanAnimationManager {
                 }
                 return smoke_frames;
             default:
-                console.log('UNKNOWN ANIMATION ' + animation);
+                throw 'UNKNOWN ANIMATION ' + animation;
         }
     }
     static getAnimations() {
@@ -83,6 +90,7 @@ class HumanAnimationManager {
             ANIMATION.TYPE,
             ANIMATION.TALK,
             ANIMATION.DRINK,
+            ANIMATION.RAGE,
         ];
     }
     static hasTopOrientedVariation(animation) {

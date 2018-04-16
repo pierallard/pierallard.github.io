@@ -4,11 +4,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Boot_1 = require("./game/game_state/Boot");
 const Preload_1 = require("./game/game_state/Preload");
 const Play_1 = require("./game/game_state/Play");
-exports.SCALE = 3;
-exports.CAMERA_WIDTH_PIXELS = 1280 / exports.SCALE;
-exports.CAMERA_HEIGHT_PIXELS = 720 / exports.SCALE;
-exports.WORLD_WIDTH = 1280 * 1.1 / 3;
-exports.WORLD_HEIGHT = 720 * 1.1 / 3;
+const PositionTransformer_1 = require("./game/PositionTransformer");
+const WorldKnowledge_1 = require("./game/WorldKnowledge");
+exports.SCALE = 2;
+const CANVAS_WIDTH = 1500;
+const CANVAS_HEIGHT = 650;
+exports.CAMERA_WIDTH_PIXELS = CANVAS_WIDTH / exports.SCALE;
+exports.CAMERA_HEIGHT_PIXELS = CANVAS_HEIGHT / exports.SCALE;
+exports.WORLD_WIDTH = WorldKnowledge_1.GRID_WIDTH * PositionTransformer_1.CELL_WIDTH / 2 + WorldKnowledge_1.GRID_HEIGHT * PositionTransformer_1.CELL_WIDTH / 2;
+exports.WORLD_HEIGHT = WorldKnowledge_1.GRID_WIDTH * PositionTransformer_1.CELL_HEIGHT / 2 + WorldKnowledge_1.GRID_HEIGHT * PositionTransformer_1.CELL_HEIGHT / 2 + 15;
 class SimpleGame extends Phaser.Game {
     constructor() {
         super(exports.CAMERA_WIDTH_PIXELS, exports.CAMERA_HEIGHT_PIXELS, Phaser.CANVAS, // Open GL for effect / shader ?

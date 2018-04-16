@@ -53,28 +53,16 @@ class World {
     getRandomFreeDesk() {
         return this.ground.getRandomFreeDesk(this.humanRepository.humans);
     }
-    getRandomFreeDispenser() {
-        return this.ground.getRandomFreeDispenser(this.humanRepository.humans);
-    }
     getSelectedHumanSprite() {
         return this.humanRepository.getSelectedHumanSprite();
     }
-    isFreePosition(tryPosition, object) {
+    isValidPosition(tryPosition, object) {
         return this.ground.isFree(tryPosition, object);
     }
-    resetAStar(startPosition, endPosition) {
+    resetAStar() {
         this.humanRepository.humans.forEach((human) => {
-            human.resetAStar(startPosition, endPosition);
+            human.resetAStar();
         });
-    }
-    getAnotherFreeHuman(human) {
-        const availableHumans = this.humanRepository.humans.filter((anotherHuman) => {
-            return anotherHuman !== human && anotherHuman.isFree();
-        });
-        if (availableHumans.length === 0) {
-            return null;
-        }
-        return availableHumans[Math.floor(Math.random() * availableHumans.length)];
     }
 }
 exports.World = World;

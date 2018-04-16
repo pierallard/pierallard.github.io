@@ -1,0 +1,1 @@
+{"version":3,"file":"Table.js","sourceRoot":"","sources":["../../../src/game/objects/Table.ts"],"names":[],"mappings":";;AACA,6CAA+C;AAC/C,qDAAgD;AAChD,mDAA8C;AAG9C,WAAmB,SAAQ,+BAAc;IACrC,MAAM,CAAC,IAAiB,EAAE,MAAwC;QAC9D,KAAK,CAAC,MAAM,CAAC,IAAI,EAAE,MAAM,CAAC,CAAC;QAE3B,6BAAa,CAAC,aAAa,CAAC,IAAI,EAAE,IAAI,EAAE,MAAM,CAAC,kBAAW,CAAC,CAAC,CAAC;IACjE,CAAC;CACJ;AAND,sBAMC"}

@@ -14,7 +14,7 @@ class TalkState {
         this.events = [];
         this.meeting = meeting;
     }
-    isActive() {
+    getNextState() {
         if (!this.meetingStarted) {
             if (!this.meeting.areAllHumanStillInMeeting()) {
                 this.active = false;
@@ -36,7 +36,7 @@ class TalkState {
                 }
             }
         }
-        return this.active;
+        return this.active ? this : null;
     }
     switchAnimation(animation) {
         const direction = Direction_1.Direction.getNeighborDirection(this.human.getPosition(), this.meeting.getAnotherHuman(this.human).getPosition());

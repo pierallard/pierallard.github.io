@@ -6,8 +6,8 @@ class FreezeState {
     constructor(human) {
         this.human = human;
     }
-    isActive() {
-        return this.active;
+    getNextState() {
+        return this.active ? this : null;
     }
     start(game) {
         this.active = true;

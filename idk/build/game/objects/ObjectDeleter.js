@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const POINTS = 20;
 const RADIUS = 6;
-const DELAY = 1500;
+const DELAY = 750;
 class ObjectDeleter {
     static makeDeletable(object, game, group) {
         const circle = new PartialCircle(game, this.getPosition(object).x, this.getPosition(object).y, group);

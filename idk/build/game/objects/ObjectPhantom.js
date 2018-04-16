@@ -23,7 +23,6 @@ class ObjectPhantom {
             this.updatePosition(new PIXI.Point(x, y), game.camera);
         }, this);
         this.putEvent = () => {
-            debugger;
             if (this.worldKnowledge.canPutHere(this)) {
                 this.put(game);
             }

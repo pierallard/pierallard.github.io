@@ -6,8 +6,8 @@ class SmokeState {
     constructor(human) {
         this.human = human;
     }
-    isActive() {
-        return this.active;
+    getNextState() {
+        return this.active ? this : null;
     }
     start(game) {
         game.time.events.add(Phaser.Math.random(1, 3) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SMOKE), this.end, this);

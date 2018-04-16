@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanRepository_1 = require("./repositories/HumanRepository");
 const Sofa_1 = require("./objects/Sofa");
+const Employee_1 = require("./human_stuff/Employee");
 const Desk_1 = require("./objects/Desk");
 const Dispenser_1 = require("./objects/Dispenser");
 const WallRepository_1 = require("./repositories/WallRepository");
@@ -10,15 +11,17 @@ const PositionTransformer_1 = require("./PositionTransformer");
 const Play_1 = require("./game_state/Play");
 const Depot_1 = require("./objects/Depot");
 const Direction_1 = require("./Direction");
-const GRID_WIDTH = 12;
-const GRID_HEIGHT = 12;
+const MoodRegister_1 = require("./human_stuff/MoodRegister");
+const Table_1 = require("./objects/Table");
+exports.GRID_WIDTH = 16;
+exports.GRID_HEIGHT = 16;
 exports.DEBUG_WORLD = false;
 class WorldKnowledge {
     constructor() {
         this.cells = [];
         this.objects = [];
-        for (let y = 0; y < GRID_HEIGHT; y++) {
-            for (let x = 0; x < GRID_WIDTH; x++) {
+        for (let y = 0; y < exports.GRID_HEIGHT; y++) {
+            for (let x = 0; x < exports.GRID_WIDTH; x++) {
                 this.cells.push(new Cell_1.Cell(new PIXI.Point(x, y)));
             }
         }
@@ -32,19 +35,19 @@ class WorldKnowledge {
             this.objects.push(new Dispenser_1.Dispenser(new PIXI.Point(5, 4), this, false));
         }
         else {
-            for (let x = 0; x < GRID_WIDTH; x++) {
+            for (let x = 0; x < exports.GRID_WIDTH; x++) {
                 this.wallRepository.addWall(new PIXI.Point(x, 0));
-                this.wallRepository.addWall(new PIXI.Point(x, GRID_HEIGHT - 1));
+                this.wallRepository.addWall(new PIXI.Point(x, exports.GRID_HEIGHT - 1));
             }
-            for (let y = 1; y < (GRID_HEIGHT - 1); y++) {
+            for (let y = 1; y < (exports.GRID_HEIGHT - 1); y++) {
                 this.wallRepository.addWall(new PIXI.Point(0, y));
-                this.wallRepository.addWall(new PIXI.Point(GRID_WIDTH - 1, y));
+                this.wallRepository.addWall(new PIXI.Point(exports.GRID_WIDTH - 1, y));
             }
             for (let x = 1; x < 3 - 1; x++) {
-                this.wallRepository.addWall(new PIXI.Point(x, GRID_WIDTH / 2 + 1));
+                this.wallRepository.addWall(new PIXI.Point(x, exports.GRID_WIDTH / 2 + 1));
             }
-            for (let x = 5; x < GRID_WIDTH - 1; x++) {
-                this.wallRepository.addWall(new PIXI.Point(x, GRID_WIDTH / 2 + 1));
+            for (let x = 5; x < exports.GRID_WIDTH - 1; x++) {
+                this.wallRepository.addWall(new PIXI.Point(x, exports.GRID_WIDTH / 2 + 1));
             }
             [
                 new PIXI.Point(4, 3),
@@ -56,11 +59,11 @@ class WorldKnowledge {
             });
         }
         this.humanRepository = new HumanRepository_1.HumanRepository(this);
+        this.moodRegister = new MoodRegister_1.MoodRegister(this.humanRepository);
     }
     create(game, groups) {
         this.game = game;
         this.groups = groups;
-        console.log(Play_1.GROUP_OBJECTS_AND_HUMANS);
         const floor = groups[Play_1.GROUP_FLOOR];
         const noname = groups[Play_1.GROUP_OBJECTS_AND_HUMANS];
         this.cells.forEach((cell) => {
@@ -71,6 +74,7 @@ class WorldKnowledge {
         });
         this.wallRepository.create(game, noname);
         this.humanRepository.create(game, groups, this);
+        this.moodRegister.create(game);
     }
     update() {
         this.humanRepository.update();
@@ -170,7 +174,7 @@ class WorldKnowledge {
         return grid;
     }
     isFree(point, object = null) {
-        if (point.x < 0 || point.y < 0 || point.x >= GRID_WIDTH || point.y >= GRID_HEIGHT) {
+        if (point.x < 0 || point.y < 0 || point.x >= exports.GRID_WIDTH || point.y >= exports.GRID_HEIGHT) {
             return false;
         }
         for (let j = 0; j < this.objects.length; j++) {
@@ -183,14 +187,14 @@ class WorldKnowledge {
         }
         return true;
     }
-    getRandomFreeSofa() {
-        const freeSofas = this.objects.filter((object) => {
-            return object.constructor.name === 'Sofa' && !this.isObjectUsed(object);
+    getRandomFreeSittable() {
+        const freeSittable = this.objects.filter((object) => {
+            return (object.constructor.name === 'Sofa' || object.constructor.name === 'Table') && !this.isObjectUsed(object);
         });
-        if (freeSofas.length === 0) {
+        if (freeSittable.length === 0) {
             return null;
         }
-        return freeSofas[Math.floor(Math.random() * freeSofas.length)];
+        return freeSittable[Math.floor(Math.random() * freeSittable.length)];
     }
     isObjectUsed(interactiveObject) {
         for (let i = 0; i < this.humanRepository.humans.length; i++) {
@@ -201,23 +205,27 @@ class WorldKnowledge {
         }
         return false;
     }
-    getRandomFreeDesk() {
+    getClosestFreeDesk(position) {
         const freeDesks = this.objects.filter((object) => {
             return object.constructor.name === 'Desk' && !this.isObjectUsed(object);
         });
         if (freeDesks.length === 0) {
             return null;
         }
-        return freeDesks[Math.floor(Math.random() * freeDesks.length)];
+        return freeDesks.sort((desk1, desk2) => {
+            return PositionTransformer_1.PositionTransformer.dist(position, desk1.getPosition()) - PositionTransformer_1.PositionTransformer.dist(position, desk2.getPosition());
+        })[0];
     }
-    getRandomFreeDispenser() {
+    getClosestFreeDispenser(position) {
         const freeDispensers = this.objects.filter((object) => {
             return object.constructor.name === 'Dispenser' && !this.isObjectUsed(object);
         });
         if (freeDispensers.length === 0) {
             return null;
         }
-        return freeDispensers[Math.floor(Math.random() * freeDispensers.length)];
+        return freeDispensers.sort((dispenser1, dispenser2) => {
+            return PositionTransformer_1.PositionTransformer.dist(position, dispenser1.getPosition()) - PositionTransformer_1.PositionTransformer.dist(position, dispenser2.getPosition());
+        })[0];
     }
     static getDist(sources, point) {
         let dist = 0;
@@ -287,11 +295,25 @@ class WorldKnowledge {
             case 'Dispenser':
                 object = new Dispenser_1.Dispenser(position, this, leftOriented);
                 break;
+            case 'Table':
+                object = new Table_1.Table(position, this, leftOriented);
+                break;
             default: throw 'Unknown object ' + name;
         }
         this.objects.push(object);
         object.create(this.game, this.groups);
         this.resetAStar(position);
+    }
+    addEmployee(humanProperties) {
+        const employee = new Employee_1.Employee(this.getRandomCell(), humanProperties);
+        employee.create(this.game, this.groups, this);
+        this.humanRepository.humans.push(employee);
+    }
+    getLastMoods() {
+        return this.moodRegister.getLastMoods();
+    }
+    hasObject(interactiveObject) {
+        return this.objects.indexOf(interactiveObject) > -1;
     }
 }
 exports.WorldKnowledge = WorldKnowledge;

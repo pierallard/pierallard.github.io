@@ -71,6 +71,9 @@ class Employee {
     goMeeting(meeting) {
         return this.stateManager.goMeeting(this.game, meeting);
     }
+    goSitMeeting(meeting) {
+        return this.stateManager.goSitMeeting(this.game, meeting);
+    }
     moveTo(cell) {
         const path = this.closestPathFinder.getPath(this.cell, cell);
         if (path === null) {
@@ -136,13 +139,14 @@ class Employee {
     isMoving() {
         return this.moving;
     }
-    interactWith(interactiveObject, isLeft = null) {
-        const direction = Direction_1.Direction.getNeighborDirection(this.cell, interactiveObject.getPosition());
+    interactWith(objectReferer, isLeft = null) {
+        const direction = Direction_1.Direction.getNeighborDirection(this.cell, objectReferer.getPosition());
         const side = (isLeft !== null) ? isLeft : Employee.isHumanLeft(direction);
         // Employee has to gap 5px from the sofa to be sit properly, and 1px from the bottom.
-        this.anchorPixels.x = interactiveObject.getPositionGap().x + (side ? -5 : 5);
-        this.anchorPixels.y = interactiveObject.getPositionGap().y - 1;
-        this.cell = interactiveObject.getPosition();
+        this.anchorPixels.x = objectReferer.getPositionGap().x + (side ? -5 : 5);
+        this.anchorPixels.y = objectReferer.getPositionGap().y - 1;
+        this.cell = objectReferer.getPosition();
+        objectReferer.setUsed(this);
         this.animateMove(direction);
     }
     static isHumanLeft(direction) {
@@ -151,24 +155,22 @@ class Employee {
     static isHumanTop(direction) {
         return [Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.TOP].indexOf(direction) > -1;
     }
-    goToFreeCell(entries = [Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT]) {
+    goToFreeCell(objectReferer) {
+        objectReferer.setUnused();
         const cells = [];
-        entries.forEach((direction) => {
-            const tryCell = Direction_1.Direction.getGap(this.cell, direction);
+        objectReferer.getEntries().forEach((direction) => {
+            const tryCell = Direction_1.Direction.getNeighbor(this.cell, direction);
             if (this.worldKnowledge.isFree(tryCell)) {
                 cells.push(tryCell);
             }
         });
         if (cells.length === 0) {
             console.log('oops');
-            debugger;
+            return;
         }
-        else {
-            const freeCell = cells[Math.floor(Math.random() * cells.length)];
-            this.path = [freeCell];
-            if (!this.moving) {
-                this.popPath(null, null);
-            }
+        this.path = [cells[Math.floor(Math.random() * cells.length)]];
+        if (!this.moving) {
+            this.popPath(null, null);
         }
     }
     loadAnimation(animation, isLeft = null, isTop = null) {
@@ -200,7 +202,7 @@ class Employee {
         }
     }
     isFree() {
-        return [HumanStateManager_1.STATE.SIT, HumanStateManager_1.STATE.MOVE_RANDOM, HumanStateManager_1.STATE.FREEZE, HumanStateManager_1.STATE.SMOKE].indexOf(this.getState()) > -1;
+        return [HumanStateManager_1.STATE.MOVE_RANDOM, HumanStateManager_1.STATE.FREEZE, HumanStateManager_1.STATE.SMOKE].indexOf(this.getState()) > -1;
     }
     getState() {
         return this.stateManager.getState();
@@ -225,6 +227,12 @@ class Employee {
     }
     getMaxRetries() {
         return Math.ceil(MIN_RETRIES + (MAX_RETRIES - MIN_RETRIES) * this.humanProperties.getPerseverance());
+    }
+    getType() {
+        return this.humanProperties.getType();
+    }
+    getName() {
+        return this.humanProperties.getName();
     }
 }
 exports.Employee = Employee;

@@ -29,7 +29,9 @@ class Preload extends Phaser.State {
         this.game.load.spritesheet('chair', 'assets/chair.png', 40, 40);
         this.game.load.spritesheet('chair_selected', 'assets/chair_selected.png', 40, 40);
         this.game.load.spritesheet('chair2', 'assets/chair2.png', 14, 17);
+        this.game.load.spritesheet('chair2_reverse', 'assets/chair2_reverse.png', 14, 17);
         this.game.load.spritesheet('table', 'assets/table.png', 42, 40);
+        this.game.load.spritesheet('table_reverse', 'assets/table_reverse.png', 42, 40);
         this.game.load.spritesheet('desk', 'assets/desk.png', 40, 40);
         this.game.load.spritesheet('desk_selected', 'assets/desk_selected.png', 40, 40);
         this.game.load.spritesheet('wall', 'assets/wall.png', 40, 37, 16);
@@ -40,6 +42,7 @@ class Preload extends Phaser.State {
         this.game.load.spritesheet('bubble', 'assets/bubble.png', 13, 15);
         this.game.load.spritesheet('bubble_images', 'assets/bubble_images.png', 9, 7);
         this.game.load.spritesheet('forbidden', 'assets/forbidden.png', 12, 12);
+        this.game.load.spritesheet('buy_button', 'assets/buy_button.png', 10, 10);
     }
     loadFonts() {
     }

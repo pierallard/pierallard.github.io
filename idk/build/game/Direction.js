@@ -17,7 +17,7 @@ class Direction {
             DIRECTION.RIGHT
         ];
     }
-    static getGap(point, direction) {
+    static getNeighbor(point, direction) {
         switch (direction) {
             case DIRECTION.TOP: return new PIXI.Point(point.x, point.y + 1);
             case DIRECTION.BOTTOM: return new PIXI.Point(point.x, point.y - 1);
@@ -56,6 +56,15 @@ class Direction {
             case DIRECTION.LEFT: return DIRECTION.TOP;
             case DIRECTION.RIGHT: return DIRECTION.BOTTOM;
             case DIRECTION.CURRENT: return DIRECTION.CURRENT;
+        }
+    }
+    static getDirectionStr(direction) {
+        switch (direction) {
+            case DIRECTION.TOP: return 'T';
+            case DIRECTION.BOTTOM: return 'B';
+            case DIRECTION.LEFT: return 'L';
+            case DIRECTION.RIGHT: return 'R';
+            case DIRECTION.CURRENT: return 'C';
         }
     }
 }

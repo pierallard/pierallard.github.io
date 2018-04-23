@@ -33,6 +33,9 @@ class HumanProperties {
     getPerseverance() {
         return this.perseverance;
     }
+    getType() {
+        return this.type;
+    }
 }
 exports.HumanProperties = HumanProperties;
 //# sourceMappingURL=HumanProperties.js.map

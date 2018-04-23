@@ -2,27 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanAnimationManager_1 = require("../human_stuff/HumanAnimationManager");
 const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
-class FreezeState {
-    constructor(human) {
-        this.human = human;
-    }
-    getNextState() {
-        return this.active ? this : null;
-    }
+const AbstractState_1 = require("./AbstractState");
+class FreezeState extends AbstractState_1.AbstractState {
     start(game) {
-        this.active = true;
+        super.start(game);
         this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE);
-        this.event = game.time.events.add(Phaser.Math.random(1, 2) * Phaser.Timer.SECOND, this.end, this);
+        this.event = game.time.events.add(Phaser.Math.random(1, 2) * Phaser.Timer.SECOND, () => {
+            this.active = false;
+        }, this);
         return true;
-    }
-    end() {
-        this.active = false;
-    }
-    stop(game) {
-        if (this.event) {
-            game.time.events.remove(this.event);
-        }
-        this.end();
     }
     getState() {
         return HumanStateManager_1.STATE.FREEZE;

@@ -13,6 +13,10 @@ const Depot_1 = require("./objects/Depot");
 const Direction_1 = require("./Direction");
 const MoodRegister_1 = require("./human_stuff/MoodRegister");
 const Table_1 = require("./objects/Table");
+const LevelManager_1 = require("./LevelManager");
+const Price_1 = require("./objects/Price");
+const ObjectInfoRegistry_1 = require("./objects/ObjectInfoRegistry");
+const SmoothValue_1 = require("./SmoothValue");
 exports.GRID_WIDTH = 16;
 exports.GRID_HEIGHT = 16;
 exports.DEBUG_WORLD = false;
@@ -26,7 +30,9 @@ class WorldKnowledge {
             }
         }
         this.wallRepository = new WallRepository_1.WallRepository();
+        this.levelManager = new LevelManager_1.LevelManager();
         this.depot = new Depot_1.Depot();
+        this.wallet = new SmoothValue_1.SmoothValue(130);
         if (exports.DEBUG_WORLD) {
             this.wallRepository.addWall(new PIXI.Point(5, 5));
             this.wallRepository.addWall(new PIXI.Point(6, 5));
@@ -78,6 +84,7 @@ class WorldKnowledge {
     }
     update() {
         this.humanRepository.update();
+        this.levelManager.update();
     }
     humanMoved(positions) {
         const walls = this.wallRepository.getWalls();
@@ -106,6 +113,9 @@ class WorldKnowledge {
             (humanPosition.x == wallPosition.x && humanPosition.y == wallPosition.y + 1) ||
             (humanPosition.x == wallPosition.x + 1 && humanPosition.y == wallPosition.y);
     }
+    getMoneyInWallet() {
+        return new Price_1.Price(this.wallet.getValue());
+    }
     getSelectedHumanSprite() {
         return this.humanRepository.getSelectedHumanSprite();
     }
@@ -114,19 +124,37 @@ class WorldKnowledge {
             human.resetAStar(position);
         });
     }
-    resetStates(position) {
+    resetStates(positions) {
         this.humanRepository.humans.forEach((human) => {
-            human.resetStateIfCellEmpty(position);
+            positions.forEach((position) => {
+                human.resetStateIfCellEmpty(position);
+            });
         });
     }
     getAnotherFreeHuman(human) {
-        const availableHumans = this.humanRepository.humans.filter((anotherHuman) => {
+        const freeHuman = this.getAnotherFreeHumans(human, 1);
+        if (freeHuman.length == 0) {
+            return null;
+        }
+        return freeHuman[0];
+    }
+    getAnotherFreeHumans(human, max) {
+        let availableHumans = this.humanRepository.humans.filter((anotherHuman) => {
             return anotherHuman !== human && anotherHuman.isFree();
         });
         if (availableHumans.length === 0) {
-            return null;
+            return [];
         }
-        return availableHumans[Math.floor(Math.random() * availableHumans.length)];
+        availableHumans = availableHumans.sort(() => {
+            return Math.random() - 0.5;
+        });
+        let result = [];
+        for (let i = 0; i < max; i++) {
+            if (availableHumans[i] !== undefined) {
+                result.push(availableHumans[i]);
+            }
+        }
+        return result;
     }
     getRandomCell() {
         const acceptableIndexes = this.getAcceptables();
@@ -178,8 +206,12 @@ class WorldKnowledge {
             return false;
         }
         for (let j = 0; j < this.objects.length; j++) {
-            if (this.objects[j].getPosition().x === point.x && this.objects[j].getPosition().y === point.y && this.objects[j] !== object) {
-                return false;
+            for (let k = 0; k < this.objects[j].getPositions().length; k++) {
+                if (this.objects[j].getPositions()[k].x === point.x &&
+                    this.objects[j].getPositions()[k].y === point.y &&
+                    this.objects[j] !== object) {
+                    return false;
+                }
             }
         }
         if (this.wallRepository.hasWall(point.x, point.y)) {
@@ -187,44 +219,25 @@ class WorldKnowledge {
         }
         return true;
     }
-    getRandomFreeSittable() {
-        const freeSittable = this.objects.filter((object) => {
-            return (object.constructor.name === 'Sofa' || object.constructor.name === 'Table') && !this.isObjectUsed(object);
-        });
-        if (freeSittable.length === 0) {
-            return null;
-        }
-        return freeSittable[Math.floor(Math.random() * freeSittable.length)];
-    }
-    isObjectUsed(interactiveObject) {
-        for (let i = 0; i < this.humanRepository.humans.length; i++) {
-            const human = this.humanRepository.humans[i];
-            if (interactiveObject.getPosition().x === human.getPosition().x && interactiveObject.getPosition().y === human.getPosition().y) {
-                return true;
+    getClosestReferer(types, referersCountPerObject = 1, position = null) {
+        let freeReferers = [];
+        this.objects.forEach((object) => {
+            if (types.indexOf(object.constructor.name) > -1) {
+                const unusedReferers = object.getUnusedReferers();
+                if (unusedReferers.length >= referersCountPerObject) {
+                    freeReferers = freeReferers.concat(unusedReferers);
+                }
             }
-        }
-        return false;
-    }
-    getClosestFreeDesk(position) {
-        const freeDesks = this.objects.filter((object) => {
-            return object.constructor.name === 'Desk' && !this.isObjectUsed(object);
         });
-        if (freeDesks.length === 0) {
+        if (freeReferers.length === 0) {
             return null;
         }
-        return freeDesks.sort((desk1, desk2) => {
-            return PositionTransformer_1.PositionTransformer.dist(position, desk1.getPosition()) - PositionTransformer_1.PositionTransformer.dist(position, desk2.getPosition());
-        })[0];
-    }
-    getClosestFreeDispenser(position) {
-        const freeDispensers = this.objects.filter((object) => {
-            return object.constructor.name === 'Dispenser' && !this.isObjectUsed(object);
-        });
-        if (freeDispensers.length === 0) {
-            return null;
+        if (position === null) {
+            return freeReferers[Math.floor(Math.random() * freeReferers.length)];
         }
-        return freeDispensers.sort((dispenser1, dispenser2) => {
-            return PositionTransformer_1.PositionTransformer.dist(position, dispenser1.getPosition()) - PositionTransformer_1.PositionTransformer.dist(position, dispenser2.getPosition());
+        return freeReferers.sort((referer1, referer2) => {
+            return PositionTransformer_1.PositionTransformer.dist(position, PositionTransformer_1.PositionTransformer.getCentroid([referer1.getPosition()]))
+                - PositionTransformer_1.PositionTransformer.dist(position, PositionTransformer_1.PositionTransformer.getCentroid([referer2.getPosition()]));
         })[0];
     }
     static getDist(sources, point) {
@@ -235,7 +248,7 @@ class WorldKnowledge {
         return dist;
     }
     moveToDepot(object) {
-        this.resetStates(object.getPosition());
+        this.resetStates(object.getPositions());
         const index = this.objects.indexOf(object, 0);
         if (index > -1) {
             this.objects.splice(index, 1);
@@ -248,40 +261,71 @@ class WorldKnowledge {
     getDepot() {
         return this.depot;
     }
-    canPutHere(phantom) {
-        // Check if there is nothing in the cell
-        if (!this.isFree(phantom.getPosition())) {
-            return false;
-        }
-        // Check if the human can enter the interactive object by at least one of the entries
-        let isEntryPossible = false;
-        phantom.getEntries().forEach((entry) => {
-            isEntryPossible = isEntryPossible || this.isEntryAccessibleForObject(phantom, entry);
-        });
-        if (isEntryPossible === false) {
-            return false;
-        }
-        // Check that if we put an object here, every other objects have at least one possible entry.
-        let doNotBlockOthers = true;
-        this.objects.forEach((object) => {
-            let isEntryPossible = false;
-            object.getEntries().forEach((entry) => {
-                const out = Direction_1.Direction.getGap(object.getPosition(), entry);
-                if (this.isFree(out) && !(out.x === phantom.getPosition().x && out.y === phantom.getPosition().y)) {
-                    isEntryPossible = true;
-                }
-            });
-            if (!isEntryPossible) {
-                doNotBlockOthers = false;
+    buy(objectName, price) {
+        this.depot.add(objectName);
+        this.wallet.add(-price.getValue());
+    }
+    canPutHere(objectInfo, origin, leftOriented) {
+        return this.areAllTheCellsFree(objectInfo, origin, leftOriented) &&
+            this.areAllSpritesEnterable(objectInfo, origin, leftOriented) &&
+            this.isNewObjectNotBlockingExistingOne(objectInfo, origin, leftOriented);
+    }
+    ;
+    areAllTheCellsFree(objectInfo, origin, leftOriented) {
+        for (let i = 0; i < objectInfo.getSpriteInfos().length; i++) {
+            const spriteInfo = objectInfo.getSpriteInfo(i);
+            const gap = spriteInfo.getPositionGapFromOrigin(leftOriented);
+            if (!this.isFree(new PIXI.Point(origin.x + gap.x, origin.y + gap.y))) {
+                return false;
             }
-        });
-        if (!doNotBlockOthers) {
-            return false;
         }
         return true;
     }
-    isEntryAccessibleForObject(phantom, entry) {
-        return this.isFree(Direction_1.Direction.getGap(phantom.getPosition(), entry));
+    areAllSpritesEnterable(objectInfo, origin, leftOriented) {
+        for (let i = 0; i < objectInfo.getSpriteInfos().length; i++) {
+            const spriteInfo = objectInfo.getSpriteInfo(i);
+            if (spriteInfo.getEntryPoints(leftOriented).length > 0) {
+                let isEntryPossible = false;
+                spriteInfo.getEntryPoints(leftOriented).forEach((entry) => {
+                    const gap = spriteInfo.getPositionGapFromOrigin(leftOriented);
+                    isEntryPossible = isEntryPossible || this.isEntryAccessibleForObject(origin, gap, entry);
+                });
+                if (isEntryPossible === false) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    isNewObjectNotBlockingExistingOne(objectInfo, origin, leftOriented) {
+        const newObjectCells = objectInfo.getCellGaps(leftOriented).map((gap) => {
+            return new PIXI.Point(origin.x + gap.x, origin.y + gap.y);
+        });
+        this.objects.forEach((object) => {
+            const otherObjectInfo = ObjectInfoRegistry_1.ObjectInfoRegistry.getObjectInfo(object.constructor.name);
+            let isEntryPossible = false;
+            otherObjectInfo.getEntryCells(object.getOrigin(), leftOriented).forEach((cell) => {
+                if (this.isFree(cell)) {
+                    let isCellBlocking = false;
+                    newObjectCells.forEach((newObjectCell) => {
+                        if (cell.x === newObjectCell.x && cell.y === newObjectCell.y) {
+                            isCellBlocking = true;
+                        }
+                    });
+                    if (!isCellBlocking) {
+                        isEntryPossible = true;
+                    }
+                }
+            });
+            if (!isEntryPossible) {
+                return false;
+            }
+        });
+        return true;
+    }
+    isEntryAccessibleForObject(origin, gap, entry) {
+        const gappedPosition = new PIXI.Point(origin.x + gap.x, origin.y + gap.y);
+        return this.isFree(Direction_1.Direction.getNeighbor(gappedPosition, entry));
     }
     add(name, position, leftOriented) {
         let object = null;
@@ -314,6 +358,15 @@ class WorldKnowledge {
     }
     hasObject(interactiveObject) {
         return this.objects.indexOf(interactiveObject) > -1;
+    }
+    getLevelProgress(type) {
+        return this.levelManager.getLevelProgress(type);
+    }
+    addProgress(type, value) {
+        this.levelManager.addLevelProgress(type, value);
+    }
+    addMoneyInWallet(price) {
+        this.wallet.add(price.getValue());
     }
 }
 exports.WorldKnowledge = WorldKnowledge;

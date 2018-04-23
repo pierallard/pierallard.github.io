@@ -4,14 +4,13 @@ const HumanAnimationManager_1 = require("../human_stuff/HumanAnimationManager");
 const Meeting_1 = require("./Meeting");
 const Direction_1 = require("../Direction");
 const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
-class TalkState {
-    constructor(human, anotherHuman, game, worldKnowledge, meeting = null) {
-        this.human = human;
+const AbstractState_1 = require("./AbstractState");
+class TalkState extends AbstractState_1.AbstractState {
+    constructor(human, anotherHuman, worldKnowledge, meeting = null) {
+        super(human);
         this.anotherHuman = anotherHuman;
-        this.game = game;
         this.worldKnowledge = worldKnowledge;
         this.meetingStarted = false;
-        this.events = [];
         this.meeting = meeting;
     }
     getNextState() {
@@ -22,7 +21,7 @@ class TalkState {
             else {
                 if (this.meeting.isReady()) {
                     this.meetingStarted = true;
-                    this.game.time.events.add(this.meeting.getTime() + Math.random() * Phaser.Timer.SECOND, this.end, this);
+                    this.game.time.events.add(this.meeting.getTime() + Math.random() * Phaser.Timer.SECOND, this.stop, this); // TODO this will fail
                     this.human.updateMoodFromState();
                     let animation = HumanAnimationManager_1.ANIMATION.TALK;
                     if (Math.random() > 0.5) {
@@ -36,7 +35,7 @@ class TalkState {
                 }
             }
         }
-        return this.active ? this : null;
+        return super.getNextState();
     }
     switchAnimation(animation) {
         const direction = Direction_1.Direction.getNeighborDirection(this.human.getPosition(), this.meeting.getAnotherHuman(this.human).getPosition());
@@ -50,29 +49,23 @@ class TalkState {
         this.events.push(this.game.time.events.add(Phaser.Math.random(3, 6) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(animation), this.switchAnimation, this, TalkState.otherAnimation(animation)));
     }
     start(game) {
-        this.active = true;
+        super.start(game);
         if (this.meeting === null) {
             this.meeting = new Meeting_1.Meeting([this.human, this.anotherHuman], Phaser.Math.random(8, 20) * Phaser.Timer.SECOND, this.worldKnowledge);
             if (!this.anotherHuman.goMeeting(this.meeting)) {
-                this.end();
+                this.stop();
                 return false;
             }
         }
         if (!this.human.moveTo(this.meeting.getCell(this.human))) {
-            this.end();
+            this.stop();
             return false;
         }
         return true;
     }
-    end() {
+    stop() {
         this.human.hideTalkBubble();
-        this.events.forEach((event) => {
-            this.game.time.events.remove(event);
-        });
-        this.active = false;
-    }
-    stop(game) {
-        this.end();
+        super.stop();
     }
     getState() {
         return HumanStateManager_1.STATE.TALK;

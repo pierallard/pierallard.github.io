@@ -6,27 +6,38 @@ const ObjectInfoRegistry_1 = require("../objects/ObjectInfoRegistry");
 const ObjectPhantom_1 = require("../objects/ObjectPhantom");
 const Play_1 = require("../game_state/Play");
 const TextStyle_1 = require("../TextStyle");
+const PositionTransformer_1 = require("../PositionTransformer");
 exports.OBJECT_SELLER_CELL_SIZE = 41;
 const CIRCLE_GAP = 7;
 class ObjectSeller {
     constructor(worldKnowledge) {
-        this.sellerButtons = [];
         this.worldKnowledge = worldKnowledge;
         this.visible = true;
-        ObjectInfoRegistry_1.ObjectInfoRegistry.getSellableObjects().forEach((object) => {
-            this.sellerButtons.push(new SellerButton(object, this.worldKnowledge));
-        });
+        this.objectProvisionnerButtons = ObjectInfoRegistry_1.ObjectInfoRegistry
+            .getSellableObjects()
+            .map((object) => new ObjectProvisionnerButton(object, this.worldKnowledge));
+        this.sellerButtons = ObjectInfoRegistry_1.ObjectInfoRegistry
+            .getSellableObjects()
+            .map((object) => new SellerButton(object, this.worldKnowledge));
     }
     create(game, groups) {
         let i = 0;
+        this.objectProvisionnerButtons.forEach((objectProvisionnerButton) => {
+            objectProvisionnerButton.create(game, groups, i);
+            i++;
+        });
+        i = 0;
         this.sellerButtons.forEach((sellerButton) => {
             sellerButton.create(game, groups, i);
             i++;
         });
     }
     update() {
+        this.objectProvisionnerButtons.forEach((objectProvisionnerButton) => {
+            objectProvisionnerButton.updateCount(this.getCount(objectProvisionnerButton.getName()));
+        });
         this.sellerButtons.forEach((sellerButton) => {
-            sellerButton.updateCount(this.getCount(sellerButton.getName()));
+            sellerButton.updateSprites();
         });
     }
     getCount(name) {
@@ -34,6 +45,9 @@ class ObjectSeller {
     }
     hide() {
         if (this.visible) {
+            this.objectProvisionnerButtons.forEach((objectProvisionnerButton) => {
+                objectProvisionnerButton.hide();
+            });
             this.sellerButtons.forEach((sellerButton) => {
                 sellerButton.hide();
             });
@@ -42,6 +56,9 @@ class ObjectSeller {
     }
     show() {
         if (!this.visible) {
+            this.objectProvisionnerButtons.forEach((objectProvisionnerButton) => {
+                objectProvisionnerButton.show();
+            });
             this.sellerButtons.forEach((sellerButton) => {
                 sellerButton.show();
             });
@@ -54,20 +71,83 @@ class SellerButton {
     constructor(objectInfo, worldKnowledge) {
         this.objectInfo = objectInfo;
         this.worldKnowledge = worldKnowledge;
+        this.isDown = false;
+    }
+    create(game, groups, index) {
+        const left = app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH;
+        const top = UserInterface_1.TOP_GAP + index * (exports.OBJECT_SELLER_CELL_SIZE / 2);
+        const textTop = index * exports.OBJECT_SELLER_CELL_SIZE + 12 + UserInterface_1.TOP_GAP + CIRCLE_GAP;
+        this.price = game.add.text(left + exports.OBJECT_SELLER_CELL_SIZE + 10, textTop, this.objectInfo.getPrice().getStringValue(), TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        groups[Play_1.GROUP_INTERFACE].add(this.price);
+        this.button = game.add.sprite(this.price.x + this.price.width + 12, textTop, 'buy_button', 0, groups[Play_1.GROUP_INTERFACE]);
+        this.button.inputEnabled = true;
+        this.button.input.useHandCursor = true;
+        this.button.events.onInputDown.add(this.buy, this, 0);
+        this.button.events.onInputUp.add(this.up, this, 0);
+        groups[Play_1.GROUP_INTERFACE].add(this.button);
+    }
+    updateSprites() {
+        if (this.isDown) {
+            this.button.loadTexture(this.button.key, 1);
+        }
+        else {
+            if (this.objectInfo.isSellable(this.worldKnowledge.getMoneyInWallet())) {
+                this.button.loadTexture(this.button.key, 0);
+            }
+            else {
+                this.button.loadTexture(this.button.key, 2);
+            }
+        }
+    }
+    buy() {
+        if (this.objectInfo.isSellable(this.worldKnowledge.getMoneyInWallet())) {
+            this.isDown = true;
+            this.worldKnowledge.buy(this.objectInfo.getName(), this.objectInfo.getPrice());
+        }
+    }
+    up() {
+        this.isDown = false;
+    }
+    hide() {
+        this.price.position.x += UserInterface_1.INTERFACE_WIDTH;
+        this.button.position.x += UserInterface_1.INTERFACE_WIDTH;
+    }
+    show() {
+        this.price.position.x -= UserInterface_1.INTERFACE_WIDTH;
+        this.button.position.x -= UserInterface_1.INTERFACE_WIDTH;
+    }
+}
+class ObjectProvisionnerButton {
+    constructor(objectInfo, worldKnowledge) {
+        this.objectInfo = objectInfo;
+        this.worldKnowledge = worldKnowledge;
         this.sprites = [];
+        this.fakeCells = [];
     }
     create(game, groups, index) {
         const left = app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH;
         const top = UserInterface_1.TOP_GAP + index * exports.OBJECT_SELLER_CELL_SIZE;
         const spriteOrigin = new PIXI.Point(left + exports.OBJECT_SELLER_CELL_SIZE / 2, top + exports.OBJECT_SELLER_CELL_SIZE);
+        let width = 1;
+        let height = 1;
+        this.objectInfo.getCellGaps(false).forEach((gap) => {
+            width = Math.max(width, 1 + gap.x);
+            height = Math.max(height, 1 + gap.y);
+        });
+        const scale = 2 / (width + height);
         this.square = game.add.graphics(left, UserInterface_1.TOP_GAP + index * exports.OBJECT_SELLER_CELL_SIZE, groups[Play_1.GROUP_INTERFACE]);
         this.square.lineStyle(1, 0xffffff);
         this.square.drawRect(0, 0, exports.OBJECT_SELLER_CELL_SIZE, exports.OBJECT_SELLER_CELL_SIZE);
-        this.fakeCell = game.add.sprite(spriteOrigin.x, spriteOrigin.y, 'casedefault');
-        this.fakeCell.anchor.set(0.5, 1);
-        groups[Play_1.GROUP_INTERFACE].add(this.fakeCell);
+        this.objectInfo.getCellGaps(false).forEach((cellGap) => {
+            const fakeCell = game.add.sprite(spriteOrigin.x - (cellGap.x - cellGap.y) * (PositionTransformer_1.CELL_WIDTH / 2) * scale, spriteOrigin.y - (cellGap.x + cellGap.y) * (PositionTransformer_1.CELL_HEIGHT / 2) * scale, 'casedefault');
+            fakeCell.scale.set(scale, scale);
+            fakeCell.anchor.set(0.5, 1);
+            groups[Play_1.GROUP_INTERFACE].add(fakeCell);
+            this.fakeCells.push(fakeCell);
+        });
         this.objectInfo.getSpriteInfos().forEach((spriteInfo) => {
-            const seller = game.add.sprite(spriteInfo.getRealPositionFromOrigin(spriteOrigin, false).x, spriteInfo.getRealPositionFromOrigin(spriteOrigin, false).y, spriteInfo.getSpriteName());
+            const seller = game.add.sprite(spriteInfo.getRealPositionFromOrigin(spriteOrigin, false, scale).x, spriteInfo.getRealPositionFromOrigin(spriteOrigin, false, scale).y, spriteInfo.getSpriteName());
+            seller.scale.set(scale, scale);
             seller.anchor.set(spriteInfo.getAnchor(seller).x, spriteInfo.getAnchor(seller).y);
             seller.inputEnabled = true;
             seller.input.pixelPerfectOver = true;
@@ -96,13 +176,17 @@ class SellerButton {
         this.counter.position.x -= diff * 3;
     }
     createPhantom(sprite, pointer, game, groups) {
-        this.worldKnowledge.getDepot().remove(this.objectInfo.getName());
-        const phantom = new ObjectPhantom_1.ObjectPhantom(this.objectInfo.getName(), game, this.worldKnowledge);
-        phantom.create(game, groups);
+        if (this.worldKnowledge.getDepot().getCount(this.objectInfo.getName()) > 0) {
+            this.worldKnowledge.getDepot().remove(this.objectInfo.getName());
+            const phantom = new ObjectPhantom_1.ObjectPhantom(this.objectInfo.getName(), game, this.worldKnowledge);
+            phantom.create(game, groups);
+        }
     }
     hide() {
         this.counter.position.x += UserInterface_1.INTERFACE_WIDTH;
-        this.fakeCell.position.x += UserInterface_1.INTERFACE_WIDTH;
+        this.fakeCells.forEach((fakeCell) => {
+            fakeCell.position.x += UserInterface_1.INTERFACE_WIDTH;
+        });
         this.circle.position.x += UserInterface_1.INTERFACE_WIDTH;
         this.sprites.forEach((sprite) => {
             sprite.position.x += UserInterface_1.INTERFACE_WIDTH;
@@ -111,7 +195,9 @@ class SellerButton {
     }
     show() {
         this.counter.position.x -= UserInterface_1.INTERFACE_WIDTH;
-        this.fakeCell.position.x -= UserInterface_1.INTERFACE_WIDTH;
+        this.fakeCells.forEach((fakeCell) => {
+            fakeCell.position.x -= UserInterface_1.INTERFACE_WIDTH;
+        });
         this.circle.position.x -= UserInterface_1.INTERFACE_WIDTH;
         this.sprites.forEach((sprite) => {
             sprite.position.x -= UserInterface_1.INTERFACE_WIDTH;

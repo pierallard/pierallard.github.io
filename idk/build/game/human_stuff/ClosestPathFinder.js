@@ -5,12 +5,10 @@ class ClosestPathFinder {
     constructor(game, worldKnowledge) {
         this.finders = {};
         this.worldKnowledge = worldKnowledge;
-        const grid = worldKnowledge.getGrid();
-        const acceptables = worldKnowledge.getAcceptables();
         Direction_1.Direction.neighborDirections().concat([Direction_1.DIRECTION.CURRENT]).forEach((direction) => {
             this.finders[direction] = game.plugins.add(Phaser.Plugin.PathFinderPlugin);
-            this.finders[direction].setGrid(grid, acceptables);
         });
+        this.reseted = true;
     }
     getNeighborPath(originCell, goalCell, entries = [Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT]) {
         return this.getPathInner(originCell, goalCell, entries);
@@ -19,11 +17,12 @@ class ClosestPathFinder {
         return this.getPathInner(originCell, goalCell, [Direction_1.DIRECTION.CURRENT]);
     }
     getPathInner(originCell, goalCell, directions) {
+        this.initialize();
         let results = {};
         for (let i = 0; i < directions.length; i++) {
             const direction = directions[i];
             try {
-                const gappedCell = Direction_1.Direction.getGap(goalCell, direction);
+                const gappedCell = Direction_1.Direction.getNeighbor(goalCell, direction);
                 if (originCell.x === gappedCell.x && originCell.y === gappedCell.y) {
                     results[direction] = [];
                     if (Object.keys(results).length >= directions.length) {
@@ -85,11 +84,17 @@ class ClosestPathFinder {
         }
     }
     reset() {
-        const grid = this.worldKnowledge.getGrid();
-        const acceptables = this.worldKnowledge.getAcceptables();
-        Object.keys(this.finders).forEach((key) => {
-            this.finders[key].setGrid(grid, acceptables);
-        });
+        this.reseted = true;
+    }
+    initialize() {
+        if (this.reseted === true) {
+            const grid = this.worldKnowledge.getGrid();
+            const acceptables = this.worldKnowledge.getAcceptables();
+            Direction_1.Direction.neighborDirections().concat([Direction_1.DIRECTION.CURRENT]).forEach((direction) => {
+                this.finders[direction].setGrid(grid, acceptables);
+            });
+            this.reseted = false;
+        }
     }
 }
 exports.ClosestPathFinder = ClosestPathFinder;

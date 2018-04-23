@@ -2,25 +2,16 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanAnimationManager_1 = require("../human_stuff/HumanAnimationManager");
 const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
-class SmokeState {
-    constructor(human) {
-        this.human = human;
-    }
-    getNextState() {
-        return this.active ? this : null;
-    }
+const AbstractState_1 = require("./AbstractState");
+class SmokeState extends AbstractState_1.AbstractState {
     start(game) {
-        game.time.events.add(Phaser.Math.random(1, 3) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SMOKE), this.end, this);
-        this.active = true;
+        super.start(game);
+        game.time.events.add(Phaser.Math.random(1, 3) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SMOKE), () => {
+            this.active = false;
+        }, this);
         this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SMOKE);
         this.human.updateMoodFromState();
         return true;
-    }
-    end() {
-        this.active = false;
-    }
-    stop(game) {
-        this.active = false;
     }
     getState() {
         return HumanStateManager_1.STATE.SMOKE;

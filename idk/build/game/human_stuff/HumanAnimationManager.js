@@ -13,6 +13,7 @@ var ANIMATION;
     ANIMATION[ANIMATION["TALK"] = 6] = "TALK";
     ANIMATION[ANIMATION["DRINK"] = 7] = "DRINK";
     ANIMATION[ANIMATION["RAGE"] = 8] = "RAGE";
+    ANIMATION[ANIMATION["FREEZE_SIT"] = 9] = "FREEZE_SIT";
 })(ANIMATION = exports.ANIMATION || (exports.ANIMATION = {}));
 class HumanAnimationManager {
     create(humanTile) {
@@ -51,9 +52,10 @@ class HumanAnimationManager {
     static getAnimationFrames(animation, topOriented = null) {
         switch (animation) {
             case ANIMATION.FREEZE: return topOriented ? [18, 19, 20] : [12, 13, 14];
+            case ANIMATION.FREEZE_SIT: return topOriented ? [21, 22, 23] : [15, 16, 17];
             case ANIMATION.WALK: return topOriented ? [6, 7, 8, 9, 10, 11] : [0, 1, 2, 3, 4, 5];
-            case ANIMATION.SIT_DOWN: return [12, 36, 37, 38, 39];
-            case ANIMATION.STAND_UP: return [39, 38, 37, 36, 12];
+            case ANIMATION.SIT_DOWN: return topOriented ? [18, 78, 79, 80, 81] : [12, 36, 37, 38, 39];
+            case ANIMATION.STAND_UP: return topOriented ? [81, 80, 79, 78, 18] : [39, 38, 37, 36, 12];
             case ANIMATION.TYPE: return [42, 43, 44, 45];
             case ANIMATION.TALK: return topOriented ? [54, 55, 56, 57, 58, 59] : [48, 49, 50, 51, 52, 53];
             case ANIMATION.RAGE:
@@ -82,6 +84,7 @@ class HumanAnimationManager {
     }
     static getAnimations() {
         return [
+            ANIMATION.FREEZE_SIT,
             ANIMATION.FREEZE,
             ANIMATION.WALK,
             ANIMATION.SMOKE,
@@ -94,7 +97,14 @@ class HumanAnimationManager {
         ];
     }
     static hasTopOrientedVariation(animation) {
-        return [ANIMATION.WALK, ANIMATION.FREEZE, ANIMATION.TALK].indexOf(animation) > -1;
+        return [
+            ANIMATION.WALK,
+            ANIMATION.FREEZE,
+            ANIMATION.TALK,
+            ANIMATION.SIT_DOWN,
+            ANIMATION.STAND_UP,
+            ANIMATION.FREEZE_SIT,
+        ].indexOf(animation) > -1;
     }
     static isLooped(animation) {
         return [
@@ -104,7 +114,24 @@ class HumanAnimationManager {
             ANIMATION.SMOKE,
             ANIMATION.TYPE,
             ANIMATION.DRINK,
+            ANIMATION.FREEZE_SIT,
         ].indexOf(animation) > -1;
+    }
+    static getAnimationStr(animation) {
+        switch (animation) {
+            case ANIMATION.FREEZE: return 'FZ';
+            case ANIMATION.FREEZE_SIT: return 'FS';
+            case ANIMATION.WALK: return 'WK';
+            case ANIMATION.SIT_DOWN: return 'SD';
+            case ANIMATION.STAND_UP: return 'SU';
+            case ANIMATION.TYPE: return 'TP';
+            case ANIMATION.TALK: return 'TK';
+            case ANIMATION.RAGE: return 'RG';
+            case ANIMATION.DRINK: return 'DK';
+            case ANIMATION.SMOKE: return 'SK';
+            default:
+                throw 'UNKNOWN ANIMATION ' + animation;
+        }
     }
 }
 exports.HumanAnimationManager = HumanAnimationManager;

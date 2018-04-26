@@ -4,13 +4,14 @@ const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
 const HumanAnimationManager_1 = require("../human_stuff/HumanAnimationManager");
 const RageState_1 = require("./RageState");
 const MoveThenActAbstractState_1 = require("./MoveThenActAbstractState");
+const ThoughtBubble_1 = require("../human_stuff/ThoughtBubble");
 class CoffeeState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
     retry() {
         const nextDispenserReferer = this.worldKnowledge.getClosestReferer(['Dispenser'], 1, this.human.getPosition());
         if (this.tries > this.human.getMaxRetries() || nextDispenserReferer === null) {
             this.active = false;
             this.human.stopWalk();
-            return new RageState_1.RageState(this.human);
+            return new RageState_1.RageState(this.human, ThoughtBubble_1.RAGE_IMAGE.COFFEE);
         }
         else {
             return new CoffeeState(this.human, nextDispenserReferer, this.worldKnowledge, this.tries + 1);

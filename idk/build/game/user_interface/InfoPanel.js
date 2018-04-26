@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const UserInterface_1 = require("./UserInterface");
 const app_1 = require("../../app");
 const Play_1 = require("../game_state/Play");
+const Pico8Colors_1 = require("../Pico8Colors");
 const HEIGHT = 80;
 const GRAPH_GAP = 2;
 class InfoPanel {
@@ -19,7 +20,7 @@ class InfoPanel {
         const graphWidth = UserInterface_1.INTERFACE_WIDTH - 2 * GRAPH_GAP;
         const lastMoods = this.worldKnowledge.getLastMoods();
         this.moods.clear();
-        this.moods.lineStyle(1, 0xffffff);
+        this.moods.lineStyle(1, Pico8Colors_1.COLOR.WHITE);
         this.moods.moveTo(0, 0);
         this.moods.lineTo(0, HEIGHT);
         this.moods.lineTo(graphWidth, HEIGHT);

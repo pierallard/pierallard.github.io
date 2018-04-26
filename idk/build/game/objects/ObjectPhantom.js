@@ -5,6 +5,7 @@ const PositionTransformer_1 = require("../PositionTransformer");
 const ObjectDeleter_1 = require("./ObjectDeleter");
 const Direction_1 = require("../Direction");
 const Play_1 = require("../game_state/Play");
+const Pico8Colors_1 = require("../Pico8Colors");
 const ARROW_SIZE = 0.9;
 const GAP = 4;
 const SPRITE_OPACITY = 0.7;
@@ -137,10 +138,10 @@ class DirectionsSprite {
             spriteInfo.getEntryPoints(this.phantom.getLeftOriented()).forEach((direction) => {
                 const cellGap = spriteInfo.getPositionGapFromOrigin(this.phantom.getLeftOriented());
                 if (this.phantom.isEntryAccessible(cellGap, direction)) {
-                    this.graphics.beginFill(0x00de2d); // Green
+                    this.graphics.beginFill(Pico8Colors_1.COLOR.LIGHT_GREEN); // Green
                 }
                 else {
-                    this.graphics.beginFill(0xff004d); // Red
+                    this.graphics.beginFill(Pico8Colors_1.COLOR.RED); // Red
                 }
                 switch (direction) {
                     case Direction_1.DIRECTION.BOTTOM:
@@ -157,7 +158,7 @@ class DirectionsSprite {
                 }
             });
         });
-        this.graphics.beginFill(this.phantom.isCellFree() ? 0x00de2d : 0xff004d);
+        this.graphics.beginFill(this.phantom.isCellFree() ? Pico8Colors_1.COLOR.LIGHT_GREEN : Pico8Colors_1.COLOR.RED);
         this.phantom.getInfo().getCellGaps(this.phantom.getLeftOriented()).forEach((cellGap) => {
             this.graphics.drawPolygon(PositionTransformer_1.PositionTransformer.addGap(new PIXI.Point(-PositionTransformer_1.CELL_WIDTH / 2, 0), cellGap), PositionTransformer_1.PositionTransformer.addGap(new PIXI.Point(0, PositionTransformer_1.CELL_HEIGHT / 2), cellGap), PositionTransformer_1.PositionTransformer.addGap(new PIXI.Point(PositionTransformer_1.CELL_WIDTH / 2, 0), cellGap), PositionTransformer_1.PositionTransformer.addGap(new PIXI.Point(0, -PositionTransformer_1.CELL_HEIGHT / 2), cellGap));
         });

@@ -7,6 +7,7 @@ const ObjectPhantom_1 = require("../objects/ObjectPhantom");
 const Play_1 = require("../game_state/Play");
 const TextStyle_1 = require("../TextStyle");
 const PositionTransformer_1 = require("../PositionTransformer");
+const Pico8Colors_1 = require("../Pico8Colors");
 exports.OBJECT_SELLER_CELL_SIZE = 41;
 const CIRCLE_GAP = 7;
 class ObjectSeller {
@@ -136,7 +137,7 @@ class ObjectProvisionnerButton {
         });
         const scale = 2 / (width + height);
         this.square = game.add.graphics(left, UserInterface_1.TOP_GAP + index * exports.OBJECT_SELLER_CELL_SIZE, groups[Play_1.GROUP_INTERFACE]);
-        this.square.lineStyle(1, 0xffffff);
+        this.square.lineStyle(1, Pico8Colors_1.COLOR.WHITE);
         this.square.drawRect(0, 0, exports.OBJECT_SELLER_CELL_SIZE, exports.OBJECT_SELLER_CELL_SIZE);
         this.objectInfo.getCellGaps(false).forEach((cellGap) => {
             const fakeCell = game.add.sprite(spriteOrigin.x - (cellGap.x - cellGap.y) * (PositionTransformer_1.CELL_WIDTH / 2) * scale, spriteOrigin.y - (cellGap.x + cellGap.y) * (PositionTransformer_1.CELL_HEIGHT / 2) * scale, 'casedefault');
@@ -158,7 +159,7 @@ class ObjectProvisionnerButton {
             groups[Play_1.GROUP_INTERFACE].add(seller);
         });
         this.circle = game.add.graphics(left, top + CIRCLE_GAP, groups[Play_1.GROUP_INTERFACE]);
-        this.circle.beginFill(0xff0000);
+        this.circle.beginFill(Pico8Colors_1.COLOR.RED);
         this.circle.drawCircle(exports.OBJECT_SELLER_CELL_SIZE, 0, 9);
         groups[Play_1.GROUP_INTERFACE].add(this.circle);
         this.counter = game.add.text(left + exports.OBJECT_SELLER_CELL_SIZE - 1.5, index * exports.OBJECT_SELLER_CELL_SIZE + UserInterface_1.TOP_GAP + CIRCLE_GAP - 5, '0', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);

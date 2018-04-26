@@ -10,6 +10,8 @@ const TalkBubble_1 = require("./TalkBubble");
 const HumanMoodManager_1 = require("./HumanMoodManager");
 const MoodSprite_1 = require("./MoodSprite");
 const Play_1 = require("../game_state/Play");
+const ThoughtBubble_1 = require("./ThoughtBubble");
+const Pico8Colors_1 = require("../Pico8Colors");
 const MAX_WALK_CELL_DURATION = 1500;
 const MIN_WALK_CELL_DURATION = 800;
 const MAX_RETRIES = 3;
@@ -25,6 +27,7 @@ class Employee {
         this.anchorPixels = new PIXI.Point(0, GAP_FROM_BOTTOM);
         this.animationManager = new HumanAnimationManager_1.HumanAnimationManager();
         this.talkBubble = new TalkBubble_1.TalkBubble();
+        this.thoughtBubble = new ThoughtBubble_1.ThoughtBubble();
         this.moodManager = new HumanMoodManager_1.HumanMoodManager();
         this.moodSprite = new MoodSprite_1.MoodSprite();
         this.humanProperties = humanProperties;
@@ -36,12 +39,17 @@ class Employee {
         this.sprite = game.add.tileSprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).x + this.anchorPixels.x, PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).y + this.anchorPixels.y, 24, 25, this.humanProperties.getSpriteKey());
         this.animationManager.create(this.sprite);
         this.sprite.anchor.set(0.5, 1.0);
-        ObjectSelector_1.ObjectSelector.makeSelectable([this.sprite]);
+        ObjectSelector_1.ObjectSelector.makeSelectable([this.sprite], () => {
+            this.worldKnowledge.setSelectedHuman(this);
+        }, () => {
+            this.worldKnowledge.unselectHuman();
+        });
         groups[Play_1.GROUP_OBJECTS_AND_HUMANS].add(this.sprite);
         this.animationManager.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE, true, false);
         this.closestPathFinder = new ClosestPathFinder_1.ClosestPathFinder(game, worldKnowledge);
         this.stateManager.create(game, worldKnowledge, this.animationManager);
         this.talkBubble.create(this.sprite, this.game, groups[Play_1.GROUP_OBJECTS_AND_HUMANS]);
+        this.thoughtBubble.create(this.sprite, this.game, groups[Play_1.GROUP_OBJECTS_AND_HUMANS]);
         this.moodSprite.create(this.sprite, this.game, groups[Play_1.GROUP_INFOS]);
         if (PATH_DEBUG) {
             this.pathGraphics = game.add.graphics(0, 0, groups[Play_1.GROUP_INFOS]);
@@ -50,6 +58,7 @@ class Employee {
     }
     update() {
         this.talkBubble.update();
+        this.thoughtBubble.update();
         this.stateManager.updateState(this.game);
         this.moodManager.update();
         this.moodSprite.update(this.moodManager.getGeneralMood(), [
@@ -59,7 +68,7 @@ class Employee {
         ]);
         if (PATH_DEBUG) {
             this.pathGraphics.clear();
-            this.pathGraphics.lineStyle(2, 0x00ff00);
+            this.pathGraphics.lineStyle(2, Pico8Colors_1.COLOR.LIGHT_GREEN);
             if (this.path !== null && this.path.length > 0) {
                 this.pathGraphics.moveTo(this.sprite.position.x, this.sprite.position.y);
                 this.path.forEach((pathItem) => {
@@ -233,6 +242,20 @@ class Employee {
     }
     getName() {
         return this.humanProperties.getName();
+    }
+    showThoughtBubble(rageImage) {
+        this.thoughtBubble.showRage(rageImage);
+    }
+    hideThoughtBubble() {
+        this.thoughtBubble.hide();
+    }
+    getNextProbabilities() {
+        return this.stateManager.getNextProbabilities();
+    }
+    unselect() {
+        if (this.isSelected()) {
+            ObjectSelector_1.ObjectSelector.click(this.sprite, null, [this.sprite]);
+        }
     }
 }
 exports.Employee = Employee;

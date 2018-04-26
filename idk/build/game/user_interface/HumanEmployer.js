@@ -6,6 +6,7 @@ const app_1 = require("../../app");
 const ObjectSeller_1 = require("./ObjectSeller");
 const Play_1 = require("../game_state/Play");
 const TextStyle_1 = require("../TextStyle");
+const Pico8Colors_1 = require("../Pico8Colors");
 class HumanEmployer {
     constructor(worldKnowledge) {
         this.worldKnowledge = worldKnowledge;
@@ -59,7 +60,7 @@ class ApplicantButton {
         const top = UserInterface_1.TOP_GAP + index * ObjectSeller_1.OBJECT_SELLER_CELL_SIZE;
         const squareCenter = new PIXI.Point(left + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE / 2, top + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE / 2);
         this.square = game.add.graphics(left, UserInterface_1.TOP_GAP + index * ObjectSeller_1.OBJECT_SELLER_CELL_SIZE, groups[Play_1.GROUP_INTERFACE]);
-        this.square.lineStyle(1, 0xffffff);
+        this.square.lineStyle(1, Pico8Colors_1.COLOR.WHITE);
         this.square.drawRect(0, 0, ObjectSeller_1.OBJECT_SELLER_CELL_SIZE, ObjectSeller_1.OBJECT_SELLER_CELL_SIZE);
         this.sprite = game.add.sprite(squareCenter.x, squareCenter.y, this.humanProperties.getSpriteKey(), 12, groups[Play_1.GROUP_INTERFACE]);
         this.sprite.anchor.set(0.5, 0.5);

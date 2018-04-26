@@ -6,6 +6,7 @@ const AbstractState_1 = require("./AbstractState");
 const TableMeeting_1 = require("./TableMeeting");
 const PositionTransformer_1 = require("../PositionTransformer");
 const RageState_1 = require("./RageState");
+const ThoughtBubble_1 = require("../human_stuff/ThoughtBubble");
 class SitTalkState extends AbstractState_1.AbstractState {
     constructor(human, table, anotherHumans, worldKnowledge, meeting = null) {
         super(human);
@@ -21,7 +22,7 @@ class SitTalkState extends AbstractState_1.AbstractState {
         if (!this.worldKnowledge.hasObject(this.table)) {
             this.active = false;
             this.human.stopWalk();
-            return new RageState_1.RageState(this.human);
+            return new RageState_1.RageState(this.human, ThoughtBubble_1.RAGE_IMAGE.TABLE);
         }
         else {
             if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
@@ -38,13 +39,13 @@ class SitTalkState extends AbstractState_1.AbstractState {
             if (!this.isHumanOnTheRightCell && !this.meetingStarted && this.meeting.aPlaceWasTakenBySomeoneElse()) {
                 this.active = false;
                 this.human.stopWalk();
-                return new RageState_1.RageState(this.human);
+                return new RageState_1.RageState(this.human, ThoughtBubble_1.RAGE_IMAGE.TABLE);
             }
             if (this.isHumanSit && !this.meetingStarted && this.meeting.isReady()) {
                 this.meetingStarted = true;
                 this.game.time.events.add(this.meeting.getTime() + Math.random() * Phaser.Timer.SECOND, this.endMeeting, this); // TODO this will fail
                 this.human.updateMoodFromState();
-                let animation = HumanAnimationManager_1.ANIMATION.TALK;
+                let animation = HumanAnimationManager_1.ANIMATION.SIT_TALK;
                 if (Math.random() > 0.5) {
                     animation = SitTalkState.otherAnimation(animation);
                 }
@@ -54,14 +55,14 @@ class SitTalkState extends AbstractState_1.AbstractState {
         return super.getNextState();
     }
     switchAnimation(animation) {
-        if (animation === HumanAnimationManager_1.ANIMATION.TALK) {
+        if (animation === HumanAnimationManager_1.ANIMATION.SIT_TALK) {
             this.human.showTalkBubble();
         }
         else {
             this.human.hideTalkBubble();
         }
         this.human.loadAnimation(animation);
-        this.events.push(this.game.time.events.add(Phaser.Math.random(3, 6) * ((animation !== HumanAnimationManager_1.ANIMATION.TALK) ? 3 : 1) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(animation), this.switchAnimation, this, SitTalkState.otherAnimation(animation)));
+        this.events.push(this.game.time.events.add(Phaser.Math.random(3, 6) * ((animation !== HumanAnimationManager_1.ANIMATION.SIT_TALK) ? 3 : 1) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(animation), this.switchAnimation, this, SitTalkState.otherAnimation(animation)));
     }
     start(game) {
         super.start(game);
@@ -106,7 +107,7 @@ class SitTalkState extends AbstractState_1.AbstractState {
             PositionTransformer_1.PositionTransformer.isNeighbor(this.human.getPosition(), this.meeting.getCell(this.human).getPosition());
     }
     static otherAnimation(animation) {
-        return animation === HumanAnimationManager_1.ANIMATION.TALK ? HumanAnimationManager_1.ANIMATION.FREEZE_SIT : HumanAnimationManager_1.ANIMATION.TALK;
+        return animation === HumanAnimationManager_1.ANIMATION.SIT_TALK ? HumanAnimationManager_1.ANIMATION.FREEZE_SIT : HumanAnimationManager_1.ANIMATION.SIT_TALK;
     }
 }
 exports.SitTalkState = SitTalkState;

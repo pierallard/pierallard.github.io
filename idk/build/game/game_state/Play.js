@@ -7,12 +7,13 @@ exports.GROUP_FLOOR = 'floor';
 exports.GROUP_OBJECTS_AND_HUMANS = 'objects_and_humans';
 exports.GROUP_INFOS = 'infos';
 exports.GROUP_INTERFACE = 'interface';
-exports.CAMERA_GAP = 1.5;
+exports.CAMERA_GAP = 2;
 class Play extends Phaser.State {
     constructor() {
         super();
         this.worldKnowledge = new WorldKnowledge_1.WorldKnowledge();
         this.userInterface = new UserInterface_1.UserInterface(this.worldKnowledge);
+        this.worldKnowledge.setUserInterface(this.userInterface);
     }
     create() {
         this.game.stage.backgroundColor = "#494947";
@@ -47,10 +48,11 @@ class Play extends Phaser.State {
         else if (this.rightKey.isDown) {
             this.game.camera.setPosition(this.game.camera.position.x + exports.CAMERA_GAP, this.game.camera.position.y);
         }
+        /*
         const selected = this.worldKnowledge.getSelectedHumanSprite();
         if (null !== selected) {
             this.game.camera.follow(selected, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
-        }
+        }*/
     }
 }
 exports.default = Play;

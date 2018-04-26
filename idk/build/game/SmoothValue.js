@@ -16,17 +16,21 @@ class SmoothValue {
         setTimeout(() => {
             const numberOfSteps = milliseconds / TIME_GAP;
             const valuePerStep = value / numberOfSteps;
+            this.value += valuePerStep;
             if (this.maxValue) {
-                this.value = Math.min(this.value + valuePerStep, this.maxValue);
+                this.value = Math.min(this.value, this.maxValue);
             }
-            else {
-                this.value += valuePerStep;
+            if (this.minValue) {
+                this.value = Math.max(this.value, this.minValue);
             }
             this.add(value - valuePerStep, milliseconds - TIME_GAP);
         }, TIME_GAP);
     }
     setMaxValue(number) {
         this.maxValue = number;
+    }
+    setMinValue(number) {
+        this.minValue = number;
     }
     setValue(number) {
         this.value = number;

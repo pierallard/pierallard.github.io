@@ -5,13 +5,14 @@ const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
 const RageState_1 = require("./RageState");
 const MoveThenActAbstractState_1 = require("./MoveThenActAbstractState");
 const Price_1 = require("../objects/Price");
+const ThoughtBubble_1 = require("../human_stuff/ThoughtBubble");
 class TypeState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
     retry() {
         const nextDeskReferer = this.worldKnowledge.getClosestReferer(['Desk'], 1, this.human.getPosition());
         if (this.tries > this.human.getMaxRetries() || nextDeskReferer === null) {
             this.active = false;
             this.human.stopWalk();
-            return new RageState_1.RageState(this.human);
+            return new RageState_1.RageState(this.human, ThoughtBubble_1.RAGE_IMAGE.LAPTOP);
         }
         else {
             return new TypeState(this.human, nextDeskReferer, this.worldKnowledge, this.tries + 1);

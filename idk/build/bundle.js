@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 56);
+/******/ 	return __webpack_require__(__webpack_require__.s = 62);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -73,19 +73,20 @@
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const WorldKnowledge_1 = __webpack_require__(14);
-const app_1 = __webpack_require__(3);
-const UserInterface_1 = __webpack_require__(7);
+const WorldKnowledge_1 = __webpack_require__(17);
+const app_1 = __webpack_require__(2);
+const UserInterface_1 = __webpack_require__(6);
 exports.GROUP_FLOOR = 'floor';
 exports.GROUP_OBJECTS_AND_HUMANS = 'objects_and_humans';
 exports.GROUP_INFOS = 'infos';
 exports.GROUP_INTERFACE = 'interface';
-exports.CAMERA_GAP = 1.5;
+exports.CAMERA_GAP = 2;
 class Play extends Phaser.State {
     constructor() {
         super();
         this.worldKnowledge = new WorldKnowledge_1.WorldKnowledge();
         this.userInterface = new UserInterface_1.UserInterface(this.worldKnowledge);
+        this.worldKnowledge.setUserInterface(this.userInterface);
     }
     create() {
         this.game.stage.backgroundColor = "#494947";
@@ -120,10 +121,11 @@ class Play extends Phaser.State {
         else if (this.rightKey.isDown) {
             this.game.camera.setPosition(this.game.camera.position.x + exports.CAMERA_GAP, this.game.camera.position.y);
         }
+        /*
         const selected = this.worldKnowledge.getSelectedHumanSprite();
         if (null !== selected) {
             this.game.camera.follow(selected, Phaser.Camera.FOLLOW_LOCKON, 0.1, 0.1);
-        }
+        }*/
     }
 }
 exports.default = Play;
@@ -136,15 +138,16 @@ exports.default = Play;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const FreezeState_1 = __webpack_require__(26);
-const SmokeState_1 = __webpack_require__(31);
-const SitState_1 = __webpack_require__(29);
-const MoveRandomState_1 = __webpack_require__(28);
-const TypeState_1 = __webpack_require__(34);
-const TalkState_1 = __webpack_require__(33);
-const CoffeeState_1 = __webpack_require__(25);
+const FreezeState_1 = __webpack_require__(29);
+const SmokeState_1 = __webpack_require__(34);
+const SitState_1 = __webpack_require__(32);
+const MoveRandomState_1 = __webpack_require__(31);
+const TypeState_1 = __webpack_require__(37);
+const TalkState_1 = __webpack_require__(36);
+const CoffeeState_1 = __webpack_require__(28);
 const HumanMoodManager_1 = __webpack_require__(19);
-const SitTalkState_1 = __webpack_require__(30);
+const SitTalkState_1 = __webpack_require__(33);
+const LIMIT = 0.8;
 var STATE;
 (function (STATE) {
     STATE[STATE["SMOKE"] = 0] = "SMOKE";
@@ -216,26 +219,7 @@ class HumanStateManager {
         }
     }
     randomNextStepName() {
-        const states = [];
-        states.push({ state: STATE.SMOKE, probability: this.getProbability(STATE.SMOKE) });
-        states.push({ state: STATE.FREEZE, probability: this.getProbability(STATE.FREEZE) });
-        states.push({ state: STATE.MOVE_RANDOM, probability: this.getProbability(STATE.MOVE_RANDOM) });
-        if (this.worldKnowledge.getAnotherFreeHuman(this.human) !== null) {
-            states.push({ state: STATE.TALK, probability: this.getProbability(STATE.TALK) });
-        }
-        if (this.worldKnowledge.getClosestReferer(['Sofa']) !== null) {
-            states.push({ state: STATE.SIT, probability: this.getProbability(STATE.SIT) });
-        }
-        if (this.worldKnowledge.getClosestReferer(['Desk']) !== null) {
-            states.push({ state: STATE.TYPE, probability: this.getProbability(STATE.TYPE) });
-        }
-        if (this.worldKnowledge.getClosestReferer(['Dispenser']) !== null) {
-            states.push({ state: STATE.COFFEE, probability: this.getProbability(STATE.COFFEE) });
-        }
-        if (this.worldKnowledge.getClosestReferer(['Table'], 4) !== null &&
-            this.worldKnowledge.getAnotherFreeHumans(this.human, 3).length === 3) {
-            states.push({ state: STATE.SIT_TALK, probability: this.getProbability(STATE.SIT_TALK) });
-        }
+        const states = this.getNextProbabilities();
         let debug = '';
         debug += 'Rlx[' + Math.ceil(this.human.getMood(HumanMoodManager_1.MOOD.RELAXATION) * 100) + '%], ';
         debug += 'Hng[' + Math.ceil(this.human.getMood(HumanMoodManager_1.MOOD.HUNGER) * 100) + '%], ';
@@ -260,6 +244,29 @@ class HumanStateManager {
             }
         }
     }
+    getNextProbabilities() {
+        const states = [];
+        if (this.worldKnowledge.getClosestReferer(['Desk']) !== null) {
+            states.push({ state: STATE.TYPE, probability: this.getProbability(STATE.TYPE) });
+        }
+        if (this.worldKnowledge.getClosestReferer(['Table'], 4) !== null &&
+            this.worldKnowledge.getAnotherFreeHumans(this.human, 3).length === 3) {
+            states.push({ state: STATE.SIT_TALK, probability: this.getProbability(STATE.SIT_TALK) });
+        }
+        if (this.worldKnowledge.getClosestReferer(['Dispenser']) !== null) {
+            states.push({ state: STATE.COFFEE, probability: this.getProbability(STATE.COFFEE) });
+        }
+        if (this.worldKnowledge.getClosestReferer(['Sofa']) !== null) {
+            states.push({ state: STATE.SIT, probability: this.getProbability(STATE.SIT) });
+        }
+        if (this.worldKnowledge.getAnotherFreeHuman(this.human) !== null) {
+            states.push({ state: STATE.TALK, probability: this.getProbability(STATE.TALK) });
+        }
+        states.push({ state: STATE.FREEZE, probability: this.getProbability(STATE.FREEZE) });
+        states.push({ state: STATE.MOVE_RANDOM, probability: this.getProbability(STATE.MOVE_RANDOM) });
+        states.push({ state: STATE.SMOKE, probability: this.getProbability(STATE.SMOKE) });
+        return states;
+    }
     getProbability(state) {
         let result = 1;
         switch (state) {
@@ -282,20 +289,22 @@ class HumanStateManager {
                 result = 6;
                 break;
             case STATE.SIT_TALK:
-                result = 600000;
+                result = 6;
                 break;
             case STATE.TYPE:
                 result = (5 + 1 + 2 + 8 + 2 + 6 + 6) * 2;
                 break;
         }
         if (state === this.state.getState()) {
-            result = result / 2;
+            result = result / 1.1;
         }
         HumanMoodManager_1.HumanMoodManager.getMoods().forEach((mood) => {
-            if (this.human.getMood(mood) < 0.5) {
+            if (this.human.getMood(mood) < LIMIT) {
                 if (HumanStateManager.getMoodGains(state)[mood] > 0) {
-                    result = result * HumanStateManager.getMoodGains(state)[mood] * 8;
-                    result = result * (1 - this.human.getMood(mood)) * 3;
+                    let ratio = 1 - this.human.getMood(mood) / LIMIT;
+                    ratio = ratio * HumanStateManager.getMoodGains(state)[mood] * 8;
+                    result = result * (1 + ratio);
+                    console.log('new ratio: ' + ratio);
                 }
             }
         });
@@ -339,6 +348,19 @@ class HumanStateManager {
     getState() {
         return this.state.getState();
     }
+    static getStr(state) {
+        switch (state) {
+            case STATE.SMOKE: return 'Smoke';
+            case STATE.FREEZE: return 'Freeze';
+            case STATE.MOVE_RANDOM: return 'Move';
+            case STATE.SIT: return 'Sit';
+            case STATE.TYPE: return 'Work';
+            case STATE.TALK: return 'Talk';
+            case STATE.COFFEE: return 'Coffee';
+            case STATE.RAGE: return 'Rage';
+            case STATE.SIT_TALK: return 'Meeting';
+        }
+    }
 }
 exports.HumanStateManager = HumanStateManager;
 
@@ -348,9 +370,73 @@ exports.HumanStateManager = HumanStateManager;
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+/// <reference path="../lib/phaser.d.ts"/>
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const app_1 = __webpack_require__(3);
+const Boot_1 = __webpack_require__(26);
+const Preload_1 = __webpack_require__(27);
+const Play_1 = __webpack_require__(0);
+const PositionTransformer_1 = __webpack_require__(4);
+const WorldKnowledge_1 = __webpack_require__(17);
+exports.SCALE = 2;
+const CANVAS_WIDTH = 1500;
+const CANVAS_HEIGHT = 650;
+exports.CAMERA_WIDTH_PIXELS = CANVAS_WIDTH / exports.SCALE;
+exports.CAMERA_HEIGHT_PIXELS = CANVAS_HEIGHT / exports.SCALE;
+exports.WORLD_WIDTH = WorldKnowledge_1.GRID_WIDTH * PositionTransformer_1.CELL_WIDTH / 2 + WorldKnowledge_1.GRID_HEIGHT * PositionTransformer_1.CELL_WIDTH / 2;
+exports.WORLD_HEIGHT = WorldKnowledge_1.GRID_WIDTH * PositionTransformer_1.CELL_HEIGHT / 2 + WorldKnowledge_1.GRID_HEIGHT * PositionTransformer_1.CELL_HEIGHT / 2 + 15;
+class SimpleGame extends Phaser.Game {
+    constructor() {
+        super(exports.CAMERA_WIDTH_PIXELS, exports.CAMERA_HEIGHT_PIXELS, Phaser.CANVAS, // Open GL for effect / shader ?
+        'content', null, false, false, false);
+        this.antialias = false;
+        this.state.add('Boot', Boot_1.default);
+        this.state.add('Preload', Preload_1.default);
+        this.state.add('Play', Play_1.default);
+        this.state.start('Boot');
+    }
+}
+window.onload = () => {
+    new SimpleGame();
+};
+
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var COLOR;
+(function (COLOR) {
+    COLOR[COLOR["BLACK"] = 512] = "BLACK";
+    COLOR[COLOR["WHITE"] = 16773349] = "WHITE";
+    COLOR[COLOR["DARK_GREY"] = 4802887] = "DARK_GREY";
+    COLOR[COLOR["LIGHT_GREY"] = 13025990] = "LIGHT_GREY";
+    COLOR[COLOR["MARROON"] = 11030581] = "MARROON";
+    COLOR[COLOR["SKIN"] = 16698281] = "SKIN";
+    COLOR[COLOR["ORANGE"] = 16556547] = "ORANGE";
+    COLOR[COLOR["YELLOW"] = 16508205] = "YELLOW";
+    COLOR[COLOR["DARK_GREEN"] = 885038] = "DARK_GREEN";
+    COLOR[COLOR["LIGHT_GREEN"] = 56877] = "LIGHT_GREEN";
+    COLOR[COLOR["LIGHT_BLUE"] = 2338302] = "LIGHT_BLUE";
+    COLOR[COLOR["DARK_BLUE"] = 2566752] = "DARK_BLUE";
+    COLOR[COLOR["LIGHT_PURPLE"] = 8878490] = "LIGHT_PURPLE";
+    COLOR[COLOR["DARK_PURPLE"] = 8267345] = "DARK_PURPLE";
+    COLOR[COLOR["RED"] = 16711757] = "RED";
+    COLOR[COLOR["ROSE"] = 16611753] = "ROSE";
+})(COLOR = exports.COLOR || (exports.COLOR = {}));
+
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const app_1 = __webpack_require__(2);
 exports.CELL_WIDTH = 40;
 exports.CELL_HEIGHT = 20;
 class PositionTransformer {
@@ -380,43 +466,7 @@ exports.PositionTransformer = PositionTransformer;
 
 
 /***/ }),
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/// <reference path="../lib/phaser.d.ts"/>
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const Boot_1 = __webpack_require__(23);
-const Preload_1 = __webpack_require__(24);
-const Play_1 = __webpack_require__(0);
-const PositionTransformer_1 = __webpack_require__(2);
-const WorldKnowledge_1 = __webpack_require__(14);
-exports.SCALE = 2;
-const CANVAS_WIDTH = 1500;
-const CANVAS_HEIGHT = 650;
-exports.CAMERA_WIDTH_PIXELS = CANVAS_WIDTH / exports.SCALE;
-exports.CAMERA_HEIGHT_PIXELS = CANVAS_HEIGHT / exports.SCALE;
-exports.WORLD_WIDTH = WorldKnowledge_1.GRID_WIDTH * PositionTransformer_1.CELL_WIDTH / 2 + WorldKnowledge_1.GRID_HEIGHT * PositionTransformer_1.CELL_WIDTH / 2;
-exports.WORLD_HEIGHT = WorldKnowledge_1.GRID_WIDTH * PositionTransformer_1.CELL_HEIGHT / 2 + WorldKnowledge_1.GRID_HEIGHT * PositionTransformer_1.CELL_HEIGHT / 2 + 15;
-class SimpleGame extends Phaser.Game {
-    constructor() {
-        super(exports.CAMERA_WIDTH_PIXELS, exports.CAMERA_HEIGHT_PIXELS, Phaser.CANVAS, // Open GL for effect / shader ?
-        'content', null, false, false, false);
-        this.antialias = false;
-        this.state.add('Boot', Boot_1.default);
-        this.state.add('Preload', Preload_1.default);
-        this.state.add('Play', Play_1.default);
-        this.state.start('Boot');
-    }
-}
-window.onload = () => {
-    new SimpleGame();
-};
-
-
-/***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -436,6 +486,7 @@ var ANIMATION;
     ANIMATION[ANIMATION["DRINK"] = 7] = "DRINK";
     ANIMATION[ANIMATION["RAGE"] = 8] = "RAGE";
     ANIMATION[ANIMATION["FREEZE_SIT"] = 9] = "FREEZE_SIT";
+    ANIMATION[ANIMATION["SIT_TALK"] = 10] = "SIT_TALK";
 })(ANIMATION = exports.ANIMATION || (exports.ANIMATION = {}));
 class HumanAnimationManager {
     create(humanTile) {
@@ -480,6 +531,7 @@ class HumanAnimationManager {
             case ANIMATION.STAND_UP: return topOriented ? [81, 80, 79, 78, 18] : [39, 38, 37, 36, 12];
             case ANIMATION.TYPE: return [42, 43, 44, 45];
             case ANIMATION.TALK: return topOriented ? [54, 55, 56, 57, 58, 59] : [48, 49, 50, 51, 52, 53];
+            case ANIMATION.SIT_TALK: return topOriented ? [90, 91, 92, 93, 94, 95] : [84, 85, 86, 87, 88, 89];
             case ANIMATION.RAGE:
                 let rage_frames = [66, 67, 68, 69];
                 for (let i = 0; i < 4; i++) {
@@ -516,6 +568,7 @@ class HumanAnimationManager {
             ANIMATION.TALK,
             ANIMATION.DRINK,
             ANIMATION.RAGE,
+            ANIMATION.SIT_TALK,
         ];
     }
     static hasTopOrientedVariation(animation) {
@@ -526,6 +579,7 @@ class HumanAnimationManager {
             ANIMATION.SIT_DOWN,
             ANIMATION.STAND_UP,
             ANIMATION.FREEZE_SIT,
+            ANIMATION.SIT_TALK,
         ].indexOf(animation) > -1;
     }
     static isLooped(animation) {
@@ -537,6 +591,7 @@ class HumanAnimationManager {
             ANIMATION.TYPE,
             ANIMATION.DRINK,
             ANIMATION.FREEZE_SIT,
+            ANIMATION.SIT_TALK,
         ].indexOf(animation) > -1;
     }
     static getAnimationStr(animation) {
@@ -551,6 +606,7 @@ class HumanAnimationManager {
             case ANIMATION.RAGE: return 'RG';
             case ANIMATION.DRINK: return 'DK';
             case ANIMATION.SMOKE: return 'SK';
+            case ANIMATION.SIT_TALK: return 'ST';
             default:
                 throw 'UNKNOWN ANIMATION ' + animation;
         }
@@ -560,7 +616,118 @@ exports.HumanAnimationManager = HumanAnimationManager;
 
 
 /***/ }),
-/* 5 */
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const Play_1 = __webpack_require__(0);
+const app_1 = __webpack_require__(2);
+const ObjectSeller_1 = __webpack_require__(23);
+const TextStyle_1 = __webpack_require__(9);
+const HumanEmployer_1 = __webpack_require__(57);
+const InfoPanel_1 = __webpack_require__(58);
+const LevelDisplayer_1 = __webpack_require__(59);
+const UserInfoPanel_1 = __webpack_require__(61);
+const Pico8Colors_1 = __webpack_require__(3);
+exports.INTERFACE_WIDTH = 150.5;
+exports.TOP_GAP_2 = 15.5 + 12;
+exports.TOP_GAP = exports.TOP_GAP_2 + 15;
+var PANEL;
+(function (PANEL) {
+    PANEL[PANEL["INFO"] = 0] = "INFO";
+    PANEL[PANEL["USR"] = 1] = "USR";
+    PANEL[PANEL["OBJ"] = 2] = "OBJ";
+    PANEL[PANEL["USER_INFO"] = 3] = "USER_INFO";
+})(PANEL = exports.PANEL || (exports.PANEL = {}));
+class UserInterface {
+    constructor(worldKnowledge) {
+        this.worldKnowledge = worldKnowledge;
+        this.objectSeller = new ObjectSeller_1.ObjectSeller(worldKnowledge);
+        this.humanEmployer = new HumanEmployer_1.HumanEmployer(worldKnowledge);
+        this.infoPanel = new InfoPanel_1.InfoPanel(worldKnowledge);
+        this.userInfoPanel = new UserInfoPanel_1.UserInfoPanel(worldKnowledge);
+        this.levelDisplayer = new LevelDisplayer_1.LevelDisplayer(worldKnowledge);
+        this.buttons = [];
+        this.selectedPanel = PANEL.OBJ;
+    }
+    create(game, groups) {
+        const interfaceGroup = groups[Play_1.GROUP_INTERFACE];
+        this.backgroundGraphics = game.add.graphics(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH, 0, interfaceGroup);
+        this.backgroundGraphics.beginFill(Pico8Colors_1.COLOR.DARK_BLUE);
+        this.backgroundGraphics.drawRect(-0.5, 0, exports.INTERFACE_WIDTH, app_1.CAMERA_HEIGHT_PIXELS);
+        interfaceGroup.add(this.backgroundGraphics);
+        this.objectSeller.create(game, groups);
+        this.humanEmployer.create(game, groups);
+        this.infoPanel.create(game, groups);
+        this.userInfoPanel.create(game, groups);
+        this.levelDisplayer.create(game, groups);
+        const buttonWidth = exports.INTERFACE_WIDTH / 3;
+        this.moneyCounter = game.add.text(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH + 2, 0, this.worldKnowledge.getMoneyInWallet().getStringValue(), TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        let i = 0;
+        [['info', PANEL.INFO], ['usr', PANEL.USR], ['obj', PANEL.OBJ]].forEach((panelInfo) => {
+            const button = game.add.text(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH + i * buttonWidth, exports.TOP_GAP_2, panelInfo[0], TextStyle_1.TEXT_STYLE, interfaceGroup);
+            button.inputEnabled = true;
+            button.input.useHandCursor = true;
+            button.events.onInputDown.add(() => {
+                this.selectPanel(panelInfo[1]);
+            });
+            this.buttons.push(button);
+            i++;
+        });
+        this.selectPanel(PANEL.INFO);
+    }
+    update() {
+        this.objectSeller.update();
+        this.infoPanel.update();
+        this.levelDisplayer.update();
+        this.userInfoPanel.update();
+        this.moneyCounter.setText(this.worldKnowledge.getMoneyInWallet().getStringValue());
+    }
+    selectPanel(panel) {
+        if (this.selectedPanel === panel) {
+            return;
+        }
+        this.selectedPanel = panel;
+        if (this.selectedPanel === PANEL.INFO) {
+            this.objectSeller.hide();
+            this.humanEmployer.hide();
+            this.infoPanel.show();
+            this.userInfoPanel.hide();
+            this.worldKnowledge.unselectHuman(false);
+        }
+        else if (this.selectedPanel === PANEL.USR) {
+            this.objectSeller.hide();
+            this.humanEmployer.show();
+            this.infoPanel.hide();
+            this.userInfoPanel.hide();
+            this.worldKnowledge.unselectHuman(false);
+        }
+        else if (this.selectedPanel === PANEL.OBJ) {
+            this.objectSeller.show();
+            this.humanEmployer.hide();
+            this.infoPanel.hide();
+            this.userInfoPanel.hide();
+            this.worldKnowledge.unselectHuman(false);
+        }
+        else if (this.selectedPanel === PANEL.USER_INFO) {
+            this.objectSeller.hide();
+            this.humanEmployer.hide();
+            this.infoPanel.hide();
+            this.userInfoPanel.show();
+        }
+    }
+    setSelectedHuman(param) {
+        this.selectPanel(PANEL.USER_INFO);
+        this.userInfoPanel.showEmployeeInfoPanelForYohan(param);
+    }
+}
+exports.UserInterface = UserInterface;
+
+
+/***/ }),
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -638,7 +805,7 @@ exports.Direction = Direction;
 
 
 /***/ }),
-/* 6 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -669,99 +836,27 @@ exports.AbstractState = AbstractState;
 
 
 /***/ }),
-/* 7 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Play_1 = __webpack_require__(0);
-const app_1 = __webpack_require__(3);
-const ObjectSeller_1 = __webpack_require__(20);
-const TextStyle_1 = __webpack_require__(13);
-const HumanEmployer_1 = __webpack_require__(53);
-const InfoPanel_1 = __webpack_require__(54);
-const LevelDisplayer_1 = __webpack_require__(55);
-exports.INTERFACE_WIDTH = 150.5;
-exports.TOP_GAP_2 = 15.5 + 12;
-exports.TOP_GAP = exports.TOP_GAP_2 + 15;
-var PANEL;
-(function (PANEL) {
-    PANEL[PANEL["INFO"] = 0] = "INFO";
-    PANEL[PANEL["USR"] = 1] = "USR";
-    PANEL[PANEL["OBJ"] = 2] = "OBJ";
-})(PANEL || (PANEL = {}));
-class UserInterface {
-    constructor(worldKnowledge) {
-        this.worldKnowledge = worldKnowledge;
-        this.objectSeller = new ObjectSeller_1.ObjectSeller(worldKnowledge);
-        this.humanEmployer = new HumanEmployer_1.HumanEmployer(worldKnowledge);
-        this.infoPanel = new InfoPanel_1.InfoPanel(worldKnowledge);
-        this.levelDisplayer = new LevelDisplayer_1.LevelDisplayer(worldKnowledge);
-        this.buttons = [];
-        this.selectedPanel = PANEL.OBJ;
-    }
-    create(game, groups) {
-        const interfaceGroup = groups[Play_1.GROUP_INTERFACE];
-        this.backgroundGraphics = game.add.graphics(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH, 0, interfaceGroup);
-        this.backgroundGraphics.beginFill(0x272a60);
-        this.backgroundGraphics.drawRect(-0.5, 0, exports.INTERFACE_WIDTH, app_1.CAMERA_HEIGHT_PIXELS);
-        interfaceGroup.add(this.backgroundGraphics);
-        this.objectSeller.create(game, groups);
-        this.humanEmployer.create(game, groups);
-        this.infoPanel.create(game, groups);
-        this.levelDisplayer.create(game, groups);
-        const buttonWidth = exports.INTERFACE_WIDTH / 3;
-        this.moneyCounter = game.add.text(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH + 2, 0, this.worldKnowledge.getMoneyInWallet().getStringValue(), TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
-        let i = 0;
-        [['info', PANEL.INFO], ['usr', PANEL.USR], ['obj', PANEL.OBJ]].forEach((panelInfo) => {
-            const button = game.add.text(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH + i * buttonWidth, exports.TOP_GAP_2, panelInfo[0], TextStyle_1.TEXT_STYLE, interfaceGroup);
-            button.inputEnabled = true;
-            button.input.useHandCursor = true;
-            button.events.onInputDown.add(() => {
-                this.selectPanel(panelInfo[1]);
-            });
-            this.buttons.push(button);
-            i++;
-        });
-        this.selectPanel(PANEL.INFO);
-    }
-    update() {
-        this.objectSeller.update();
-        this.infoPanel.update();
-        this.levelDisplayer.update();
-        this.moneyCounter.setText(this.worldKnowledge.getMoneyInWallet().getStringValue());
-    }
-    selectPanel(panel) {
-        this.selectedPanel = panel;
-        if (this.selectedPanel === PANEL.INFO) {
-            this.objectSeller.hide();
-            this.humanEmployer.hide();
-            this.infoPanel.show();
-        }
-        else if (this.selectedPanel === PANEL.USR) {
-            this.objectSeller.hide();
-            this.humanEmployer.show();
-            this.infoPanel.hide();
-        }
-        else {
-            this.objectSeller.show();
-            this.humanEmployer.hide();
-            this.infoPanel.hide();
-        }
-    }
-}
-exports.UserInterface = UserInterface;
+exports.TEXT_STYLE = {
+    align: 'center',
+    fill: "#ffffff",
+    font: '16px 000webfont'
+};
 
 
 /***/ }),
-/* 8 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanProperties_1 = __webpack_require__(36);
+const HumanProperties_1 = __webpack_require__(39);
 const NAMES = [
     'Michel',
     'Jean-Paul',
@@ -792,12 +887,43 @@ exports.HumanPropertiesFactory = HumanPropertiesFactory;
 
 
 /***/ }),
-/* 9 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+const Bubble_1 = __webpack_require__(21);
+var RAGE_IMAGE;
+(function (RAGE_IMAGE) {
+    RAGE_IMAGE[RAGE_IMAGE["COFFEE"] = 0] = "COFFEE";
+    RAGE_IMAGE[RAGE_IMAGE["LAPTOP"] = 1] = "LAPTOP";
+    RAGE_IMAGE[RAGE_IMAGE["SLEEP"] = 2] = "SLEEP";
+    RAGE_IMAGE[RAGE_IMAGE["TABLE"] = 3] = "TABLE";
+})(RAGE_IMAGE = exports.RAGE_IMAGE || (exports.RAGE_IMAGE = {}));
+class ThoughtBubble extends Bubble_1.Bubble {
+    getSpriteFrame() {
+        return 1;
+    }
+    getImageSpriteKey() {
+        return 'bubble_images_angry';
+    }
+    showRage(rageImage) {
+        this.imageSprite.loadTexture(this.getImageSpriteKey(), rageImage);
+        super.show();
+    }
+}
+exports.ThoughtBubble = ThoughtBubble;
+
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const Pico8Colors_1 = __webpack_require__(3);
 const POINTS = 20;
 const RADIUS = 6;
 const DELAY = 750;
@@ -876,7 +1002,7 @@ class PartialCircle extends Phaser.Graphics {
     }
     redraw() {
         this.clear();
-        this.lineStyle(3, 0xff004d);
+        this.lineStyle(3, Pico8Colors_1.COLOR.RED);
         this.moveTo(0, -RADIUS);
         for (let i = 0; i < POINTS * this.percentage; i++) {
             const angle = Math.PI * 2 / POINTS * (i + 1) + Math.PI;
@@ -887,21 +1013,27 @@ class PartialCircle extends Phaser.Graphics {
 
 
 /***/ }),
-/* 10 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanStateManager_1 = __webpack_require__(1);
-const HumanAnimationManager_1 = __webpack_require__(4);
-const AbstractState_1 = __webpack_require__(6);
+const HumanAnimationManager_1 = __webpack_require__(5);
+const AbstractState_1 = __webpack_require__(8);
 class RageState extends AbstractState_1.AbstractState {
+    constructor(human, rageImage) {
+        super(human);
+        this.rageImage = rageImage;
+    }
     start(game) {
         super.start(game);
         this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.RAGE);
+        this.human.showThoughtBubble(this.rageImage);
         this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.RAGE), () => {
             this.active = false;
+            this.human.hideThoughtBubble();
         }, this));
         return true;
     }
@@ -913,15 +1045,15 @@ exports.RageState = RageState;
 
 
 /***/ }),
-/* 11 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = __webpack_require__(0);
-const ObjectInfoRegistry_1 = __webpack_require__(12);
-const ObjectReferer_1 = __webpack_require__(45);
+const ObjectInfoRegistry_1 = __webpack_require__(15);
+const ObjectReferer_1 = __webpack_require__(48);
 class AbstractObject {
     constructor(point, worldKnowledge, leftOriented) {
         this.position = point;
@@ -1013,16 +1145,16 @@ exports.AbstractObject = AbstractObject;
 
 
 /***/ }),
-/* 12 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const ObjectInfo_1 = __webpack_require__(43);
-const SpriteInfo_1 = __webpack_require__(48);
-const Direction_1 = __webpack_require__(5);
-const Price_1 = __webpack_require__(16);
+const ObjectInfo_1 = __webpack_require__(46);
+const SpriteInfo_1 = __webpack_require__(51);
+const Direction_1 = __webpack_require__(7);
+const Price_1 = __webpack_require__(20);
 class ObjectInfoRegistry {
     static getObjectInfo(name) {
         if (this.objectInfos === null) {
@@ -1070,43 +1202,76 @@ exports.ObjectInfoRegistry = ObjectInfoRegistry;
 
 
 /***/ }),
-/* 13 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TEXT_STYLE = {
-    align: 'center',
-    fill: "#ffffff",
-    font: '16px 000webfont'
-};
+const TIME_GAP = Phaser.Timer.SECOND / 10;
+class SmoothValue {
+    constructor(value) {
+        this.value = value;
+    }
+    getValue() {
+        return this.value;
+    }
+    add(value, milliseconds = Phaser.Timer.SECOND) {
+        if (milliseconds < TIME_GAP) {
+            this.value += value;
+            return;
+        }
+        setTimeout(() => {
+            const numberOfSteps = milliseconds / TIME_GAP;
+            const valuePerStep = value / numberOfSteps;
+            this.value += valuePerStep;
+            if (this.maxValue) {
+                this.value = Math.min(this.value, this.maxValue);
+            }
+            if (this.minValue) {
+                this.value = Math.max(this.value, this.minValue);
+            }
+            this.add(value - valuePerStep, milliseconds - TIME_GAP);
+        }, TIME_GAP);
+    }
+    setMaxValue(number) {
+        this.maxValue = number;
+    }
+    setMinValue(number) {
+        this.minValue = number;
+    }
+    setValue(number) {
+        this.value = number;
+    }
+}
+exports.SmoothValue = SmoothValue;
 
 
 /***/ }),
-/* 14 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanRepository_1 = __webpack_require__(51);
-const Sofa_1 = __webpack_require__(47);
-const Employee_1 = __webpack_require__(18);
-const Desk_1 = __webpack_require__(41);
-const Dispenser_1 = __webpack_require__(42);
-const WallRepository_1 = __webpack_require__(52);
-const Cell_1 = __webpack_require__(21);
-const PositionTransformer_1 = __webpack_require__(2);
+const HumanRepository_1 = __webpack_require__(54);
+const Sofa_1 = __webpack_require__(50);
+const Employee_1 = __webpack_require__(22);
+const Desk_1 = __webpack_require__(44);
+const Dispenser_1 = __webpack_require__(45);
+const WallRepository_1 = __webpack_require__(55);
+const Cell_1 = __webpack_require__(24);
+const PositionTransformer_1 = __webpack_require__(4);
 const Play_1 = __webpack_require__(0);
-const Depot_1 = __webpack_require__(40);
-const Direction_1 = __webpack_require__(5);
-const MoodRegister_1 = __webpack_require__(37);
-const Table_1 = __webpack_require__(49);
-const LevelManager_1 = __webpack_require__(22);
-const Price_1 = __webpack_require__(16);
-const ObjectInfoRegistry_1 = __webpack_require__(12);
-const SmoothValue_1 = __webpack_require__(17);
+const Depot_1 = __webpack_require__(43);
+const Direction_1 = __webpack_require__(7);
+const MoodRegister_1 = __webpack_require__(40);
+const Table_1 = __webpack_require__(52);
+const LevelManager_1 = __webpack_require__(25);
+const Price_1 = __webpack_require__(20);
+const ObjectInfoRegistry_1 = __webpack_require__(15);
+const SmoothValue_1 = __webpack_require__(16);
+const UserInterface_1 = __webpack_require__(6);
 exports.GRID_WIDTH = 16;
 exports.GRID_HEIGHT = 16;
 exports.DEBUG_WORLD = false;
@@ -1458,19 +1623,38 @@ class WorldKnowledge {
     addMoneyInWallet(price) {
         this.wallet.add(price.getValue());
     }
+    setSelectedHuman(employee) {
+        this.userInterface.setSelectedHuman(employee);
+        this.humanRepository.humans.forEach((human) => {
+            if (human !== employee) {
+                human.unselect();
+            }
+        });
+    }
+    setUserInterface(userInterface) {
+        this.userInterface = userInterface;
+    }
+    unselectHuman(switchPanel = true) {
+        if (switchPanel) {
+            this.userInterface.selectPanel(UserInterface_1.PANEL.INFO);
+        }
+        this.humanRepository.humans.forEach((human) => {
+            human.unselect();
+        });
+    }
 }
 exports.WorldKnowledge = WorldKnowledge;
 
 
 /***/ }),
-/* 15 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const AbstractState_1 = __webpack_require__(6);
-const PositionTransformer_1 = __webpack_require__(2);
+const AbstractState_1 = __webpack_require__(8);
+const PositionTransformer_1 = __webpack_require__(4);
 class MoveThenActAbstractState extends AbstractState_1.AbstractState {
     constructor(human, objectReferer, worldKnowledge, tries = 0) {
         super(human);
@@ -1512,7 +1696,80 @@ exports.MoveThenActAbstractState = MoveThenActAbstractState;
 
 
 /***/ }),
-/* 16 */
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const HumanStateManager_1 = __webpack_require__(1);
+const SmoothValue_1 = __webpack_require__(16);
+const LOSS = -0.05;
+const DEFAULT = 0.8;
+const TIME_BETWEEN_LOSS = 10000;
+var MOOD;
+(function (MOOD) {
+    MOOD[MOOD["RELAXATION"] = 0] = "RELAXATION";
+    MOOD[MOOD["HUNGER"] = 1] = "HUNGER";
+    MOOD[MOOD["SOCIAL"] = 2] = "SOCIAL";
+})(MOOD = exports.MOOD || (exports.MOOD = {}));
+class HumanMoodManager {
+    constructor() {
+        this.moods = {};
+        this.moods[MOOD.RELAXATION] = new SmoothValue_1.SmoothValue(DEFAULT);
+        this.moods[MOOD.HUNGER] = new SmoothValue_1.SmoothValue(DEFAULT);
+        this.moods[MOOD.SOCIAL] = new SmoothValue_1.SmoothValue(DEFAULT);
+        this.moods[MOOD.RELAXATION].setMaxValue(1);
+        this.moods[MOOD.HUNGER].setMaxValue(1);
+        this.moods[MOOD.SOCIAL].setMaxValue(1);
+        this.moods[MOOD.RELAXATION].setMinValue(0);
+        this.moods[MOOD.HUNGER].setMinValue(0);
+        this.moods[MOOD.SOCIAL].setMinValue(0);
+        this.hasToBeUpdated = true;
+    }
+    create(game) {
+        this.game = game;
+    }
+    update() {
+        if (this.hasToBeUpdated) {
+            let moodUpdate = {};
+            moodUpdate[MOOD.RELAXATION] = LOSS;
+            moodUpdate[MOOD.HUNGER] = LOSS;
+            moodUpdate[MOOD.SOCIAL] = LOSS / 2;
+            this.updateFromStateInner(moodUpdate, TIME_BETWEEN_LOSS);
+            this.hasToBeUpdated = false;
+            this.game.time.events.add(TIME_BETWEEN_LOSS, () => {
+                this.hasToBeUpdated = true;
+            }, this);
+        }
+    }
+    updateFromState(state) {
+        this.updateFromStateInner(HumanStateManager_1.HumanStateManager.getMoodGains(state));
+    }
+    updateFromStateInner(moods, time = Phaser.Timer.SECOND) {
+        Object.keys(moods).forEach((mood) => {
+            this.moods[mood].add(moods[mood], time);
+        });
+    }
+    static getMoods() {
+        return [
+            MOOD.RELAXATION,
+            MOOD.HUNGER,
+            MOOD.SOCIAL
+        ];
+    }
+    getMood(mood) {
+        return this.moods[mood].getValue();
+    }
+    getGeneralMood() {
+        return (this.moods[MOOD.RELAXATION].getValue() + this.moods[MOOD.SOCIAL].getValue() + this.moods[MOOD.HUNGER].getValue()) / 3;
+    }
+}
+exports.HumanMoodManager = HumanMoodManager;
+
+
+/***/ }),
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1542,64 +1799,61 @@ exports.Price = Price;
 
 
 /***/ }),
-/* 17 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const TIME_GAP = Phaser.Timer.SECOND / 10;
-class SmoothValue {
-    constructor(value) {
-        this.value = value;
+class Bubble {
+    create(humanSprite, game, group) {
+        this.game = game;
+        this.parent = humanSprite;
+        this.sprite = game.add.sprite(this.parent.position.x, this.parent.position.y, 'bubble', this.getSpriteFrame(), group);
+        this.sprite.anchor.set(1, 37 / this.sprite.height);
+        group.add(this.sprite);
+        this.imageSprite = game.add.sprite(this.parent.position.x, this.parent.position.y, this.getImageSpriteKey(), 0, group);
+        this.imageSprite.anchor.set(1.2, 76 / this.sprite.height);
+        group.add(this.imageSprite);
+        this.hide();
     }
-    getValue() {
-        return this.value;
+    show() {
+        this.sprite.alpha = 1;
+        this.imageSprite.alpha = 1;
     }
-    add(value, milliseconds = Phaser.Timer.SECOND) {
-        if (milliseconds < TIME_GAP) {
-            this.value += value;
-            return;
-        }
-        setTimeout(() => {
-            const numberOfSteps = milliseconds / TIME_GAP;
-            const valuePerStep = value / numberOfSteps;
-            if (this.maxValue) {
-                this.value = Math.min(this.value + valuePerStep, this.maxValue);
-            }
-            else {
-                this.value += valuePerStep;
-            }
-            this.add(value - valuePerStep, milliseconds - TIME_GAP);
-        }, TIME_GAP);
+    hide() {
+        this.sprite.alpha = 0;
+        this.imageSprite.alpha = 0;
     }
-    setMaxValue(number) {
-        this.maxValue = number;
-    }
-    setValue(number) {
-        this.value = number;
+    update() {
+        this.sprite.position = this.parent.position;
+        this.sprite.scale.x = this.parent.scale.x;
+        this.imageSprite.position = this.parent.position;
+        this.imageSprite.scale.x = this.parent.scale.x;
     }
 }
-exports.SmoothValue = SmoothValue;
+exports.Bubble = Bubble;
 
 
 /***/ }),
-/* 18 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(2);
-const ClosestPathFinder_1 = __webpack_require__(35);
-const Direction_1 = __webpack_require__(5);
-const HumanAnimationManager_1 = __webpack_require__(4);
+const PositionTransformer_1 = __webpack_require__(4);
+const ClosestPathFinder_1 = __webpack_require__(38);
+const Direction_1 = __webpack_require__(7);
+const HumanAnimationManager_1 = __webpack_require__(5);
 const HumanStateManager_1 = __webpack_require__(1);
-const ObjectSelector_1 = __webpack_require__(46);
-const TalkBubble_1 = __webpack_require__(39);
+const ObjectSelector_1 = __webpack_require__(49);
+const TalkBubble_1 = __webpack_require__(42);
 const HumanMoodManager_1 = __webpack_require__(19);
-const MoodSprite_1 = __webpack_require__(38);
+const MoodSprite_1 = __webpack_require__(41);
 const Play_1 = __webpack_require__(0);
+const ThoughtBubble_1 = __webpack_require__(11);
+const Pico8Colors_1 = __webpack_require__(3);
 const MAX_WALK_CELL_DURATION = 1500;
 const MIN_WALK_CELL_DURATION = 800;
 const MAX_RETRIES = 3;
@@ -1615,6 +1869,7 @@ class Employee {
         this.anchorPixels = new PIXI.Point(0, GAP_FROM_BOTTOM);
         this.animationManager = new HumanAnimationManager_1.HumanAnimationManager();
         this.talkBubble = new TalkBubble_1.TalkBubble();
+        this.thoughtBubble = new ThoughtBubble_1.ThoughtBubble();
         this.moodManager = new HumanMoodManager_1.HumanMoodManager();
         this.moodSprite = new MoodSprite_1.MoodSprite();
         this.humanProperties = humanProperties;
@@ -1626,12 +1881,17 @@ class Employee {
         this.sprite = game.add.tileSprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).x + this.anchorPixels.x, PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).y + this.anchorPixels.y, 24, 25, this.humanProperties.getSpriteKey());
         this.animationManager.create(this.sprite);
         this.sprite.anchor.set(0.5, 1.0);
-        ObjectSelector_1.ObjectSelector.makeSelectable([this.sprite]);
+        ObjectSelector_1.ObjectSelector.makeSelectable([this.sprite], () => {
+            this.worldKnowledge.setSelectedHuman(this);
+        }, () => {
+            this.worldKnowledge.unselectHuman();
+        });
         groups[Play_1.GROUP_OBJECTS_AND_HUMANS].add(this.sprite);
         this.animationManager.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE, true, false);
         this.closestPathFinder = new ClosestPathFinder_1.ClosestPathFinder(game, worldKnowledge);
         this.stateManager.create(game, worldKnowledge, this.animationManager);
         this.talkBubble.create(this.sprite, this.game, groups[Play_1.GROUP_OBJECTS_AND_HUMANS]);
+        this.thoughtBubble.create(this.sprite, this.game, groups[Play_1.GROUP_OBJECTS_AND_HUMANS]);
         this.moodSprite.create(this.sprite, this.game, groups[Play_1.GROUP_INFOS]);
         if (PATH_DEBUG) {
             this.pathGraphics = game.add.graphics(0, 0, groups[Play_1.GROUP_INFOS]);
@@ -1640,6 +1900,7 @@ class Employee {
     }
     update() {
         this.talkBubble.update();
+        this.thoughtBubble.update();
         this.stateManager.updateState(this.game);
         this.moodManager.update();
         this.moodSprite.update(this.moodManager.getGeneralMood(), [
@@ -1649,7 +1910,7 @@ class Employee {
         ]);
         if (PATH_DEBUG) {
             this.pathGraphics.clear();
-            this.pathGraphics.lineStyle(2, 0x00ff00);
+            this.pathGraphics.lineStyle(2, Pico8Colors_1.COLOR.LIGHT_GREEN);
             if (this.path !== null && this.path.length > 0) {
                 this.pathGraphics.moveTo(this.sprite.position.x, this.sprite.position.y);
                 this.path.forEach((pathItem) => {
@@ -1824,89 +2085,39 @@ class Employee {
     getName() {
         return this.humanProperties.getName();
     }
+    showThoughtBubble(rageImage) {
+        this.thoughtBubble.showRage(rageImage);
+    }
+    hideThoughtBubble() {
+        this.thoughtBubble.hide();
+    }
+    getNextProbabilities() {
+        return this.stateManager.getNextProbabilities();
+    }
+    unselect() {
+        if (this.isSelected()) {
+            ObjectSelector_1.ObjectSelector.click(this.sprite, null, [this.sprite]);
+        }
+    }
 }
 exports.Employee = Employee;
 
 
 /***/ }),
-/* 19 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanStateManager_1 = __webpack_require__(1);
-const LOSS = -0.05;
-const DEFAULT = 0.75;
-var MOOD;
-(function (MOOD) {
-    MOOD[MOOD["RELAXATION"] = 0] = "RELAXATION";
-    MOOD[MOOD["HUNGER"] = 1] = "HUNGER";
-    MOOD[MOOD["SOCIAL"] = 2] = "SOCIAL";
-})(MOOD = exports.MOOD || (exports.MOOD = {}));
-class HumanMoodManager {
-    constructor() {
-        this.moods = {};
-        this.moods[MOOD.RELAXATION] = DEFAULT;
-        this.moods[MOOD.HUNGER] = DEFAULT;
-        this.moods[MOOD.SOCIAL] = DEFAULT;
-        this.hasToBeUpdated = true;
-    }
-    create(game) {
-        this.game = game;
-    }
-    update() {
-        if (this.hasToBeUpdated) {
-            let moodUpdate = {};
-            moodUpdate[MOOD.RELAXATION] = LOSS;
-            moodUpdate[MOOD.HUNGER] = LOSS;
-            moodUpdate[MOOD.SOCIAL] = LOSS / 2;
-            this.updateFromStateInner(moodUpdate);
-            this.hasToBeUpdated = false;
-            this.game.time.events.add(10 * Phaser.Timer.SECOND, () => {
-                this.hasToBeUpdated = true;
-            }, this);
-        }
-    }
-    updateFromState(state) {
-        this.updateFromStateInner(HumanStateManager_1.HumanStateManager.getMoodGains(state));
-    }
-    updateFromStateInner(moods) {
-        Object.keys(moods).forEach((mood) => {
-            this.moods[mood] = Math.max(0, Math.min(1, this.moods[mood] + moods[mood]));
-        });
-    }
-    static getMoods() {
-        return [
-            MOOD.RELAXATION,
-            MOOD.HUNGER,
-            MOOD.SOCIAL
-        ];
-    }
-    getMood(mood) {
-        return this.moods[mood];
-    }
-    getGeneralMood() {
-        return (this.moods[MOOD.RELAXATION] + this.moods[MOOD.SOCIAL] + this.moods[MOOD.HUNGER]) / 3;
-    }
-}
-exports.HumanMoodManager = HumanMoodManager;
-
-
-/***/ }),
-/* 20 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const UserInterface_1 = __webpack_require__(7);
-const app_1 = __webpack_require__(3);
-const ObjectInfoRegistry_1 = __webpack_require__(12);
-const ObjectPhantom_1 = __webpack_require__(44);
+const UserInterface_1 = __webpack_require__(6);
+const app_1 = __webpack_require__(2);
+const ObjectInfoRegistry_1 = __webpack_require__(15);
+const ObjectPhantom_1 = __webpack_require__(47);
 const Play_1 = __webpack_require__(0);
-const TextStyle_1 = __webpack_require__(13);
-const PositionTransformer_1 = __webpack_require__(2);
+const TextStyle_1 = __webpack_require__(9);
+const PositionTransformer_1 = __webpack_require__(4);
+const Pico8Colors_1 = __webpack_require__(3);
 exports.OBJECT_SELLER_CELL_SIZE = 41;
 const CIRCLE_GAP = 7;
 class ObjectSeller {
@@ -2036,7 +2247,7 @@ class ObjectProvisionnerButton {
         });
         const scale = 2 / (width + height);
         this.square = game.add.graphics(left, UserInterface_1.TOP_GAP + index * exports.OBJECT_SELLER_CELL_SIZE, groups[Play_1.GROUP_INTERFACE]);
-        this.square.lineStyle(1, 0xffffff);
+        this.square.lineStyle(1, Pico8Colors_1.COLOR.WHITE);
         this.square.drawRect(0, 0, exports.OBJECT_SELLER_CELL_SIZE, exports.OBJECT_SELLER_CELL_SIZE);
         this.objectInfo.getCellGaps(false).forEach((cellGap) => {
             const fakeCell = game.add.sprite(spriteOrigin.x - (cellGap.x - cellGap.y) * (PositionTransformer_1.CELL_WIDTH / 2) * scale, spriteOrigin.y - (cellGap.x + cellGap.y) * (PositionTransformer_1.CELL_HEIGHT / 2) * scale, 'casedefault');
@@ -2058,7 +2269,7 @@ class ObjectProvisionnerButton {
             groups[Play_1.GROUP_INTERFACE].add(seller);
         });
         this.circle = game.add.graphics(left, top + CIRCLE_GAP, groups[Play_1.GROUP_INTERFACE]);
-        this.circle.beginFill(0xff0000);
+        this.circle.beginFill(Pico8Colors_1.COLOR.RED);
         this.circle.drawCircle(exports.OBJECT_SELLER_CELL_SIZE, 0, 9);
         groups[Play_1.GROUP_INTERFACE].add(this.circle);
         this.counter = game.add.text(left + exports.OBJECT_SELLER_CELL_SIZE - 1.5, index * exports.OBJECT_SELLER_CELL_SIZE + UserInterface_1.TOP_GAP + CIRCLE_GAP - 5, '0', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
@@ -2108,14 +2319,14 @@ class ObjectProvisionnerButton {
 
 
 /***/ }),
-/* 21 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(2);
-const WorldKnowledge_1 = __webpack_require__(14);
+const PositionTransformer_1 = __webpack_require__(4);
+const WorldKnowledge_1 = __webpack_require__(17);
 class Cell {
     constructor(point) {
         this.position = point;
@@ -2133,14 +2344,14 @@ exports.Cell = Cell;
 
 
 /***/ }),
-/* 22 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanPropertiesFactory_1 = __webpack_require__(8);
-const SmoothValue_1 = __webpack_require__(17);
+const HumanPropertiesFactory_1 = __webpack_require__(10);
+const SmoothValue_1 = __webpack_require__(16);
 class LevelManager {
     constructor() {
         this.level = 1;
@@ -2183,13 +2394,13 @@ exports.LevelManager = LevelManager;
 
 
 /***/ }),
-/* 23 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const app_1 = __webpack_require__(3);
+const app_1 = __webpack_require__(2);
 class Boot extends Phaser.State {
     create() {
         // this.physics.startSystem(Phaser.Physics.ARCADE);
@@ -2204,7 +2415,7 @@ exports.default = Boot;
 
 
 /***/ }),
-/* 24 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2251,6 +2462,7 @@ class Preload extends Phaser.State {
         this.game.load.spritesheet('sofa_selected', 'assets/sofa_selected.png', 8, 6);
         this.game.load.spritesheet('bubble', 'assets/bubble.png', 13, 15);
         this.game.load.spritesheet('bubble_images', 'assets/bubble_images.png', 9, 7);
+        this.game.load.spritesheet('bubble_images_angry', 'assets/bubble_images_angry.png', 9, 7);
         this.game.load.spritesheet('forbidden', 'assets/forbidden.png', 12, 12);
         this.game.load.spritesheet('buy_button', 'assets/buy_button.png', 10, 10);
     }
@@ -2261,23 +2473,24 @@ exports.default = Preload;
 
 
 /***/ }),
-/* 25 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanStateManager_1 = __webpack_require__(1);
-const HumanAnimationManager_1 = __webpack_require__(4);
-const RageState_1 = __webpack_require__(10);
-const MoveThenActAbstractState_1 = __webpack_require__(15);
+const HumanAnimationManager_1 = __webpack_require__(5);
+const RageState_1 = __webpack_require__(13);
+const MoveThenActAbstractState_1 = __webpack_require__(18);
+const ThoughtBubble_1 = __webpack_require__(11);
 class CoffeeState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
     retry() {
         const nextDispenserReferer = this.worldKnowledge.getClosestReferer(['Dispenser'], 1, this.human.getPosition());
         if (this.tries > this.human.getMaxRetries() || nextDispenserReferer === null) {
             this.active = false;
             this.human.stopWalk();
-            return new RageState_1.RageState(this.human);
+            return new RageState_1.RageState(this.human, ThoughtBubble_1.RAGE_IMAGE.COFFEE);
         }
         else {
             return new CoffeeState(this.human, nextDispenserReferer, this.worldKnowledge, this.tries + 1);
@@ -2301,15 +2514,15 @@ exports.CoffeeState = CoffeeState;
 
 
 /***/ }),
-/* 26 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(4);
+const HumanAnimationManager_1 = __webpack_require__(5);
 const HumanStateManager_1 = __webpack_require__(1);
-const AbstractState_1 = __webpack_require__(6);
+const AbstractState_1 = __webpack_require__(8);
 class FreezeState extends AbstractState_1.AbstractState {
     start(game) {
         super.start(game);
@@ -2327,7 +2540,7 @@ exports.FreezeState = FreezeState;
 
 
 /***/ }),
-/* 27 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2395,14 +2608,14 @@ exports.Meeting = Meeting;
 
 
 /***/ }),
-/* 28 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanStateManager_1 = __webpack_require__(1);
-const AbstractState_1 = __webpack_require__(6);
+const AbstractState_1 = __webpack_require__(8);
 class MoveRandomState extends AbstractState_1.AbstractState {
     constructor(human, worldKnowledge) {
         super(human);
@@ -2432,23 +2645,24 @@ exports.MoveRandomState = MoveRandomState;
 
 
 /***/ }),
-/* 29 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(4);
+const HumanAnimationManager_1 = __webpack_require__(5);
 const HumanStateManager_1 = __webpack_require__(1);
-const RageState_1 = __webpack_require__(10);
-const MoveThenActAbstractState_1 = __webpack_require__(15);
+const RageState_1 = __webpack_require__(13);
+const MoveThenActAbstractState_1 = __webpack_require__(18);
+const ThoughtBubble_1 = __webpack_require__(11);
 class SitState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
     retry() {
         const nextSofaReferer = this.worldKnowledge.getClosestReferer(['Sofa'], 1, this.human.getPosition());
         if (this.tries > this.human.getMaxRetries() || nextSofaReferer === null) {
             this.active = false;
             this.human.stopWalk();
-            return new RageState_1.RageState(this.human);
+            return new RageState_1.RageState(this.human, ThoughtBubble_1.RAGE_IMAGE.SLEEP);
         }
         else {
             return new SitState(this.human, nextSofaReferer, this.worldKnowledge, this.tries + 1);
@@ -2475,18 +2689,19 @@ exports.SitState = SitState;
 
 
 /***/ }),
-/* 30 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(4);
+const HumanAnimationManager_1 = __webpack_require__(5);
 const HumanStateManager_1 = __webpack_require__(1);
-const AbstractState_1 = __webpack_require__(6);
-const TableMeeting_1 = __webpack_require__(32);
-const PositionTransformer_1 = __webpack_require__(2);
-const RageState_1 = __webpack_require__(10);
+const AbstractState_1 = __webpack_require__(8);
+const TableMeeting_1 = __webpack_require__(35);
+const PositionTransformer_1 = __webpack_require__(4);
+const RageState_1 = __webpack_require__(13);
+const ThoughtBubble_1 = __webpack_require__(11);
 class SitTalkState extends AbstractState_1.AbstractState {
     constructor(human, table, anotherHumans, worldKnowledge, meeting = null) {
         super(human);
@@ -2502,7 +2717,7 @@ class SitTalkState extends AbstractState_1.AbstractState {
         if (!this.worldKnowledge.hasObject(this.table)) {
             this.active = false;
             this.human.stopWalk();
-            return new RageState_1.RageState(this.human);
+            return new RageState_1.RageState(this.human, ThoughtBubble_1.RAGE_IMAGE.TABLE);
         }
         else {
             if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
@@ -2519,13 +2734,13 @@ class SitTalkState extends AbstractState_1.AbstractState {
             if (!this.isHumanOnTheRightCell && !this.meetingStarted && this.meeting.aPlaceWasTakenBySomeoneElse()) {
                 this.active = false;
                 this.human.stopWalk();
-                return new RageState_1.RageState(this.human);
+                return new RageState_1.RageState(this.human, ThoughtBubble_1.RAGE_IMAGE.TABLE);
             }
             if (this.isHumanSit && !this.meetingStarted && this.meeting.isReady()) {
                 this.meetingStarted = true;
                 this.game.time.events.add(this.meeting.getTime() + Math.random() * Phaser.Timer.SECOND, this.endMeeting, this); // TODO this will fail
                 this.human.updateMoodFromState();
-                let animation = HumanAnimationManager_1.ANIMATION.TALK;
+                let animation = HumanAnimationManager_1.ANIMATION.SIT_TALK;
                 if (Math.random() > 0.5) {
                     animation = SitTalkState.otherAnimation(animation);
                 }
@@ -2535,14 +2750,14 @@ class SitTalkState extends AbstractState_1.AbstractState {
         return super.getNextState();
     }
     switchAnimation(animation) {
-        if (animation === HumanAnimationManager_1.ANIMATION.TALK) {
+        if (animation === HumanAnimationManager_1.ANIMATION.SIT_TALK) {
             this.human.showTalkBubble();
         }
         else {
             this.human.hideTalkBubble();
         }
         this.human.loadAnimation(animation);
-        this.events.push(this.game.time.events.add(Phaser.Math.random(3, 6) * ((animation !== HumanAnimationManager_1.ANIMATION.TALK) ? 3 : 1) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(animation), this.switchAnimation, this, SitTalkState.otherAnimation(animation)));
+        this.events.push(this.game.time.events.add(Phaser.Math.random(3, 6) * ((animation !== HumanAnimationManager_1.ANIMATION.SIT_TALK) ? 3 : 1) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(animation), this.switchAnimation, this, SitTalkState.otherAnimation(animation)));
     }
     start(game) {
         super.start(game);
@@ -2587,22 +2802,22 @@ class SitTalkState extends AbstractState_1.AbstractState {
             PositionTransformer_1.PositionTransformer.isNeighbor(this.human.getPosition(), this.meeting.getCell(this.human).getPosition());
     }
     static otherAnimation(animation) {
-        return animation === HumanAnimationManager_1.ANIMATION.TALK ? HumanAnimationManager_1.ANIMATION.FREEZE_SIT : HumanAnimationManager_1.ANIMATION.TALK;
+        return animation === HumanAnimationManager_1.ANIMATION.SIT_TALK ? HumanAnimationManager_1.ANIMATION.FREEZE_SIT : HumanAnimationManager_1.ANIMATION.SIT_TALK;
     }
 }
 exports.SitTalkState = SitTalkState;
 
 
 /***/ }),
-/* 31 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(4);
+const HumanAnimationManager_1 = __webpack_require__(5);
 const HumanStateManager_1 = __webpack_require__(1);
-const AbstractState_1 = __webpack_require__(6);
+const AbstractState_1 = __webpack_require__(8);
 class SmokeState extends AbstractState_1.AbstractState {
     start(game) {
         super.start(game);
@@ -2621,7 +2836,7 @@ exports.SmokeState = SmokeState;
 
 
 /***/ }),
-/* 32 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2692,17 +2907,17 @@ exports.TableMeeting = TableMeeting;
 
 
 /***/ }),
-/* 33 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(4);
-const Meeting_1 = __webpack_require__(27);
-const Direction_1 = __webpack_require__(5);
+const HumanAnimationManager_1 = __webpack_require__(5);
+const Meeting_1 = __webpack_require__(30);
+const Direction_1 = __webpack_require__(7);
 const HumanStateManager_1 = __webpack_require__(1);
-const AbstractState_1 = __webpack_require__(6);
+const AbstractState_1 = __webpack_require__(8);
 class TalkState extends AbstractState_1.AbstractState {
     constructor(human, anotherHuman, worldKnowledge, meeting = null) {
         super(human);
@@ -2776,24 +2991,25 @@ exports.TalkState = TalkState;
 
 
 /***/ }),
-/* 34 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(4);
+const HumanAnimationManager_1 = __webpack_require__(5);
 const HumanStateManager_1 = __webpack_require__(1);
-const RageState_1 = __webpack_require__(10);
-const MoveThenActAbstractState_1 = __webpack_require__(15);
-const Price_1 = __webpack_require__(16);
+const RageState_1 = __webpack_require__(13);
+const MoveThenActAbstractState_1 = __webpack_require__(18);
+const Price_1 = __webpack_require__(20);
+const ThoughtBubble_1 = __webpack_require__(11);
 class TypeState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
     retry() {
         const nextDeskReferer = this.worldKnowledge.getClosestReferer(['Desk'], 1, this.human.getPosition());
         if (this.tries > this.human.getMaxRetries() || nextDeskReferer === null) {
             this.active = false;
             this.human.stopWalk();
-            return new RageState_1.RageState(this.human);
+            return new RageState_1.RageState(this.human, ThoughtBubble_1.RAGE_IMAGE.LAPTOP);
         }
         else {
             return new TypeState(this.human, nextDeskReferer, this.worldKnowledge, this.tries + 1);
@@ -2824,13 +3040,13 @@ exports.TypeState = TypeState;
 
 
 /***/ }),
-/* 35 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Direction_1 = __webpack_require__(5);
+const Direction_1 = __webpack_require__(7);
 class ClosestPathFinder {
     constructor(game, worldKnowledge) {
         this.finders = {};
@@ -2931,13 +3147,13 @@ exports.ClosestPathFinder = ClosestPathFinder;
 
 
 /***/ }),
-/* 36 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanPropertiesFactory_1 = __webpack_require__(8);
+const HumanPropertiesFactory_1 = __webpack_require__(10);
 class HumanProperties {
     constructor(type, name, salary, speed, quality, perseverance) {
         this.type = type;
@@ -2978,13 +3194,13 @@ exports.HumanProperties = HumanProperties;
 
 
 /***/ }),
-/* 37 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const UserInterface_1 = __webpack_require__(7);
+const UserInterface_1 = __webpack_require__(6);
 class MoodRegister {
     constructor(humanRepository) {
         this.humanRepository = humanRepository;
@@ -3012,12 +3228,13 @@ exports.MoodRegister = MoodRegister;
 
 
 /***/ }),
-/* 38 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+const Pico8Colors_1 = __webpack_require__(3);
 const GAP_X = -7;
 const GAP_Y = 1;
 const DEBUG = false;
@@ -3039,13 +3256,13 @@ class MoodSprite {
         for (let i = 0; i < moods.length; i++) {
             this.sprite.moveTo(0, i * 2);
             if (moods[i] < 0.1) {
-                this.sprite.lineStyle(2, 0xff004d);
+                this.sprite.lineStyle(2, Pico8Colors_1.COLOR.RED);
             }
             else if (moods[i] < 0.5) {
-                this.sprite.lineStyle(2, 0xfca203);
+                this.sprite.lineStyle(2, Pico8Colors_1.COLOR.ORANGE);
             }
             else {
-                this.sprite.lineStyle(2, 0x00de2d);
+                this.sprite.lineStyle(2, Pico8Colors_1.COLOR.LIGHT_GREEN);
             }
             this.sprite.lineTo(moods[i] * 15 + 1, i * 2);
         }
@@ -3055,45 +3272,30 @@ exports.MoodSprite = MoodSprite;
 
 
 /***/ }),
-/* 39 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const IMAGE_COUNT = 3;
-class TalkBubble {
+const Bubble_1 = __webpack_require__(21);
+const IMAGE_COUNT = 6;
+class TalkBubble extends Bubble_1.Bubble {
+    getImageSpriteKey() {
+        return 'bubble_images';
+    }
+    getSpriteFrame() {
+        return 0;
+    }
     create(humanSprite, game, group) {
-        this.game = game;
-        this.parent = humanSprite;
-        this.sprite = game.add.sprite(this.parent.position.x, this.parent.position.y, 'bubble', 0, group);
-        this.sprite.anchor.set(1, 37 / this.sprite.height);
-        group.add(this.sprite);
-        this.imageSprite = game.add.sprite(this.parent.position.x, this.parent.position.y, 'bubble_images', 0, group);
-        this.imageSprite.anchor.set(1.2, 76 / this.sprite.height);
-        group.add(this.imageSprite);
+        super.create(humanSprite, game, group);
         this.switchImage();
-        this.hide();
-    }
-    show() {
-        this.sprite.alpha = 1;
-        this.imageSprite.alpha = 1;
-    }
-    hide() {
-        this.sprite.alpha = 0;
-        this.imageSprite.alpha = 0;
-    }
-    update() {
-        this.sprite.position = this.parent.position;
-        this.sprite.scale.x = this.parent.scale.x;
-        this.imageSprite.position = this.parent.position;
-        this.imageSprite.scale.x = this.parent.scale.x;
     }
     static getRandomFrame() {
         return Math.floor(Math.random() * IMAGE_COUNT);
     }
     switchImage() {
-        this.imageSprite.loadTexture(this.imageSprite.key, TalkBubble.getRandomFrame());
+        //this.imageSprite.loadTexture(this.imageSprite.key, TalkBubble.getRandomFrame());
         this.game.time.events.add(Phaser.Math.random(2, 4) * Phaser.Timer.SECOND, this.switchImage, this);
     }
 }
@@ -3101,7 +3303,7 @@ exports.TalkBubble = TalkBubble;
 
 
 /***/ }),
-/* 40 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3134,15 +3336,15 @@ exports.Depot = Depot;
 
 
 /***/ }),
-/* 41 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = __webpack_require__(0);
-const AbstractObject_1 = __webpack_require__(11);
-const ObjectDeleter_1 = __webpack_require__(9);
+const AbstractObject_1 = __webpack_require__(14);
+const ObjectDeleter_1 = __webpack_require__(12);
 class Desk extends AbstractObject_1.AbstractObject {
     create(game, groups) {
         super.create(game, groups);
@@ -3153,14 +3355,14 @@ exports.Desk = Desk;
 
 
 /***/ }),
-/* 42 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const AbstractObject_1 = __webpack_require__(11);
-const ObjectDeleter_1 = __webpack_require__(9);
+const AbstractObject_1 = __webpack_require__(14);
+const ObjectDeleter_1 = __webpack_require__(12);
 const Play_1 = __webpack_require__(0);
 class Dispenser extends AbstractObject_1.AbstractObject {
     create(game, groups) {
@@ -3172,13 +3374,13 @@ exports.Dispenser = Dispenser;
 
 
 /***/ }),
-/* 43 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Direction_1 = __webpack_require__(5);
+const Direction_1 = __webpack_require__(7);
 class ObjectInfo {
     constructor(name, spriteInfos, price) {
         this.name = name;
@@ -3236,17 +3438,18 @@ exports.ObjectInfo = ObjectInfo;
 
 
 /***/ }),
-/* 44 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const ObjectInfoRegistry_1 = __webpack_require__(12);
-const PositionTransformer_1 = __webpack_require__(2);
-const ObjectDeleter_1 = __webpack_require__(9);
-const Direction_1 = __webpack_require__(5);
+const ObjectInfoRegistry_1 = __webpack_require__(15);
+const PositionTransformer_1 = __webpack_require__(4);
+const ObjectDeleter_1 = __webpack_require__(12);
+const Direction_1 = __webpack_require__(7);
 const Play_1 = __webpack_require__(0);
+const Pico8Colors_1 = __webpack_require__(3);
 const ARROW_SIZE = 0.9;
 const GAP = 4;
 const SPRITE_OPACITY = 0.7;
@@ -3379,10 +3582,10 @@ class DirectionsSprite {
             spriteInfo.getEntryPoints(this.phantom.getLeftOriented()).forEach((direction) => {
                 const cellGap = spriteInfo.getPositionGapFromOrigin(this.phantom.getLeftOriented());
                 if (this.phantom.isEntryAccessible(cellGap, direction)) {
-                    this.graphics.beginFill(0x00de2d); // Green
+                    this.graphics.beginFill(Pico8Colors_1.COLOR.LIGHT_GREEN); // Green
                 }
                 else {
-                    this.graphics.beginFill(0xff004d); // Red
+                    this.graphics.beginFill(Pico8Colors_1.COLOR.RED); // Red
                 }
                 switch (direction) {
                     case Direction_1.DIRECTION.BOTTOM:
@@ -3399,7 +3602,7 @@ class DirectionsSprite {
                 }
             });
         });
-        this.graphics.beginFill(this.phantom.isCellFree() ? 0x00de2d : 0xff004d);
+        this.graphics.beginFill(this.phantom.isCellFree() ? Pico8Colors_1.COLOR.LIGHT_GREEN : Pico8Colors_1.COLOR.RED);
         this.phantom.getInfo().getCellGaps(this.phantom.getLeftOriented()).forEach((cellGap) => {
             this.graphics.drawPolygon(PositionTransformer_1.PositionTransformer.addGap(new PIXI.Point(-PositionTransformer_1.CELL_WIDTH / 2, 0), cellGap), PositionTransformer_1.PositionTransformer.addGap(new PIXI.Point(0, PositionTransformer_1.CELL_HEIGHT / 2), cellGap), PositionTransformer_1.PositionTransformer.addGap(new PIXI.Point(PositionTransformer_1.CELL_WIDTH / 2, 0), cellGap), PositionTransformer_1.PositionTransformer.addGap(new PIXI.Point(0, -PositionTransformer_1.CELL_HEIGHT / 2), cellGap));
         });
@@ -3441,7 +3644,7 @@ class PhantomSprite {
 
 
 /***/ }),
-/* 45 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3481,7 +3684,7 @@ exports.ObjectReferer = ObjectReferer;
 
 
 /***/ }),
-/* 46 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3489,13 +3692,13 @@ exports.ObjectReferer = ObjectReferer;
 Object.defineProperty(exports, "__esModule", { value: true });
 const SELECTED = '_selected';
 class ObjectSelector {
-    static makeSelectable(sprites) {
+    static makeSelectable(sprites, fallbackSelect = () => { }, fallbackUnselect = () => { }) {
         sprites.forEach((sprite) => {
             sprite.inputEnabled = true;
             sprite.input.pixelPerfectOver = true;
             sprite.input.pixelPerfectClick = true;
             sprite.input.useHandCursor = true;
-            sprite.events.onInputDown.add(this.click, this, 0, sprites);
+            sprite.events.onInputDown.add(this.click, this, 0, sprites, fallbackSelect, fallbackUnselect);
         });
     }
     static setSelected(sprite, selected) {
@@ -3506,11 +3709,17 @@ class ObjectSelector {
     static isSelected(tile) {
         return tile.key.indexOf(SELECTED) > -1;
     }
-    static click(sprite, _pointer, sprites) {
+    static click(sprite, _pointer, sprites, fallbackSelect = () => { }, fallbackUnselect = () => { }) {
         const isSelected = this.isSelected(sprite);
         sprites.forEach((sprite) => {
             this.setSelected(sprite, !isSelected);
         });
+        if (isSelected) {
+            fallbackUnselect.call();
+        }
+        else {
+            fallbackSelect.call();
+        }
     }
     static getNonSelectedKey(key) {
         return key.replace(SELECTED, '');
@@ -3526,14 +3735,14 @@ exports.ObjectSelector = ObjectSelector;
 
 
 /***/ }),
-/* 47 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const AbstractObject_1 = __webpack_require__(11);
-const ObjectDeleter_1 = __webpack_require__(9);
+const AbstractObject_1 = __webpack_require__(14);
+const ObjectDeleter_1 = __webpack_require__(12);
 const Play_1 = __webpack_require__(0);
 class Sofa extends AbstractObject_1.AbstractObject {
     create(game, groups) {
@@ -3548,14 +3757,14 @@ exports.Sofa = Sofa;
 
 
 /***/ }),
-/* 48 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(2);
-const Direction_1 = __webpack_require__(5);
+const PositionTransformer_1 = __webpack_require__(4);
+const Direction_1 = __webpack_require__(7);
 class SpriteInfo {
     constructor(name, entryPoints, left, bottom, anchorBottom, gapLeft, cellGapX, cellGapY, leftOriented, topOriented) {
         this.name = name;
@@ -3630,15 +3839,15 @@ exports.SpriteInfo = SpriteInfo;
 
 
 /***/ }),
-/* 49 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = __webpack_require__(0);
-const AbstractObject_1 = __webpack_require__(11);
-const ObjectDeleter_1 = __webpack_require__(9);
+const AbstractObject_1 = __webpack_require__(14);
+const ObjectDeleter_1 = __webpack_require__(12);
 class Table extends AbstractObject_1.AbstractObject {
     create(game, groups) {
         super.create(game, groups);
@@ -3649,13 +3858,13 @@ exports.Table = Table;
 
 
 /***/ }),
-/* 50 */
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(2);
+const PositionTransformer_1 = __webpack_require__(4);
 const FAKE_MACHIN = -4;
 class Wall {
     constructor(position) {
@@ -3686,14 +3895,14 @@ exports.Wall = Wall;
 
 
 /***/ }),
-/* 51 */
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Employee_1 = __webpack_require__(18);
-const HumanPropertiesFactory_1 = __webpack_require__(8);
+const Employee_1 = __webpack_require__(22);
+const HumanPropertiesFactory_1 = __webpack_require__(10);
 class HumanRepository {
     constructor(worldKnowledge) {
         this.humans = [
@@ -3723,13 +3932,13 @@ exports.HumanRepository = HumanRepository;
 
 
 /***/ }),
-/* 52 */
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Wall_1 = __webpack_require__(50);
+const Wall_1 = __webpack_require__(53);
 class WallRepository {
     constructor() {
         this.walls = [];
@@ -3761,18 +3970,174 @@ exports.WallRepository = WallRepository;
 
 
 /***/ }),
-/* 53 */
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanPropertiesFactory_1 = __webpack_require__(8);
-const UserInterface_1 = __webpack_require__(7);
-const app_1 = __webpack_require__(3);
-const ObjectSeller_1 = __webpack_require__(20);
 const Play_1 = __webpack_require__(0);
-const TextStyle_1 = __webpack_require__(13);
+const Pico8Colors_1 = __webpack_require__(3);
+const UserInterface_1 = __webpack_require__(6);
+const app_1 = __webpack_require__(2);
+const HumanStateManager_1 = __webpack_require__(1);
+const Tooltip_1 = __webpack_require__(60);
+const PARTS = 36;
+class Camembert {
+    constructor() {
+        this.data = [];
+        this.tooltipShowed = false;
+        this.tooltip = new Tooltip_1.Tooltip();
+    }
+    create(game, groups) {
+        this.game = game;
+        this.graphics = game.add.graphics(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH / 2, 180, groups[Play_1.GROUP_INTERFACE]);
+        this.drawCamembert();
+        this.graphics.inputEnabled = true;
+        this.graphics.events.onInputOver.add(this.showTooltip, this, 0, game);
+        this.graphics.events.onInputOut.add(this.hideTooltip, this, 0, game);
+        groups[Play_1.GROUP_INTERFACE].add(this.graphics);
+        this.tooltip.create(game, groups);
+        this.hideTooltip();
+    }
+    setHuman(human) {
+        this.human = human;
+    }
+    update() {
+        if (this.human) {
+            this.refreshData();
+            this.drawCamembert();
+        }
+        if (this.tooltipShowed) {
+            this.tooltip.update();
+            const position = this.game.input.mousePointer.position;
+            const positionThroughtCenter = new PIXI.Point(position.x - this.graphics.x, position.y - this.graphics.y);
+            let angle = Math.atan2(positionThroughtCenter.x, -positionThroughtCenter.y);
+            if (angle < 0) {
+                angle += 2 * Math.PI;
+            }
+            const currentCamembert = this.getSelectedCamembertPart(angle);
+            this.tooltip.setText(currentCamembert.getString());
+        }
+    }
+    showTooltip() {
+        this.tooltipShowed = true;
+        this.tooltip.show();
+    }
+    hideTooltip() {
+        this.tooltipShowed = false;
+        this.tooltip.hide();
+    }
+    drawCamembert() {
+        this.graphics.clear();
+        const sumValues = this.sumValues();
+        let currentAngle = 0;
+        const RADIUS = (UserInterface_1.INTERFACE_WIDTH - 30) / 2;
+        for (let i = 0; i < this.data.length; i++) {
+            const camembertPart = this.data[i];
+            const points = camembertPart.getPoints(currentAngle, sumValues, RADIUS);
+            currentAngle += camembertPart.getAngle(sumValues);
+            this.graphics.beginFill(camembertPart.getColor());
+            this.graphics.drawPolygon(points);
+            this.graphics.endFill();
+        }
+    }
+    refreshData() {
+        this.data = [];
+        this.human.getNextProbabilities().forEach((state) => {
+            this.data.push(new CamembertPart(state.probability, Camembert.getColor(state.state), HumanStateManager_1.HumanStateManager.getStr(state.state)));
+        });
+    }
+    static getColor(state) {
+        switch (state) {
+            case HumanStateManager_1.STATE.SMOKE: return Pico8Colors_1.COLOR.DARK_GREY;
+            case HumanStateManager_1.STATE.FREEZE: return Pico8Colors_1.COLOR.LIGHT_BLUE;
+            case HumanStateManager_1.STATE.MOVE_RANDOM: return Pico8Colors_1.COLOR.ROSE;
+            case HumanStateManager_1.STATE.SIT: return Pico8Colors_1.COLOR.ORANGE;
+            case HumanStateManager_1.STATE.TYPE: return Pico8Colors_1.COLOR.LIGHT_GREEN;
+            case HumanStateManager_1.STATE.TALK: return Pico8Colors_1.COLOR.YELLOW;
+            case HumanStateManager_1.STATE.COFFEE: return Pico8Colors_1.COLOR.MARROON;
+            case HumanStateManager_1.STATE.RAGE: return Pico8Colors_1.COLOR.RED;
+            case HumanStateManager_1.STATE.SIT_TALK: return Pico8Colors_1.COLOR.DARK_GREEN;
+        }
+    }
+    getSelectedCamembertPart(angle) {
+        let currentAngle = 0;
+        const sum = this.sumValues();
+        for (let i = 0; i < this.data.length; i++) {
+            const camembertPart = this.data[i];
+            const camembertAngle = camembertPart.getAngle(sum);
+            if (angle >= currentAngle && angle <= (currentAngle + camembertAngle)) {
+                return camembertPart;
+            }
+            currentAngle += camembertAngle;
+        }
+        return null;
+    }
+    sumValues() {
+        return this.data.reduce((cur, camembertPart) => {
+            return cur + camembertPart.getValue();
+        }, 0);
+    }
+    show() {
+        this.graphics.position.x -= UserInterface_1.INTERFACE_WIDTH;
+    }
+    hide() {
+        this.graphics.position.x += UserInterface_1.INTERFACE_WIDTH;
+    }
+}
+exports.Camembert = Camembert;
+class CamembertPart {
+    constructor(value, color, text) {
+        this.value = value;
+        this.color = color;
+        this.text = text;
+    }
+    getValue() {
+        return this.value;
+    }
+    getPoints(currentAngle, sumValues, RADIUS) {
+        const angleOfAPart = Math.PI * 2 / PARTS;
+        const littleGap = 1 * Math.PI * 2 / 360;
+        const valueAngle = this.getAngle(sumValues);
+        let points = [
+            new PIXI.Point(Math.sin(currentAngle) * RADIUS, -Math.cos(currentAngle) * RADIUS)
+        ];
+        for (let j = 0; j < Math.PI * 2; j += angleOfAPart) {
+            if (j > currentAngle && j < currentAngle + valueAngle) {
+                points.push(new PIXI.Point(Math.sin(j) * RADIUS, -Math.cos(j) * RADIUS));
+            }
+        }
+        points.push(new PIXI.Point(Math.sin(Math.min(currentAngle + valueAngle + littleGap, Math.PI * 2)) * RADIUS, -Math.cos(Math.min(currentAngle + valueAngle + littleGap, Math.PI * 2)) * RADIUS));
+        points.push(new PIXI.Point(0, 0));
+        return points;
+    }
+    getAngle(sumValues) {
+        return this.value / sumValues * Math.PI * 2;
+    }
+    getColor() {
+        return this.color;
+    }
+    getString() {
+        return this.text;
+    }
+}
+
+
+/***/ }),
+/* 57 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const HumanPropertiesFactory_1 = __webpack_require__(10);
+const UserInterface_1 = __webpack_require__(6);
+const app_1 = __webpack_require__(2);
+const ObjectSeller_1 = __webpack_require__(23);
+const Play_1 = __webpack_require__(0);
+const TextStyle_1 = __webpack_require__(9);
+const Pico8Colors_1 = __webpack_require__(3);
 class HumanEmployer {
     constructor(worldKnowledge) {
         this.worldKnowledge = worldKnowledge;
@@ -3826,7 +4191,7 @@ class ApplicantButton {
         const top = UserInterface_1.TOP_GAP + index * ObjectSeller_1.OBJECT_SELLER_CELL_SIZE;
         const squareCenter = new PIXI.Point(left + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE / 2, top + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE / 2);
         this.square = game.add.graphics(left, UserInterface_1.TOP_GAP + index * ObjectSeller_1.OBJECT_SELLER_CELL_SIZE, groups[Play_1.GROUP_INTERFACE]);
-        this.square.lineStyle(1, 0xffffff);
+        this.square.lineStyle(1, Pico8Colors_1.COLOR.WHITE);
         this.square.drawRect(0, 0, ObjectSeller_1.OBJECT_SELLER_CELL_SIZE, ObjectSeller_1.OBJECT_SELLER_CELL_SIZE);
         this.sprite = game.add.sprite(squareCenter.x, squareCenter.y, this.humanProperties.getSpriteKey(), 12, groups[Play_1.GROUP_INTERFACE]);
         this.sprite.anchor.set(0.5, 0.5);
@@ -3864,15 +4229,16 @@ class ApplicantButton {
 
 
 /***/ }),
-/* 54 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const UserInterface_1 = __webpack_require__(7);
-const app_1 = __webpack_require__(3);
+const UserInterface_1 = __webpack_require__(6);
+const app_1 = __webpack_require__(2);
 const Play_1 = __webpack_require__(0);
+const Pico8Colors_1 = __webpack_require__(3);
 const HEIGHT = 80;
 const GRAPH_GAP = 2;
 class InfoPanel {
@@ -3889,7 +4255,7 @@ class InfoPanel {
         const graphWidth = UserInterface_1.INTERFACE_WIDTH - 2 * GRAPH_GAP;
         const lastMoods = this.worldKnowledge.getLastMoods();
         this.moods.clear();
-        this.moods.lineStyle(1, 0xffffff);
+        this.moods.lineStyle(1, Pico8Colors_1.COLOR.WHITE);
         this.moods.moveTo(0, 0);
         this.moods.lineTo(0, HEIGHT);
         this.moods.lineTo(graphWidth, HEIGHT);
@@ -3915,16 +4281,17 @@ exports.InfoPanel = InfoPanel;
 
 
 /***/ }),
-/* 55 */
+/* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = __webpack_require__(0);
-const UserInterface_1 = __webpack_require__(7);
-const app_1 = __webpack_require__(3);
-const HumanPropertiesFactory_1 = __webpack_require__(8);
+const UserInterface_1 = __webpack_require__(6);
+const app_1 = __webpack_require__(2);
+const HumanPropertiesFactory_1 = __webpack_require__(10);
+const Pico8Colors_1 = __webpack_require__(3);
 const BAR_HEIGHT = 10;
 const GAP = 3;
 const TOP = 12;
@@ -3941,10 +4308,10 @@ class LevelDisplayer {
         this.graphics.clear();
         [HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER, HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE, HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING].forEach((type, i) => {
             this.graphics.lineStyle(0);
-            this.graphics.beginFill(0xff0000);
+            this.graphics.beginFill(Pico8Colors_1.COLOR.RED);
             this.graphics.drawRect(GAP + i * (width + GAP), 0.5, width * this.worldKnowledge.getLevelProgress(type), BAR_HEIGHT);
             this.graphics.endFill();
-            this.graphics.lineStyle(1, 0xffffff);
+            this.graphics.lineStyle(1, Pico8Colors_1.COLOR.WHITE);
             this.graphics.drawRect(GAP + i * (width + GAP), 0.5, width, BAR_HEIGHT);
         });
     }
@@ -3953,10 +4320,131 @@ exports.LevelDisplayer = LevelDisplayer;
 
 
 /***/ }),
-/* 56 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(3);
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const TextStyle_1 = __webpack_require__(9);
+const Play_1 = __webpack_require__(0);
+const Pico8Colors_1 = __webpack_require__(3);
+const app_1 = __webpack_require__(2);
+class Tooltip {
+    create(game, groups) {
+        this.game = game;
+        this.box = game.add.graphics(0, 0, groups[Play_1.GROUP_INTERFACE]);
+        this.text = game.add.text(0, 0, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+    }
+    update() {
+        this.cursorPosition = new PIXI.Point(app_1.SCALE * Math.round(this.game.input.mousePointer.position.x / app_1.SCALE) + 0.5, app_1.SCALE * Math.round(this.game.input.mousePointer.position.y / app_1.SCALE) + 0.5);
+        this.text.x = this.cursorPosition.x + 6;
+        this.text.y = this.cursorPosition.y + 12;
+        this.updateBox();
+    }
+    setText(text) {
+        this.text.text = text;
+        this.updateBox();
+    }
+    show() {
+        this.text.alpha = 1;
+        this.box.alpha = 1;
+    }
+    hide() {
+        this.text.alpha = 0;
+        this.box.alpha = 0;
+        this.box.clear();
+    }
+    updateBox() {
+        this.box.clear();
+        this.box.beginFill(Pico8Colors_1.COLOR.BLACK);
+        this.box.lineStyle(1, Pico8Colors_1.COLOR.WHITE);
+        this.box.drawRect(this.cursorPosition.x + 4, this.cursorPosition.y + 13, this.text.width + 1, 8);
+    }
+}
+exports.Tooltip = Tooltip;
+
+
+/***/ }),
+/* 61 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const UserInterface_1 = __webpack_require__(6);
+const app_1 = __webpack_require__(2);
+const TextStyle_1 = __webpack_require__(9);
+const HumanMoodManager_1 = __webpack_require__(19);
+const Camembert_1 = __webpack_require__(56);
+const HumanStateManager_1 = __webpack_require__(1);
+const HEIGHT = 80;
+const GRAPH_GAP = 2;
+class UserInfoPanel {
+    constructor(worldKnowledge) {
+        this.worldKnowledge = worldKnowledge;
+        this.visible = true;
+        this.camembert = new Camembert_1.Camembert();
+    }
+    create(game, groups) {
+        const left = app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GRAPH_GAP;
+        const top = UserInterface_1.TOP_GAP;
+        const gap = 10;
+        this.employeeName = game.add.text(left, top, '', TextStyle_1.TEXT_STYLE);
+        this.moodRelaxationText = game.add.text(left, top + gap, 'Relax', TextStyle_1.TEXT_STYLE);
+        this.moodHungerText = game.add.text(left, top + 2 * gap, 'Hunger', TextStyle_1.TEXT_STYLE);
+        this.moodSocialText = game.add.text(left, top + 3 * gap, 'Social', TextStyle_1.TEXT_STYLE);
+        this.currentState = game.add.text(left, top + 4 * gap, '', TextStyle_1.TEXT_STYLE);
+        this.camembert.create(game, groups);
+    }
+    update() {
+        if (this.human) {
+            this.moodRelaxationText.setText('Relax  ' + UserInfoPanel.getPercentageStr(this.human.getMood(HumanMoodManager_1.MOOD.RELAXATION)));
+            this.moodHungerText.setText('Hunger ' + UserInfoPanel.getPercentageStr(this.human.getMood(HumanMoodManager_1.MOOD.HUNGER)));
+            this.moodSocialText.setText('Social ' + UserInfoPanel.getPercentageStr(this.human.getMood(HumanMoodManager_1.MOOD.SOCIAL)));
+            this.camembert.update();
+            this.currentState.setText('State: ' + HumanStateManager_1.HumanStateManager.getStr(this.human.getState()));
+        }
+    }
+    static getPercentageStr(percentage) {
+        return Math.round(percentage * 100) + '%';
+    }
+    show() {
+        if (!this.visible) {
+            this.employeeName.position.x -= UserInterface_1.INTERFACE_WIDTH;
+            this.camembert.show();
+            this.moodRelaxationText.position.x -= UserInterface_1.INTERFACE_WIDTH;
+            this.moodHungerText.position.x -= UserInterface_1.INTERFACE_WIDTH;
+            this.moodSocialText.position.x -= UserInterface_1.INTERFACE_WIDTH;
+            this.currentState.position.x -= UserInterface_1.INTERFACE_WIDTH;
+        }
+        this.visible = true;
+    }
+    hide() {
+        if (this.visible) {
+            this.employeeName.position.x += UserInterface_1.INTERFACE_WIDTH;
+            this.camembert.hide();
+            this.moodRelaxationText.position.x += UserInterface_1.INTERFACE_WIDTH;
+            this.moodHungerText.position.x += UserInterface_1.INTERFACE_WIDTH;
+            this.moodSocialText.position.x += UserInterface_1.INTERFACE_WIDTH;
+            this.currentState.position.x += UserInterface_1.INTERFACE_WIDTH;
+        }
+        this.visible = false;
+    }
+    showEmployeeInfoPanelForYohan(human) {
+        this.human = human;
+        this.employeeName.setText(human.getName());
+        this.camembert.setHuman(human);
+    }
+}
+exports.UserInfoPanel = UserInfoPanel;
+
+
+/***/ }),
+/* 62 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(2);
 
 
 /***/ })

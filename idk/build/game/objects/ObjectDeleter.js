@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const Pico8Colors_1 = require("../Pico8Colors");
 const POINTS = 20;
 const RADIUS = 6;
 const DELAY = 750;
@@ -78,7 +79,7 @@ class PartialCircle extends Phaser.Graphics {
     }
     redraw() {
         this.clear();
-        this.lineStyle(3, 0xff004d);
+        this.lineStyle(3, Pico8Colors_1.COLOR.RED);
         this.moveTo(0, -RADIUS);
         for (let i = 0; i < POINTS * this.percentage; i++) {
             const angle = Math.PI * 2 / POINTS * (i + 1) + Math.PI;

@@ -4,13 +4,14 @@ const HumanAnimationManager_1 = require("../human_stuff/HumanAnimationManager");
 const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
 const RageState_1 = require("./RageState");
 const MoveThenActAbstractState_1 = require("./MoveThenActAbstractState");
+const ThoughtBubble_1 = require("../human_stuff/ThoughtBubble");
 class SitState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
     retry() {
         const nextSofaReferer = this.worldKnowledge.getClosestReferer(['Sofa'], 1, this.human.getPosition());
         if (this.tries > this.human.getMaxRetries() || nextSofaReferer === null) {
             this.active = false;
             this.human.stopWalk();
-            return new RageState_1.RageState(this.human);
+            return new RageState_1.RageState(this.human, ThoughtBubble_1.RAGE_IMAGE.SLEEP);
         }
         else {
             return new SitState(this.human, nextSofaReferer, this.worldKnowledge, this.tries + 1);

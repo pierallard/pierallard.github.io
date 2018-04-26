@@ -9,6 +9,7 @@ const TalkState_1 = require("../human_states/TalkState");
 const CoffeeState_1 = require("../human_states/CoffeeState");
 const HumanMoodManager_1 = require("./HumanMoodManager");
 const SitTalkState_1 = require("../human_states/SitTalkState");
+const LIMIT = 0.8;
 var STATE;
 (function (STATE) {
     STATE[STATE["SMOKE"] = 0] = "SMOKE";
@@ -80,26 +81,7 @@ class HumanStateManager {
         }
     }
     randomNextStepName() {
-        const states = [];
-        states.push({ state: STATE.SMOKE, probability: this.getProbability(STATE.SMOKE) });
-        states.push({ state: STATE.FREEZE, probability: this.getProbability(STATE.FREEZE) });
-        states.push({ state: STATE.MOVE_RANDOM, probability: this.getProbability(STATE.MOVE_RANDOM) });
-        if (this.worldKnowledge.getAnotherFreeHuman(this.human) !== null) {
-            states.push({ state: STATE.TALK, probability: this.getProbability(STATE.TALK) });
-        }
-        if (this.worldKnowledge.getClosestReferer(['Sofa']) !== null) {
-            states.push({ state: STATE.SIT, probability: this.getProbability(STATE.SIT) });
-        }
-        if (this.worldKnowledge.getClosestReferer(['Desk']) !== null) {
-            states.push({ state: STATE.TYPE, probability: this.getProbability(STATE.TYPE) });
-        }
-        if (this.worldKnowledge.getClosestReferer(['Dispenser']) !== null) {
-            states.push({ state: STATE.COFFEE, probability: this.getProbability(STATE.COFFEE) });
-        }
-        if (this.worldKnowledge.getClosestReferer(['Table'], 4) !== null &&
-            this.worldKnowledge.getAnotherFreeHumans(this.human, 3).length === 3) {
-            states.push({ state: STATE.SIT_TALK, probability: this.getProbability(STATE.SIT_TALK) });
-        }
+        const states = this.getNextProbabilities();
         let debug = '';
         debug += 'Rlx[' + Math.ceil(this.human.getMood(HumanMoodManager_1.MOOD.RELAXATION) * 100) + '%], ';
         debug += 'Hng[' + Math.ceil(this.human.getMood(HumanMoodManager_1.MOOD.HUNGER) * 100) + '%], ';
@@ -124,6 +106,29 @@ class HumanStateManager {
             }
         }
     }
+    getNextProbabilities() {
+        const states = [];
+        if (this.worldKnowledge.getClosestReferer(['Desk']) !== null) {
+            states.push({ state: STATE.TYPE, probability: this.getProbability(STATE.TYPE) });
+        }
+        if (this.worldKnowledge.getClosestReferer(['Table'], 4) !== null &&
+            this.worldKnowledge.getAnotherFreeHumans(this.human, 3).length === 3) {
+            states.push({ state: STATE.SIT_TALK, probability: this.getProbability(STATE.SIT_TALK) });
+        }
+        if (this.worldKnowledge.getClosestReferer(['Dispenser']) !== null) {
+            states.push({ state: STATE.COFFEE, probability: this.getProbability(STATE.COFFEE) });
+        }
+        if (this.worldKnowledge.getClosestReferer(['Sofa']) !== null) {
+            states.push({ state: STATE.SIT, probability: this.getProbability(STATE.SIT) });
+        }
+        if (this.worldKnowledge.getAnotherFreeHuman(this.human) !== null) {
+            states.push({ state: STATE.TALK, probability: this.getProbability(STATE.TALK) });
+        }
+        states.push({ state: STATE.FREEZE, probability: this.getProbability(STATE.FREEZE) });
+        states.push({ state: STATE.MOVE_RANDOM, probability: this.getProbability(STATE.MOVE_RANDOM) });
+        states.push({ state: STATE.SMOKE, probability: this.getProbability(STATE.SMOKE) });
+        return states;
+    }
     getProbability(state) {
         let result = 1;
         switch (state) {
@@ -146,20 +151,22 @@ class HumanStateManager {
                 result = 6;
                 break;
             case STATE.SIT_TALK:
-                result = 600000;
+                result = 6;
                 break;
             case STATE.TYPE:
                 result = (5 + 1 + 2 + 8 + 2 + 6 + 6) * 2;
                 break;
         }
         if (state === this.state.getState()) {
-            result = result / 2;
+            result = result / 1.1;
         }
         HumanMoodManager_1.HumanMoodManager.getMoods().forEach((mood) => {
-            if (this.human.getMood(mood) < 0.5) {
+            if (this.human.getMood(mood) < LIMIT) {
                 if (HumanStateManager.getMoodGains(state)[mood] > 0) {
-                    result = result * HumanStateManager.getMoodGains(state)[mood] * 8;
-                    result = result * (1 - this.human.getMood(mood)) * 3;
+                    let ratio = 1 - this.human.getMood(mood) / LIMIT;
+                    ratio = ratio * HumanStateManager.getMoodGains(state)[mood] * 8;
+                    result = result * (1 + ratio);
+                    console.log('new ratio: ' + ratio);
                 }
             }
         });
@@ -202,6 +209,19 @@ class HumanStateManager {
     }
     getState() {
         return this.state.getState();
+    }
+    static getStr(state) {
+        switch (state) {
+            case STATE.SMOKE: return 'Smoke';
+            case STATE.FREEZE: return 'Freeze';
+            case STATE.MOVE_RANDOM: return 'Move';
+            case STATE.SIT: return 'Sit';
+            case STATE.TYPE: return 'Work';
+            case STATE.TALK: return 'Talk';
+            case STATE.COFFEE: return 'Coffee';
+            case STATE.RAGE: return 'Rage';
+            case STATE.SIT_TALK: return 'Meeting';
+        }
     }
 }
 exports.HumanStateManager = HumanStateManager;

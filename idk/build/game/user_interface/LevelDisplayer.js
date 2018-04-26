@@ -4,6 +4,7 @@ const Play_1 = require("../game_state/Play");
 const UserInterface_1 = require("./UserInterface");
 const app_1 = require("../../app");
 const HumanPropertiesFactory_1 = require("../human_stuff/HumanPropertiesFactory");
+const Pico8Colors_1 = require("../Pico8Colors");
 const BAR_HEIGHT = 10;
 const GAP = 3;
 const TOP = 12;
@@ -20,10 +21,10 @@ class LevelDisplayer {
         this.graphics.clear();
         [HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER, HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE, HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING].forEach((type, i) => {
             this.graphics.lineStyle(0);
-            this.graphics.beginFill(0xff0000);
+            this.graphics.beginFill(Pico8Colors_1.COLOR.RED);
             this.graphics.drawRect(GAP + i * (width + GAP), 0.5, width * this.worldKnowledge.getLevelProgress(type), BAR_HEIGHT);
             this.graphics.endFill();
-            this.graphics.lineStyle(1, 0xffffff);
+            this.graphics.lineStyle(1, Pico8Colors_1.COLOR.WHITE);
             this.graphics.drawRect(GAP + i * (width + GAP), 0.5, width, BAR_HEIGHT);
         });
     }

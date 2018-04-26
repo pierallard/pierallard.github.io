@@ -17,6 +17,7 @@ const LevelManager_1 = require("./LevelManager");
 const Price_1 = require("./objects/Price");
 const ObjectInfoRegistry_1 = require("./objects/ObjectInfoRegistry");
 const SmoothValue_1 = require("./SmoothValue");
+const UserInterface_1 = require("./user_interface/UserInterface");
 exports.GRID_WIDTH = 16;
 exports.GRID_HEIGHT = 16;
 exports.DEBUG_WORLD = false;
@@ -367,6 +368,25 @@ class WorldKnowledge {
     }
     addMoneyInWallet(price) {
         this.wallet.add(price.getValue());
+    }
+    setSelectedHuman(employee) {
+        this.userInterface.setSelectedHuman(employee);
+        this.humanRepository.humans.forEach((human) => {
+            if (human !== employee) {
+                human.unselect();
+            }
+        });
+    }
+    setUserInterface(userInterface) {
+        this.userInterface = userInterface;
+    }
+    unselectHuman(switchPanel = true) {
+        if (switchPanel) {
+            this.userInterface.selectPanel(UserInterface_1.PANEL.INFO);
+        }
+        this.humanRepository.humans.forEach((human) => {
+            human.unselect();
+        });
     }
 }
 exports.WorldKnowledge = WorldKnowledge;

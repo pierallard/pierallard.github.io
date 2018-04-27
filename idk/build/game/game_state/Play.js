@@ -7,6 +7,7 @@ exports.GROUP_FLOOR = 'floor';
 exports.GROUP_OBJECTS_AND_HUMANS = 'objects_and_humans';
 exports.GROUP_INFOS = 'infos';
 exports.GROUP_INTERFACE = 'interface';
+exports.GROUP_TOOLTIP = 'tooltip';
 exports.CAMERA_GAP = 2;
 class Play extends Phaser.State {
     constructor() {
@@ -22,7 +23,9 @@ class Play extends Phaser.State {
         this.groups[exports.GROUP_OBJECTS_AND_HUMANS] = this.game.add.group();
         this.groups[exports.GROUP_INFOS] = this.game.add.group();
         this.groups[exports.GROUP_INTERFACE] = this.game.add.group();
+        this.groups[exports.GROUP_TOOLTIP] = this.game.add.group();
         this.groups[exports.GROUP_INTERFACE].fixedToCamera = true;
+        this.groups[exports.GROUP_TOOLTIP].fixedToCamera = true;
         this.worldKnowledge.create(this.game, this.groups);
         this.userInterface.create(this.game, this.groups);
         this.game.world.setBounds(0, 0, app_1.WORLD_WIDTH + UserInterface_1.INTERFACE_WIDTH, app_1.WORLD_HEIGHT);
@@ -31,6 +34,7 @@ class Play extends Phaser.State {
         this.downKey = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
         this.leftKey = this.game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
         this.rightKey = this.game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
+        // const text = this.game.add.bitmapText(CAMERA_WIDTH_PIXELS - INTERFACE_WIDTH + 60, 2, 'retro_computer','Bitmap Fonts!',7, this.groups[GROUP_INTERFACE]);
     }
     update(game) {
         this.groups[exports.GROUP_OBJECTS_AND_HUMANS].sort('y', Phaser.Group.SORT_ASCENDING);

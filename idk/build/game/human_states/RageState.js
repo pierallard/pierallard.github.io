@@ -21,6 +21,9 @@ class RageState extends AbstractState_1.AbstractState {
     getState() {
         return HumanStateManager_1.STATE.RAGE;
     }
+    getRageImage() {
+        return this.rageImage;
+    }
 }
 exports.RageState = RageState;
 //# sourceMappingURL=RageState.js.map

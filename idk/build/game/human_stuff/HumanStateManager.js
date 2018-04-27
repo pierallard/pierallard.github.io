@@ -9,6 +9,8 @@ const TalkState_1 = require("../human_states/TalkState");
 const CoffeeState_1 = require("../human_states/CoffeeState");
 const HumanMoodManager_1 = require("./HumanMoodManager");
 const SitTalkState_1 = require("../human_states/SitTalkState");
+const RageState_1 = require("../human_states/RageState");
+const ThoughtBubble_1 = require("./ThoughtBubble");
 const LIMIT = 0.8;
 var STATE;
 (function (STATE) {
@@ -154,11 +156,26 @@ class HumanStateManager {
                 result = 6;
                 break;
             case STATE.TYPE:
-                result = (5 + 1 + 2 + 8 + 2 + 6 + 6) * 2;
+                result = (5 + 1 + 2 + 8 + 2 + 6 + 6);
                 break;
         }
         if (state === this.state.getState()) {
-            result = result / 1.1;
+            result = result / 2;
+        }
+        if (this.state instanceof RageState_1.RageState) {
+            const rageState = this.state;
+            if (rageState.getRageImage() === ThoughtBubble_1.RAGE_IMAGE.COFFEE && state === STATE.COFFEE) {
+                result = result / 3;
+            }
+            if (rageState.getRageImage() === ThoughtBubble_1.RAGE_IMAGE.LAPTOP && state === STATE.TYPE) {
+                result = result / 3;
+            }
+            if (rageState.getRageImage() === ThoughtBubble_1.RAGE_IMAGE.SLEEP && state === STATE.SIT) {
+                result = result / 3;
+            }
+            if (rageState.getRageImage() === ThoughtBubble_1.RAGE_IMAGE.TABLE && state === STATE.SIT_TALK) {
+                result = result / 3;
+            }
         }
         HumanMoodManager_1.HumanMoodManager.getMoods().forEach((mood) => {
             if (this.human.getMood(mood) < LIMIT) {
@@ -166,7 +183,6 @@ class HumanStateManager {
                     let ratio = 1 - this.human.getMood(mood) / LIMIT;
                     ratio = ratio * HumanStateManager.getMoodGains(state)[mood] * 8;
                     result = result * (1 + ratio);
-                    console.log('new ratio: ' + ratio);
                 }
             }
         });
@@ -176,7 +192,7 @@ class HumanStateManager {
         let result = {};
         switch (state) {
             case STATE.SMOKE:
-                result[HumanMoodManager_1.MOOD.RELAXATION] = 0.4;
+                result[HumanMoodManager_1.MOOD.RELAXATION] = 0.1;
                 break;
             case STATE.TALK:
                 result[HumanMoodManager_1.MOOD.SOCIAL] = 0.5;

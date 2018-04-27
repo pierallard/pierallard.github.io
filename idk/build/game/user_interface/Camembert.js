@@ -6,34 +6,12 @@ const UserInterface_1 = require("./UserInterface");
 const app_1 = require("../../app");
 const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
 const Tooltip_1 = require("./Tooltip");
+const SmoothValue_1 = require("../SmoothValue");
 const PARTS = 36;
 class Camembert {
     constructor() {
         this.data = [];
-        this.tooltipShowed = false;
-        this.tooltip = new Tooltip_1.Tooltip();
-    }
-    create(game, groups) {
-        this.game = game;
-        this.graphics = game.add.graphics(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH / 2, 180, groups[Play_1.GROUP_INTERFACE]);
-        this.drawCamembert();
-        this.graphics.inputEnabled = true;
-        this.graphics.events.onInputOver.add(this.showTooltip, this, 0, game);
-        this.graphics.events.onInputOut.add(this.hideTooltip, this, 0, game);
-        groups[Play_1.GROUP_INTERFACE].add(this.graphics);
-        this.tooltip.create(game, groups);
-        this.hideTooltip();
-    }
-    setHuman(human) {
-        this.human = human;
-    }
-    update() {
-        if (this.human) {
-            this.refreshData();
-            this.drawCamembert();
-        }
-        if (this.tooltipShowed) {
-            this.tooltip.update();
+        this.tooltip = new Tooltip_1.Tooltip(() => {
             const position = this.game.input.mousePointer.position;
             const positionThroughtCenter = new PIXI.Point(position.x - this.graphics.x, position.y - this.graphics.y);
             let angle = Math.atan2(positionThroughtCenter.x, -positionThroughtCenter.y);
@@ -41,16 +19,35 @@ class Camembert {
                 angle += 2 * Math.PI;
             }
             const currentCamembert = this.getSelectedCamembertPart(angle);
-            this.tooltip.setText(currentCamembert.getString());
+            if (currentCamembert) {
+                return currentCamembert.getString();
+            }
+            return '';
+        });
+        this.shouldRefreshData = true;
+        this.shouldRefreshCamembert = true;
+    }
+    create(game, groups) {
+        this.game = game;
+        this.graphics = game.add.graphics(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH / 2, 180, groups[Play_1.GROUP_INTERFACE]);
+        this.drawCamembert();
+        this.tooltip.setInput(this, this.graphics);
+        groups[Play_1.GROUP_INTERFACE].add(this.graphics);
+        this.tooltip.create(game, groups);
+    }
+    setHuman(human) {
+        this.human = human;
+    }
+    update() {
+        if (this.human) {
+            if (this.shouldRefreshData) {
+                this.refreshData();
+            }
+            if (this.shouldRefreshCamembert) {
+                this.drawCamembert();
+            }
         }
-    }
-    showTooltip() {
-        this.tooltipShowed = true;
-        this.tooltip.show();
-    }
-    hideTooltip() {
-        this.tooltipShowed = false;
-        this.tooltip.hide();
+        this.tooltip.update();
     }
     drawCamembert() {
         this.graphics.clear();
@@ -65,12 +62,36 @@ class Camembert {
             this.graphics.drawPolygon(points);
             this.graphics.endFill();
         }
+        this.shouldRefreshCamembert = false;
+        this.game.time.events.add(Phaser.Timer.SECOND * 0.1, () => {
+            this.shouldRefreshCamembert = true;
+        }, this);
     }
     refreshData() {
-        this.data = [];
+        let foundIdentifiers = [];
         this.human.getNextProbabilities().forEach((state) => {
-            this.data.push(new CamembertPart(state.probability, Camembert.getColor(state.state), HumanStateManager_1.HumanStateManager.getStr(state.state)));
+            let found = false;
+            for (let i = 0; i < this.data.length; i++) {
+                const camembertPart = this.data[i];
+                if (camembertPart.getState() === state.state) {
+                    camembertPart.setValue(state.probability);
+                    found = true;
+                    foundIdentifiers.push(i);
+                }
+            }
+            if (!found) {
+                this.data.push(new CamembertPart(state.state, state.probability, Camembert.getColor(state.state), HumanStateManager_1.HumanStateManager.getStr(state.state)));
+            }
         });
+        for (let i = 0; i < this.data.length; i++) {
+            if (foundIdentifiers.indexOf(i) <= -1) {
+                this.data[i].setValue(0);
+            }
+        }
+        this.shouldRefreshData = false;
+        this.game.time.events.add(Phaser.Timer.SECOND * 1.1, () => {
+            this.shouldRefreshData = true;
+        }, this);
     }
     static getColor(state) {
         switch (state) {
@@ -112,13 +133,14 @@ class Camembert {
 }
 exports.Camembert = Camembert;
 class CamembertPart {
-    constructor(value, color, text) {
-        this.value = value;
+    constructor(state, value, color, text) {
+        this.state = state;
+        this.value = new SmoothValue_1.SmoothValue(value);
         this.color = color;
         this.text = text;
     }
     getValue() {
-        return this.value;
+        return this.value.getValue();
     }
     getPoints(currentAngle, sumValues, RADIUS) {
         const angleOfAPart = Math.PI * 2 / PARTS;
@@ -137,13 +159,19 @@ class CamembertPart {
         return points;
     }
     getAngle(sumValues) {
-        return this.value / sumValues * Math.PI * 2;
+        return this.value.getValue() / sumValues * Math.PI * 2;
     }
     getColor() {
         return this.color;
     }
     getString() {
         return this.text;
+    }
+    getState() {
+        return this.state;
+    }
+    setValue(probability) {
+        this.value.setValue(probability);
     }
 }
 //# sourceMappingURL=Camembert.js.map

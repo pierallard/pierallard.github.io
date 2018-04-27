@@ -28,9 +28,9 @@ class LevelManager {
             this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING].getValue() >= this.goals[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING] &&
             this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE].getValue() >= this.goals[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE]) {
             this.level += 1;
-            this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER].setValue(0);
-            this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING].setValue(0);
-            this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE].setValue(0);
+            this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER].setInstantValue(0);
+            this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING].setInstantValue(0);
+            this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE].setInstantValue(0);
             this.goals[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER] = this.goals[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER] * 2;
             this.goals[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING] = this.goals[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING] * 2;
             this.goals[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE] = this.goals[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE] * 2;

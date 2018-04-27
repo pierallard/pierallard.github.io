@@ -46,6 +46,7 @@ class Preload extends Phaser.State {
         this.game.load.spritesheet('buy_button', 'assets/buy_button.png', 10, 10);
     }
     loadFonts() {
+        this.game.load.bitmapFont('retro_computer', 'assets/font/font.png', 'assets/font/font.ftn');
     }
 }
 exports.default = Preload;

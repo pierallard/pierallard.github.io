@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 62);
+/******/ 	return __webpack_require__(__webpack_require__.s = 63);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -74,12 +74,13 @@
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const WorldKnowledge_1 = __webpack_require__(17);
-const app_1 = __webpack_require__(2);
+const app_1 = __webpack_require__(3);
 const UserInterface_1 = __webpack_require__(6);
 exports.GROUP_FLOOR = 'floor';
 exports.GROUP_OBJECTS_AND_HUMANS = 'objects_and_humans';
 exports.GROUP_INFOS = 'infos';
 exports.GROUP_INTERFACE = 'interface';
+exports.GROUP_TOOLTIP = 'tooltip';
 exports.CAMERA_GAP = 2;
 class Play extends Phaser.State {
     constructor() {
@@ -95,7 +96,9 @@ class Play extends Phaser.State {
         this.groups[exports.GROUP_OBJECTS_AND_HUMANS] = this.game.add.group();
         this.groups[exports.GROUP_INFOS] = this.game.add.group();
         this.groups[exports.GROUP_INTERFACE] = this.game.add.group();
+        this.groups[exports.GROUP_TOOLTIP] = this.game.add.group();
         this.groups[exports.GROUP_INTERFACE].fixedToCamera = true;
+        this.groups[exports.GROUP_TOOLTIP].fixedToCamera = true;
         this.worldKnowledge.create(this.game, this.groups);
         this.userInterface.create(this.game, this.groups);
         this.game.world.setBounds(0, 0, app_1.WORLD_WIDTH + UserInterface_1.INTERFACE_WIDTH, app_1.WORLD_HEIGHT);
@@ -104,6 +107,7 @@ class Play extends Phaser.State {
         this.downKey = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
         this.leftKey = this.game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
         this.rightKey = this.game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
+        // const text = this.game.add.bitmapText(CAMERA_WIDTH_PIXELS - INTERFACE_WIDTH + 60, 2, 'retro_computer','Bitmap Fonts!',7, this.groups[GROUP_INTERFACE]);
     }
     update(game) {
         this.groups[exports.GROUP_OBJECTS_AND_HUMANS].sort('y', Phaser.Group.SORT_ASCENDING);
@@ -138,15 +142,17 @@ exports.default = Play;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const FreezeState_1 = __webpack_require__(29);
-const SmokeState_1 = __webpack_require__(34);
-const SitState_1 = __webpack_require__(32);
-const MoveRandomState_1 = __webpack_require__(31);
-const TypeState_1 = __webpack_require__(37);
-const TalkState_1 = __webpack_require__(36);
-const CoffeeState_1 = __webpack_require__(28);
+const FreezeState_1 = __webpack_require__(31);
+const SmokeState_1 = __webpack_require__(36);
+const SitState_1 = __webpack_require__(34);
+const MoveRandomState_1 = __webpack_require__(33);
+const TypeState_1 = __webpack_require__(39);
+const TalkState_1 = __webpack_require__(38);
+const CoffeeState_1 = __webpack_require__(30);
 const HumanMoodManager_1 = __webpack_require__(19);
-const SitTalkState_1 = __webpack_require__(33);
+const SitTalkState_1 = __webpack_require__(35);
+const RageState_1 = __webpack_require__(11);
+const ThoughtBubble_1 = __webpack_require__(9);
 const LIMIT = 0.8;
 var STATE;
 (function (STATE) {
@@ -292,11 +298,26 @@ class HumanStateManager {
                 result = 6;
                 break;
             case STATE.TYPE:
-                result = (5 + 1 + 2 + 8 + 2 + 6 + 6) * 2;
+                result = (5 + 1 + 2 + 8 + 2 + 6 + 6);
                 break;
         }
         if (state === this.state.getState()) {
-            result = result / 1.1;
+            result = result / 2;
+        }
+        if (this.state instanceof RageState_1.RageState) {
+            const rageState = this.state;
+            if (rageState.getRageImage() === ThoughtBubble_1.RAGE_IMAGE.COFFEE && state === STATE.COFFEE) {
+                result = result / 3;
+            }
+            if (rageState.getRageImage() === ThoughtBubble_1.RAGE_IMAGE.LAPTOP && state === STATE.TYPE) {
+                result = result / 3;
+            }
+            if (rageState.getRageImage() === ThoughtBubble_1.RAGE_IMAGE.SLEEP && state === STATE.SIT) {
+                result = result / 3;
+            }
+            if (rageState.getRageImage() === ThoughtBubble_1.RAGE_IMAGE.TABLE && state === STATE.SIT_TALK) {
+                result = result / 3;
+            }
         }
         HumanMoodManager_1.HumanMoodManager.getMoods().forEach((mood) => {
             if (this.human.getMood(mood) < LIMIT) {
@@ -304,7 +325,6 @@ class HumanStateManager {
                     let ratio = 1 - this.human.getMood(mood) / LIMIT;
                     ratio = ratio * HumanStateManager.getMoodGains(state)[mood] * 8;
                     result = result * (1 + ratio);
-                    console.log('new ratio: ' + ratio);
                 }
             }
         });
@@ -314,7 +334,7 @@ class HumanStateManager {
         let result = {};
         switch (state) {
             case STATE.SMOKE:
-                result[HumanMoodManager_1.MOOD.RELAXATION] = 0.4;
+                result[HumanMoodManager_1.MOOD.RELAXATION] = 0.1;
                 break;
             case STATE.TALK:
                 result[HumanMoodManager_1.MOOD.SOCIAL] = 0.5;
@@ -370,11 +390,39 @@ exports.HumanStateManager = HumanStateManager;
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var COLOR;
+(function (COLOR) {
+    COLOR[COLOR["BLACK"] = 512] = "BLACK";
+    COLOR[COLOR["WHITE"] = 16773349] = "WHITE";
+    COLOR[COLOR["DARK_GREY"] = 4802887] = "DARK_GREY";
+    COLOR[COLOR["LIGHT_GREY"] = 13025990] = "LIGHT_GREY";
+    COLOR[COLOR["MARROON"] = 11030581] = "MARROON";
+    COLOR[COLOR["SKIN"] = 16698281] = "SKIN";
+    COLOR[COLOR["ORANGE"] = 16556547] = "ORANGE";
+    COLOR[COLOR["YELLOW"] = 16508205] = "YELLOW";
+    COLOR[COLOR["DARK_GREEN"] = 885038] = "DARK_GREEN";
+    COLOR[COLOR["LIGHT_GREEN"] = 56877] = "LIGHT_GREEN";
+    COLOR[COLOR["LIGHT_BLUE"] = 2338302] = "LIGHT_BLUE";
+    COLOR[COLOR["DARK_BLUE"] = 2566752] = "DARK_BLUE";
+    COLOR[COLOR["LIGHT_PURPLE"] = 8878490] = "LIGHT_PURPLE";
+    COLOR[COLOR["DARK_PURPLE"] = 8267345] = "DARK_PURPLE";
+    COLOR[COLOR["RED"] = 16711757] = "RED";
+    COLOR[COLOR["ROSE"] = 16611753] = "ROSE";
+})(COLOR = exports.COLOR || (exports.COLOR = {}));
+
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
 /// <reference path="../lib/phaser.d.ts"/>
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Boot_1 = __webpack_require__(26);
-const Preload_1 = __webpack_require__(27);
+const Boot_1 = __webpack_require__(28);
+const Preload_1 = __webpack_require__(29);
 const Play_1 = __webpack_require__(0);
 const PositionTransformer_1 = __webpack_require__(4);
 const WorldKnowledge_1 = __webpack_require__(17);
@@ -402,41 +450,13 @@ window.onload = () => {
 
 
 /***/ }),
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var COLOR;
-(function (COLOR) {
-    COLOR[COLOR["BLACK"] = 512] = "BLACK";
-    COLOR[COLOR["WHITE"] = 16773349] = "WHITE";
-    COLOR[COLOR["DARK_GREY"] = 4802887] = "DARK_GREY";
-    COLOR[COLOR["LIGHT_GREY"] = 13025990] = "LIGHT_GREY";
-    COLOR[COLOR["MARROON"] = 11030581] = "MARROON";
-    COLOR[COLOR["SKIN"] = 16698281] = "SKIN";
-    COLOR[COLOR["ORANGE"] = 16556547] = "ORANGE";
-    COLOR[COLOR["YELLOW"] = 16508205] = "YELLOW";
-    COLOR[COLOR["DARK_GREEN"] = 885038] = "DARK_GREEN";
-    COLOR[COLOR["LIGHT_GREEN"] = 56877] = "LIGHT_GREEN";
-    COLOR[COLOR["LIGHT_BLUE"] = 2338302] = "LIGHT_BLUE";
-    COLOR[COLOR["DARK_BLUE"] = 2566752] = "DARK_BLUE";
-    COLOR[COLOR["LIGHT_PURPLE"] = 8878490] = "LIGHT_PURPLE";
-    COLOR[COLOR["DARK_PURPLE"] = 8267345] = "DARK_PURPLE";
-    COLOR[COLOR["RED"] = 16711757] = "RED";
-    COLOR[COLOR["ROSE"] = 16611753] = "ROSE";
-})(COLOR = exports.COLOR || (exports.COLOR = {}));
-
-
-/***/ }),
 /* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const app_1 = __webpack_require__(2);
+const app_1 = __webpack_require__(3);
 exports.CELL_WIDTH = 40;
 exports.CELL_HEIGHT = 20;
 class PositionTransformer {
@@ -623,14 +643,14 @@ exports.HumanAnimationManager = HumanAnimationManager;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = __webpack_require__(0);
-const app_1 = __webpack_require__(2);
-const ObjectSeller_1 = __webpack_require__(23);
-const TextStyle_1 = __webpack_require__(9);
-const HumanEmployer_1 = __webpack_require__(57);
-const InfoPanel_1 = __webpack_require__(58);
-const LevelDisplayer_1 = __webpack_require__(59);
-const UserInfoPanel_1 = __webpack_require__(61);
-const Pico8Colors_1 = __webpack_require__(3);
+const app_1 = __webpack_require__(3);
+const ObjectSeller_1 = __webpack_require__(24);
+const TextStyle_1 = __webpack_require__(10);
+const HumanEmployer_1 = __webpack_require__(59);
+const InfoPanel_1 = __webpack_require__(60);
+const LevelDisplayer_1 = __webpack_require__(61);
+const UserInfoPanel_1 = __webpack_require__(62);
+const Pico8Colors_1 = __webpack_require__(2);
 exports.INTERFACE_WIDTH = 150.5;
 exports.TOP_GAP_2 = 15.5 + 12;
 exports.TOP_GAP = exports.TOP_GAP_2 + 15;
@@ -683,6 +703,7 @@ class UserInterface {
         this.infoPanel.update();
         this.levelDisplayer.update();
         this.userInfoPanel.update();
+        this.humanEmployer.update();
         this.moneyCounter.setText(this.worldKnowledge.getMoneyInWallet().getStringValue());
     }
     selectPanel(panel) {
@@ -842,11 +863,27 @@ exports.AbstractState = AbstractState;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TEXT_STYLE = {
-    align: 'center',
-    fill: "#ffffff",
-    font: '16px 000webfont'
-};
+const Bubble_1 = __webpack_require__(22);
+var RAGE_IMAGE;
+(function (RAGE_IMAGE) {
+    RAGE_IMAGE[RAGE_IMAGE["COFFEE"] = 0] = "COFFEE";
+    RAGE_IMAGE[RAGE_IMAGE["LAPTOP"] = 1] = "LAPTOP";
+    RAGE_IMAGE[RAGE_IMAGE["SLEEP"] = 2] = "SLEEP";
+    RAGE_IMAGE[RAGE_IMAGE["TABLE"] = 3] = "TABLE";
+})(RAGE_IMAGE = exports.RAGE_IMAGE || (exports.RAGE_IMAGE = {}));
+class ThoughtBubble extends Bubble_1.Bubble {
+    getSpriteFrame() {
+        return 1;
+    }
+    getImageSpriteKey() {
+        return 'bubble_images_angry';
+    }
+    showRage(rageImage) {
+        this.imageSprite.loadTexture(this.getImageSpriteKey(), rageImage);
+        super.show();
+    }
+}
+exports.ThoughtBubble = ThoughtBubble;
 
 
 /***/ }),
@@ -856,7 +893,56 @@ exports.TEXT_STYLE = {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanProperties_1 = __webpack_require__(39);
+exports.TEXT_STYLE = {
+    align: 'center',
+    fill: "#ffffff",
+    font: '16px 000webfont'
+};
+
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const HumanStateManager_1 = __webpack_require__(1);
+const HumanAnimationManager_1 = __webpack_require__(5);
+const AbstractState_1 = __webpack_require__(8);
+class RageState extends AbstractState_1.AbstractState {
+    constructor(human, rageImage) {
+        super(human);
+        this.rageImage = rageImage;
+    }
+    start(game) {
+        super.start(game);
+        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.RAGE);
+        this.human.showThoughtBubble(this.rageImage);
+        this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.RAGE), () => {
+            this.active = false;
+            this.human.hideThoughtBubble();
+        }, this));
+        return true;
+    }
+    getState() {
+        return HumanStateManager_1.STATE.RAGE;
+    }
+    getRageImage() {
+        return this.rageImage;
+    }
+}
+exports.RageState = RageState;
+
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const HumanProperties_1 = __webpack_require__(41);
 const NAMES = [
     'Michel',
     'Jean-Paul',
@@ -887,43 +973,13 @@ exports.HumanPropertiesFactory = HumanPropertiesFactory;
 
 
 /***/ }),
-/* 11 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Bubble_1 = __webpack_require__(21);
-var RAGE_IMAGE;
-(function (RAGE_IMAGE) {
-    RAGE_IMAGE[RAGE_IMAGE["COFFEE"] = 0] = "COFFEE";
-    RAGE_IMAGE[RAGE_IMAGE["LAPTOP"] = 1] = "LAPTOP";
-    RAGE_IMAGE[RAGE_IMAGE["SLEEP"] = 2] = "SLEEP";
-    RAGE_IMAGE[RAGE_IMAGE["TABLE"] = 3] = "TABLE";
-})(RAGE_IMAGE = exports.RAGE_IMAGE || (exports.RAGE_IMAGE = {}));
-class ThoughtBubble extends Bubble_1.Bubble {
-    getSpriteFrame() {
-        return 1;
-    }
-    getImageSpriteKey() {
-        return 'bubble_images_angry';
-    }
-    showRage(rageImage) {
-        this.imageSprite.loadTexture(this.getImageSpriteKey(), rageImage);
-        super.show();
-    }
-}
-exports.ThoughtBubble = ThoughtBubble;
-
-
-/***/ }),
-/* 12 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const Pico8Colors_1 = __webpack_require__(3);
+const Pico8Colors_1 = __webpack_require__(2);
 const POINTS = 20;
 const RADIUS = 6;
 const DELAY = 750;
@@ -1013,47 +1069,67 @@ class PartialCircle extends Phaser.Graphics {
 
 
 /***/ }),
-/* 13 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const HumanStateManager_1 = __webpack_require__(1);
-const HumanAnimationManager_1 = __webpack_require__(5);
-const AbstractState_1 = __webpack_require__(8);
-class RageState extends AbstractState_1.AbstractState {
-    constructor(human, rageImage) {
-        super(human);
-        this.rageImage = rageImage;
-    }
-    start(game) {
-        super.start(game);
-        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.RAGE);
-        this.human.showThoughtBubble(this.rageImage);
-        this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.RAGE), () => {
-            this.active = false;
-            this.human.hideThoughtBubble();
-        }, this));
-        return true;
-    }
-    getState() {
-        return HumanStateManager_1.STATE.RAGE;
-    }
-}
-exports.RageState = RageState;
-
-
-/***/ }),
 /* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+const TIME_GAP = Phaser.Timer.SECOND / 10;
+class SmoothValue {
+    constructor(value) {
+        this.maxValue = null;
+        this.minValue = null;
+        this.value = value;
+    }
+    getValue() {
+        return this.value;
+    }
+    add(value, milliseconds = Phaser.Timer.SECOND) {
+        if (milliseconds < TIME_GAP) {
+            this.value += value;
+        }
+        else {
+            setTimeout(() => {
+                const numberOfSteps = milliseconds / TIME_GAP;
+                const valuePerStep = value / numberOfSteps;
+                this.value += valuePerStep;
+                this.add(value - valuePerStep, milliseconds - TIME_GAP);
+            }, TIME_GAP);
+        }
+        if (this.maxValue !== null) {
+            this.value = Math.min(this.value, this.maxValue);
+        }
+        if (this.minValue !== null) {
+            this.value = Math.max(this.value, this.minValue);
+        }
+    }
+    setMaxValue(number) {
+        this.maxValue = number;
+    }
+    setMinValue(number) {
+        this.minValue = number;
+    }
+    setValue(number) {
+        this.add(number - this.value);
+    }
+    setInstantValue(number) {
+        this.value = number;
+    }
+}
+exports.SmoothValue = SmoothValue;
+
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = __webpack_require__(0);
-const ObjectInfoRegistry_1 = __webpack_require__(15);
-const ObjectReferer_1 = __webpack_require__(48);
+const ObjectInfoRegistry_1 = __webpack_require__(16);
+const ObjectReferer_1 = __webpack_require__(50);
 class AbstractObject {
     constructor(point, worldKnowledge, leftOriented) {
         this.position = point;
@@ -1145,14 +1221,14 @@ exports.AbstractObject = AbstractObject;
 
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const ObjectInfo_1 = __webpack_require__(46);
-const SpriteInfo_1 = __webpack_require__(51);
+const ObjectInfo_1 = __webpack_require__(48);
+const SpriteInfo_1 = __webpack_require__(53);
 const Direction_1 = __webpack_require__(7);
 const Price_1 = __webpack_require__(20);
 class ObjectInfoRegistry {
@@ -1202,75 +1278,29 @@ exports.ObjectInfoRegistry = ObjectInfoRegistry;
 
 
 /***/ }),
-/* 16 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const TIME_GAP = Phaser.Timer.SECOND / 10;
-class SmoothValue {
-    constructor(value) {
-        this.value = value;
-    }
-    getValue() {
-        return this.value;
-    }
-    add(value, milliseconds = Phaser.Timer.SECOND) {
-        if (milliseconds < TIME_GAP) {
-            this.value += value;
-            return;
-        }
-        setTimeout(() => {
-            const numberOfSteps = milliseconds / TIME_GAP;
-            const valuePerStep = value / numberOfSteps;
-            this.value += valuePerStep;
-            if (this.maxValue) {
-                this.value = Math.min(this.value, this.maxValue);
-            }
-            if (this.minValue) {
-                this.value = Math.max(this.value, this.minValue);
-            }
-            this.add(value - valuePerStep, milliseconds - TIME_GAP);
-        }, TIME_GAP);
-    }
-    setMaxValue(number) {
-        this.maxValue = number;
-    }
-    setMinValue(number) {
-        this.minValue = number;
-    }
-    setValue(number) {
-        this.value = number;
-    }
-}
-exports.SmoothValue = SmoothValue;
-
-
-/***/ }),
 /* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanRepository_1 = __webpack_require__(54);
-const Sofa_1 = __webpack_require__(50);
-const Employee_1 = __webpack_require__(22);
-const Desk_1 = __webpack_require__(44);
-const Dispenser_1 = __webpack_require__(45);
-const WallRepository_1 = __webpack_require__(55);
-const Cell_1 = __webpack_require__(24);
+const HumanRepository_1 = __webpack_require__(56);
+const Sofa_1 = __webpack_require__(52);
+const Employee_1 = __webpack_require__(23);
+const Desk_1 = __webpack_require__(46);
+const Dispenser_1 = __webpack_require__(47);
+const WallRepository_1 = __webpack_require__(57);
+const Cell_1 = __webpack_require__(26);
 const PositionTransformer_1 = __webpack_require__(4);
 const Play_1 = __webpack_require__(0);
-const Depot_1 = __webpack_require__(43);
+const Depot_1 = __webpack_require__(45);
 const Direction_1 = __webpack_require__(7);
-const MoodRegister_1 = __webpack_require__(40);
-const Table_1 = __webpack_require__(52);
-const LevelManager_1 = __webpack_require__(25);
+const MoodRegister_1 = __webpack_require__(42);
+const Table_1 = __webpack_require__(54);
+const LevelManager_1 = __webpack_require__(27);
 const Price_1 = __webpack_require__(20);
-const ObjectInfoRegistry_1 = __webpack_require__(15);
-const SmoothValue_1 = __webpack_require__(16);
+const ObjectInfoRegistry_1 = __webpack_require__(16);
+const SmoothValue_1 = __webpack_require__(14);
 const UserInterface_1 = __webpack_require__(6);
 exports.GRID_WIDTH = 16;
 exports.GRID_HEIGHT = 16;
@@ -1703,7 +1733,7 @@ exports.MoveThenActAbstractState = MoveThenActAbstractState;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanStateManager_1 = __webpack_require__(1);
-const SmoothValue_1 = __webpack_require__(16);
+const SmoothValue_1 = __webpack_require__(14);
 const LOSS = -0.05;
 const DEFAULT = 0.8;
 const TIME_BETWEEN_LOSS = 10000;
@@ -1805,6 +1835,63 @@ exports.Price = Price;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+const Play_1 = __webpack_require__(0);
+const Pico8Colors_1 = __webpack_require__(2);
+exports.DEFAULT_BAR_HEIGHT = 10;
+class Gauge {
+    constructor(width, color, height = null) {
+        this.value = 0;
+        this.width = Math.round(width);
+        this.color = color;
+        this.visible = true;
+        this.height = height ? height : exports.DEFAULT_BAR_HEIGHT;
+    }
+    create(game, groups, position) {
+        this.graphics = game.add.graphics(position.x, position.y, groups[Play_1.GROUP_INTERFACE]);
+        this.update();
+    }
+    setValue(value) {
+        this.value = value;
+        this.update();
+    }
+    update() {
+        this.graphics.clear();
+        if (this.visible) {
+            this.graphics.lineStyle(0);
+            this.graphics.beginFill(Pico8Colors_1.COLOR.BLACK);
+            this.graphics.drawRect(0, 0.5, this.width, this.height);
+            this.graphics.beginFill(this.color);
+            this.graphics.drawRect(0, 0.5, Math.floor(this.width * this.value) + 0.5, this.height);
+            this.graphics.endFill();
+            this.graphics.lineStyle(1, Pico8Colors_1.COLOR.WHITE);
+            this.graphics.drawRect(0, 0.5, this.width, this.height);
+        }
+    }
+    show() {
+        this.visible = true;
+        this.update();
+    }
+    hide() {
+        this.visible = false;
+        this.update();
+    }
+    destroy(destroyChildren) {
+        this.graphics.destroy(destroyChildren);
+    }
+    getGraphics() {
+        return this.graphics;
+    }
+}
+exports.Gauge = Gauge;
+
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 class Bubble {
     create(humanSprite, game, group) {
         this.game = game;
@@ -1836,24 +1923,24 @@ exports.Bubble = Bubble;
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const PositionTransformer_1 = __webpack_require__(4);
-const ClosestPathFinder_1 = __webpack_require__(38);
+const ClosestPathFinder_1 = __webpack_require__(40);
 const Direction_1 = __webpack_require__(7);
 const HumanAnimationManager_1 = __webpack_require__(5);
 const HumanStateManager_1 = __webpack_require__(1);
-const ObjectSelector_1 = __webpack_require__(49);
-const TalkBubble_1 = __webpack_require__(42);
+const ObjectSelector_1 = __webpack_require__(51);
+const TalkBubble_1 = __webpack_require__(44);
 const HumanMoodManager_1 = __webpack_require__(19);
-const MoodSprite_1 = __webpack_require__(41);
+const MoodSprite_1 = __webpack_require__(43);
 const Play_1 = __webpack_require__(0);
-const ThoughtBubble_1 = __webpack_require__(11);
-const Pico8Colors_1 = __webpack_require__(3);
+const ThoughtBubble_1 = __webpack_require__(9);
+const Pico8Colors_1 = __webpack_require__(2);
 const MAX_WALK_CELL_DURATION = 1500;
 const MIN_WALK_CELL_DURATION = 800;
 const MAX_RETRIES = 3;
@@ -2104,20 +2191,20 @@ exports.Employee = Employee;
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const UserInterface_1 = __webpack_require__(6);
-const app_1 = __webpack_require__(2);
-const ObjectInfoRegistry_1 = __webpack_require__(15);
-const ObjectPhantom_1 = __webpack_require__(47);
+const app_1 = __webpack_require__(3);
+const ObjectInfoRegistry_1 = __webpack_require__(16);
+const ObjectPhantom_1 = __webpack_require__(49);
 const Play_1 = __webpack_require__(0);
-const TextStyle_1 = __webpack_require__(9);
+const TextStyle_1 = __webpack_require__(10);
 const PositionTransformer_1 = __webpack_require__(4);
-const Pico8Colors_1 = __webpack_require__(3);
+const Pico8Colors_1 = __webpack_require__(2);
 exports.OBJECT_SELLER_CELL_SIZE = 41;
 const CIRCLE_GAP = 7;
 class ObjectSeller {
@@ -2319,7 +2406,72 @@ class ObjectProvisionnerButton {
 
 
 /***/ }),
-/* 24 */
+/* 25 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const TextStyle_1 = __webpack_require__(10);
+const Play_1 = __webpack_require__(0);
+const Pico8Colors_1 = __webpack_require__(2);
+const app_1 = __webpack_require__(3);
+class Tooltip {
+    constructor(getValueFunction) {
+        this.getValueFunction = getValueFunction;
+    }
+    create(game, groups) {
+        this.game = game;
+        this.box = game.add.graphics(0, 0, groups[Play_1.GROUP_TOOLTIP]);
+        this.text = game.add.text(0, 0, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_TOOLTIP]);
+        this.hide();
+    }
+    update() {
+        if (this.text.alpha > 0) {
+            this.text.text = this.getValueFunction.call(this.tooltipable);
+            this.text.x = this.getTooltipPosition().x;
+            this.text.y = this.getTooltipPosition().y;
+            this.updateBox();
+        }
+    }
+    show() {
+        this.text.alpha = 1;
+        this.box.alpha = 1;
+    }
+    hide() {
+        this.text.alpha = 0;
+        this.box.alpha = 0;
+        this.box.clear();
+    }
+    updateBox() {
+        this.box.clear();
+        this.box.beginFill(Pico8Colors_1.COLOR.BLACK);
+        this.box.lineStyle(1, Pico8Colors_1.COLOR.WHITE);
+        this.box.drawRect(this.getTooltipPosition().x - 2, this.getTooltipPosition().y + 1, this.getBoxWidth(), 8);
+    }
+    setInput(tooltipable, graphics) {
+        graphics.inputEnabled = true;
+        graphics.events.onInputOver.add(this.show, this, 0);
+        graphics.events.onInputOut.add(this.hide, this, 0);
+        this.tooltipable = tooltipable;
+    }
+    getTooltipPosition() {
+        this.cursorPosition = new PIXI.Point(app_1.SCALE * Math.round(this.game.input.mousePointer.position.x / app_1.SCALE) + 0.5, app_1.SCALE * Math.round(this.game.input.mousePointer.position.y / app_1.SCALE) + 0.5);
+        let position = new PIXI.Point(this.cursorPosition.x + 6, this.cursorPosition.y + 9);
+        if (position.x + this.getBoxWidth() > app_1.CAMERA_WIDTH_PIXELS) {
+            position.x = app_1.CAMERA_WIDTH_PIXELS - this.getBoxWidth() + 0.5;
+        }
+        return position;
+    }
+    getBoxWidth() {
+        return this.text.width + 1;
+    }
+}
+exports.Tooltip = Tooltip;
+
+
+/***/ }),
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2344,14 +2496,14 @@ exports.Cell = Cell;
 
 
 /***/ }),
-/* 25 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanPropertiesFactory_1 = __webpack_require__(10);
-const SmoothValue_1 = __webpack_require__(16);
+const HumanPropertiesFactory_1 = __webpack_require__(12);
+const SmoothValue_1 = __webpack_require__(14);
 class LevelManager {
     constructor() {
         this.level = 1;
@@ -2378,9 +2530,9 @@ class LevelManager {
             this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING].getValue() >= this.goals[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING] &&
             this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE].getValue() >= this.goals[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE]) {
             this.level += 1;
-            this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER].setValue(0);
-            this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING].setValue(0);
-            this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE].setValue(0);
+            this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER].setInstantValue(0);
+            this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING].setInstantValue(0);
+            this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE].setInstantValue(0);
             this.goals[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER] = this.goals[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER] * 2;
             this.goals[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING] = this.goals[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING] * 2;
             this.goals[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE] = this.goals[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE] * 2;
@@ -2394,13 +2546,13 @@ exports.LevelManager = LevelManager;
 
 
 /***/ }),
-/* 26 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const app_1 = __webpack_require__(2);
+const app_1 = __webpack_require__(3);
 class Boot extends Phaser.State {
     create() {
         // this.physics.startSystem(Phaser.Physics.ARCADE);
@@ -2415,7 +2567,7 @@ exports.default = Boot;
 
 
 /***/ }),
-/* 27 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2467,13 +2619,14 @@ class Preload extends Phaser.State {
         this.game.load.spritesheet('buy_button', 'assets/buy_button.png', 10, 10);
     }
     loadFonts() {
+        this.game.load.bitmapFont('retro_computer', 'assets/font/font.png', 'assets/font/font.ftn');
     }
 }
 exports.default = Preload;
 
 
 /***/ }),
-/* 28 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2481,9 +2634,9 @@ exports.default = Preload;
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanStateManager_1 = __webpack_require__(1);
 const HumanAnimationManager_1 = __webpack_require__(5);
-const RageState_1 = __webpack_require__(13);
+const RageState_1 = __webpack_require__(11);
 const MoveThenActAbstractState_1 = __webpack_require__(18);
-const ThoughtBubble_1 = __webpack_require__(11);
+const ThoughtBubble_1 = __webpack_require__(9);
 class CoffeeState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
     retry() {
         const nextDispenserReferer = this.worldKnowledge.getClosestReferer(['Dispenser'], 1, this.human.getPosition());
@@ -2514,7 +2667,7 @@ exports.CoffeeState = CoffeeState;
 
 
 /***/ }),
-/* 29 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2540,7 +2693,7 @@ exports.FreezeState = FreezeState;
 
 
 /***/ }),
-/* 30 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2608,7 +2761,7 @@ exports.Meeting = Meeting;
 
 
 /***/ }),
-/* 31 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2645,7 +2798,7 @@ exports.MoveRandomState = MoveRandomState;
 
 
 /***/ }),
-/* 32 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2653,9 +2806,9 @@ exports.MoveRandomState = MoveRandomState;
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanAnimationManager_1 = __webpack_require__(5);
 const HumanStateManager_1 = __webpack_require__(1);
-const RageState_1 = __webpack_require__(13);
+const RageState_1 = __webpack_require__(11);
 const MoveThenActAbstractState_1 = __webpack_require__(18);
-const ThoughtBubble_1 = __webpack_require__(11);
+const ThoughtBubble_1 = __webpack_require__(9);
 class SitState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
     retry() {
         const nextSofaReferer = this.worldKnowledge.getClosestReferer(['Sofa'], 1, this.human.getPosition());
@@ -2689,7 +2842,7 @@ exports.SitState = SitState;
 
 
 /***/ }),
-/* 33 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2698,10 +2851,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const HumanAnimationManager_1 = __webpack_require__(5);
 const HumanStateManager_1 = __webpack_require__(1);
 const AbstractState_1 = __webpack_require__(8);
-const TableMeeting_1 = __webpack_require__(35);
+const TableMeeting_1 = __webpack_require__(37);
 const PositionTransformer_1 = __webpack_require__(4);
-const RageState_1 = __webpack_require__(13);
-const ThoughtBubble_1 = __webpack_require__(11);
+const RageState_1 = __webpack_require__(11);
+const ThoughtBubble_1 = __webpack_require__(9);
 class SitTalkState extends AbstractState_1.AbstractState {
     constructor(human, table, anotherHumans, worldKnowledge, meeting = null) {
         super(human);
@@ -2809,7 +2962,7 @@ exports.SitTalkState = SitTalkState;
 
 
 /***/ }),
-/* 34 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2836,7 +2989,7 @@ exports.SmokeState = SmokeState;
 
 
 /***/ }),
-/* 35 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2907,14 +3060,14 @@ exports.TableMeeting = TableMeeting;
 
 
 /***/ }),
-/* 36 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanAnimationManager_1 = __webpack_require__(5);
-const Meeting_1 = __webpack_require__(30);
+const Meeting_1 = __webpack_require__(32);
 const Direction_1 = __webpack_require__(7);
 const HumanStateManager_1 = __webpack_require__(1);
 const AbstractState_1 = __webpack_require__(8);
@@ -2991,7 +3144,7 @@ exports.TalkState = TalkState;
 
 
 /***/ }),
-/* 37 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2999,10 +3152,10 @@ exports.TalkState = TalkState;
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanAnimationManager_1 = __webpack_require__(5);
 const HumanStateManager_1 = __webpack_require__(1);
-const RageState_1 = __webpack_require__(13);
+const RageState_1 = __webpack_require__(11);
 const MoveThenActAbstractState_1 = __webpack_require__(18);
 const Price_1 = __webpack_require__(20);
-const ThoughtBubble_1 = __webpack_require__(11);
+const ThoughtBubble_1 = __webpack_require__(9);
 class TypeState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
     retry() {
         const nextDeskReferer = this.worldKnowledge.getClosestReferer(['Desk'], 1, this.human.getPosition());
@@ -3040,7 +3193,7 @@ exports.TypeState = TypeState;
 
 
 /***/ }),
-/* 38 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3147,13 +3300,13 @@ exports.ClosestPathFinder = ClosestPathFinder;
 
 
 /***/ }),
-/* 39 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanPropertiesFactory_1 = __webpack_require__(10);
+const HumanPropertiesFactory_1 = __webpack_require__(12);
 class HumanProperties {
     constructor(type, name, salary, speed, quality, perseverance) {
         this.type = type;
@@ -3194,7 +3347,7 @@ exports.HumanProperties = HumanProperties;
 
 
 /***/ }),
-/* 40 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3228,13 +3381,13 @@ exports.MoodRegister = MoodRegister;
 
 
 /***/ }),
-/* 41 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Pico8Colors_1 = __webpack_require__(3);
+const Pico8Colors_1 = __webpack_require__(2);
 const GAP_X = -7;
 const GAP_Y = 1;
 const DEBUG = false;
@@ -3272,13 +3425,13 @@ exports.MoodSprite = MoodSprite;
 
 
 /***/ }),
-/* 42 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Bubble_1 = __webpack_require__(21);
+const Bubble_1 = __webpack_require__(22);
 const IMAGE_COUNT = 6;
 class TalkBubble extends Bubble_1.Bubble {
     getImageSpriteKey() {
@@ -3303,7 +3456,7 @@ exports.TalkBubble = TalkBubble;
 
 
 /***/ }),
-/* 43 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3336,15 +3489,15 @@ exports.Depot = Depot;
 
 
 /***/ }),
-/* 44 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = __webpack_require__(0);
-const AbstractObject_1 = __webpack_require__(14);
-const ObjectDeleter_1 = __webpack_require__(12);
+const AbstractObject_1 = __webpack_require__(15);
+const ObjectDeleter_1 = __webpack_require__(13);
 class Desk extends AbstractObject_1.AbstractObject {
     create(game, groups) {
         super.create(game, groups);
@@ -3355,14 +3508,14 @@ exports.Desk = Desk;
 
 
 /***/ }),
-/* 45 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const AbstractObject_1 = __webpack_require__(14);
-const ObjectDeleter_1 = __webpack_require__(12);
+const AbstractObject_1 = __webpack_require__(15);
+const ObjectDeleter_1 = __webpack_require__(13);
 const Play_1 = __webpack_require__(0);
 class Dispenser extends AbstractObject_1.AbstractObject {
     create(game, groups) {
@@ -3374,7 +3527,7 @@ exports.Dispenser = Dispenser;
 
 
 /***/ }),
-/* 46 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3438,18 +3591,18 @@ exports.ObjectInfo = ObjectInfo;
 
 
 /***/ }),
-/* 47 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const ObjectInfoRegistry_1 = __webpack_require__(15);
+const ObjectInfoRegistry_1 = __webpack_require__(16);
 const PositionTransformer_1 = __webpack_require__(4);
-const ObjectDeleter_1 = __webpack_require__(12);
+const ObjectDeleter_1 = __webpack_require__(13);
 const Direction_1 = __webpack_require__(7);
 const Play_1 = __webpack_require__(0);
-const Pico8Colors_1 = __webpack_require__(3);
+const Pico8Colors_1 = __webpack_require__(2);
 const ARROW_SIZE = 0.9;
 const GAP = 4;
 const SPRITE_OPACITY = 0.7;
@@ -3644,7 +3797,7 @@ class PhantomSprite {
 
 
 /***/ }),
-/* 48 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3684,7 +3837,7 @@ exports.ObjectReferer = ObjectReferer;
 
 
 /***/ }),
-/* 49 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3735,14 +3888,14 @@ exports.ObjectSelector = ObjectSelector;
 
 
 /***/ }),
-/* 50 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const AbstractObject_1 = __webpack_require__(14);
-const ObjectDeleter_1 = __webpack_require__(12);
+const AbstractObject_1 = __webpack_require__(15);
+const ObjectDeleter_1 = __webpack_require__(13);
 const Play_1 = __webpack_require__(0);
 class Sofa extends AbstractObject_1.AbstractObject {
     create(game, groups) {
@@ -3757,7 +3910,7 @@ exports.Sofa = Sofa;
 
 
 /***/ }),
-/* 51 */
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3839,15 +3992,15 @@ exports.SpriteInfo = SpriteInfo;
 
 
 /***/ }),
-/* 52 */
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = __webpack_require__(0);
-const AbstractObject_1 = __webpack_require__(14);
-const ObjectDeleter_1 = __webpack_require__(12);
+const AbstractObject_1 = __webpack_require__(15);
+const ObjectDeleter_1 = __webpack_require__(13);
 class Table extends AbstractObject_1.AbstractObject {
     create(game, groups) {
         super.create(game, groups);
@@ -3858,7 +4011,7 @@ exports.Table = Table;
 
 
 /***/ }),
-/* 53 */
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3895,14 +4048,14 @@ exports.Wall = Wall;
 
 
 /***/ }),
-/* 54 */
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Employee_1 = __webpack_require__(22);
-const HumanPropertiesFactory_1 = __webpack_require__(10);
+const Employee_1 = __webpack_require__(23);
+const HumanPropertiesFactory_1 = __webpack_require__(12);
 class HumanRepository {
     constructor(worldKnowledge) {
         this.humans = [
@@ -3932,13 +4085,13 @@ exports.HumanRepository = HumanRepository;
 
 
 /***/ }),
-/* 55 */
+/* 57 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Wall_1 = __webpack_require__(53);
+const Wall_1 = __webpack_require__(55);
 class WallRepository {
     constructor() {
         this.walls = [];
@@ -3970,46 +4123,24 @@ exports.WallRepository = WallRepository;
 
 
 /***/ }),
-/* 56 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = __webpack_require__(0);
-const Pico8Colors_1 = __webpack_require__(3);
+const Pico8Colors_1 = __webpack_require__(2);
 const UserInterface_1 = __webpack_require__(6);
-const app_1 = __webpack_require__(2);
+const app_1 = __webpack_require__(3);
 const HumanStateManager_1 = __webpack_require__(1);
-const Tooltip_1 = __webpack_require__(60);
+const Tooltip_1 = __webpack_require__(25);
+const SmoothValue_1 = __webpack_require__(14);
 const PARTS = 36;
 class Camembert {
     constructor() {
         this.data = [];
-        this.tooltipShowed = false;
-        this.tooltip = new Tooltip_1.Tooltip();
-    }
-    create(game, groups) {
-        this.game = game;
-        this.graphics = game.add.graphics(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH / 2, 180, groups[Play_1.GROUP_INTERFACE]);
-        this.drawCamembert();
-        this.graphics.inputEnabled = true;
-        this.graphics.events.onInputOver.add(this.showTooltip, this, 0, game);
-        this.graphics.events.onInputOut.add(this.hideTooltip, this, 0, game);
-        groups[Play_1.GROUP_INTERFACE].add(this.graphics);
-        this.tooltip.create(game, groups);
-        this.hideTooltip();
-    }
-    setHuman(human) {
-        this.human = human;
-    }
-    update() {
-        if (this.human) {
-            this.refreshData();
-            this.drawCamembert();
-        }
-        if (this.tooltipShowed) {
-            this.tooltip.update();
+        this.tooltip = new Tooltip_1.Tooltip(() => {
             const position = this.game.input.mousePointer.position;
             const positionThroughtCenter = new PIXI.Point(position.x - this.graphics.x, position.y - this.graphics.y);
             let angle = Math.atan2(positionThroughtCenter.x, -positionThroughtCenter.y);
@@ -4017,16 +4148,35 @@ class Camembert {
                 angle += 2 * Math.PI;
             }
             const currentCamembert = this.getSelectedCamembertPart(angle);
-            this.tooltip.setText(currentCamembert.getString());
+            if (currentCamembert) {
+                return currentCamembert.getString();
+            }
+            return '';
+        });
+        this.shouldRefreshData = true;
+        this.shouldRefreshCamembert = true;
+    }
+    create(game, groups) {
+        this.game = game;
+        this.graphics = game.add.graphics(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH / 2, 180, groups[Play_1.GROUP_INTERFACE]);
+        this.drawCamembert();
+        this.tooltip.setInput(this, this.graphics);
+        groups[Play_1.GROUP_INTERFACE].add(this.graphics);
+        this.tooltip.create(game, groups);
+    }
+    setHuman(human) {
+        this.human = human;
+    }
+    update() {
+        if (this.human) {
+            if (this.shouldRefreshData) {
+                this.refreshData();
+            }
+            if (this.shouldRefreshCamembert) {
+                this.drawCamembert();
+            }
         }
-    }
-    showTooltip() {
-        this.tooltipShowed = true;
-        this.tooltip.show();
-    }
-    hideTooltip() {
-        this.tooltipShowed = false;
-        this.tooltip.hide();
+        this.tooltip.update();
     }
     drawCamembert() {
         this.graphics.clear();
@@ -4041,12 +4191,36 @@ class Camembert {
             this.graphics.drawPolygon(points);
             this.graphics.endFill();
         }
+        this.shouldRefreshCamembert = false;
+        this.game.time.events.add(Phaser.Timer.SECOND * 0.1, () => {
+            this.shouldRefreshCamembert = true;
+        }, this);
     }
     refreshData() {
-        this.data = [];
+        let foundIdentifiers = [];
         this.human.getNextProbabilities().forEach((state) => {
-            this.data.push(new CamembertPart(state.probability, Camembert.getColor(state.state), HumanStateManager_1.HumanStateManager.getStr(state.state)));
+            let found = false;
+            for (let i = 0; i < this.data.length; i++) {
+                const camembertPart = this.data[i];
+                if (camembertPart.getState() === state.state) {
+                    camembertPart.setValue(state.probability);
+                    found = true;
+                    foundIdentifiers.push(i);
+                }
+            }
+            if (!found) {
+                this.data.push(new CamembertPart(state.state, state.probability, Camembert.getColor(state.state), HumanStateManager_1.HumanStateManager.getStr(state.state)));
+            }
         });
+        for (let i = 0; i < this.data.length; i++) {
+            if (foundIdentifiers.indexOf(i) <= -1) {
+                this.data[i].setValue(0);
+            }
+        }
+        this.shouldRefreshData = false;
+        this.game.time.events.add(Phaser.Timer.SECOND * 1.1, () => {
+            this.shouldRefreshData = true;
+        }, this);
     }
     static getColor(state) {
         switch (state) {
@@ -4088,13 +4262,14 @@ class Camembert {
 }
 exports.Camembert = Camembert;
 class CamembertPart {
-    constructor(value, color, text) {
-        this.value = value;
+    constructor(state, value, color, text) {
+        this.state = state;
+        this.value = new SmoothValue_1.SmoothValue(value);
         this.color = color;
         this.text = text;
     }
     getValue() {
-        return this.value;
+        return this.value.getValue();
     }
     getPoints(currentAngle, sumValues, RADIUS) {
         const angleOfAPart = Math.PI * 2 / PARTS;
@@ -4113,7 +4288,7 @@ class CamembertPart {
         return points;
     }
     getAngle(sumValues) {
-        return this.value / sumValues * Math.PI * 2;
+        return this.value.getValue() / sumValues * Math.PI * 2;
     }
     getColor() {
         return this.color;
@@ -4121,23 +4296,30 @@ class CamembertPart {
     getString() {
         return this.text;
     }
+    getState() {
+        return this.state;
+    }
+    setValue(probability) {
+        this.value.setValue(probability);
+    }
 }
 
 
 /***/ }),
-/* 57 */
+/* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanPropertiesFactory_1 = __webpack_require__(10);
+const HumanPropertiesFactory_1 = __webpack_require__(12);
 const UserInterface_1 = __webpack_require__(6);
-const app_1 = __webpack_require__(2);
-const ObjectSeller_1 = __webpack_require__(23);
+const app_1 = __webpack_require__(3);
+const ObjectSeller_1 = __webpack_require__(24);
 const Play_1 = __webpack_require__(0);
-const TextStyle_1 = __webpack_require__(9);
-const Pico8Colors_1 = __webpack_require__(3);
+const TextStyle_1 = __webpack_require__(10);
+const Pico8Colors_1 = __webpack_require__(2);
+const Gauge_1 = __webpack_require__(21);
 class HumanEmployer {
     constructor(worldKnowledge) {
         this.worldKnowledge = worldKnowledge;
@@ -4154,6 +4336,11 @@ class HumanEmployer {
         this.applicantButtons.forEach((applicant) => {
             applicant.create(game, groups, i);
             i++;
+        });
+    }
+    update() {
+        this.applicantButtons.forEach((applicantButton) => {
+            applicantButton.update();
         });
     }
     hide() {
@@ -4173,10 +4360,16 @@ class HumanEmployer {
         this.visible = true;
     }
     employ(applicant) {
+        this.cancel(applicant);
+        this.worldKnowledge.addEmployee(applicant.getHumanProperties());
+    }
+    cancel(applicant) {
         const index = this.applicantButtons.indexOf(applicant);
         this.applicantButtons[index] = new ApplicantButton(this, HumanPropertiesFactory_1.HumanPropertiesFactory.create(), this.worldKnowledge);
         this.applicantButtons[index].create(this.game, this.groups, index);
-        this.worldKnowledge.addEmployee(applicant.getHumanProperties());
+        if (!this.visible) {
+            this.applicantButtons[index].hide();
+        }
     }
 }
 exports.HumanEmployer = HumanEmployer;
@@ -4185,6 +4378,9 @@ class ApplicantButton {
         this.humanEmployer = humanEmployer;
         this.humanProperties = humanProperties;
         this.worldKnowledge = worldKnowledge;
+        this.availabilityTime = (45 + Math.random() * 45) * Phaser.Timer.SECOND;
+        this.remainingTime = this.availabilityTime;
+        this.remainingGauge = new Gauge_1.Gauge(ObjectSeller_1.OBJECT_SELLER_CELL_SIZE, Pico8Colors_1.COLOR.YELLOW, 5);
     }
     create(game, groups, index) {
         const left = app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH;
@@ -4202,43 +4398,63 @@ class ApplicantButton {
         this.sprite.events.onInputDown.add(this.click, this, 0);
         this.name = game.add.text(left + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE + 3, top, this.humanProperties.getName(), TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
         this.typeText = game.add.text(left + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE + 3, top + 8, this.humanProperties.getStrType(), TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.remainingGauge.create(game, groups, new PIXI.Point(left, top + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE - 5 - 0.5));
+        this.remainingGauge.setValue(1);
+        game.add.tween(this).to({
+            remainingTime: 0
+        }, this.availabilityTime, 'Linear', true);
     }
     hide() {
         this.sprite.position.x += UserInterface_1.INTERFACE_WIDTH;
         this.name.position.x += UserInterface_1.INTERFACE_WIDTH;
         this.typeText.position.x += UserInterface_1.INTERFACE_WIDTH;
         this.square.position.x += UserInterface_1.INTERFACE_WIDTH + 10;
+        this.remainingGauge.hide();
     }
     show() {
         this.sprite.position.x -= UserInterface_1.INTERFACE_WIDTH;
         this.name.position.x -= UserInterface_1.INTERFACE_WIDTH;
         this.typeText.position.x -= UserInterface_1.INTERFACE_WIDTH;
         this.square.position.x -= UserInterface_1.INTERFACE_WIDTH + 10;
+        this.remainingGauge.show();
     }
     click() {
-        this.sprite.destroy(true);
-        this.name.destroy(true);
-        this.typeText.destroy(true);
-        this.square.destroy(true);
+        this.destroy();
         this.humanEmployer.employ(this);
     }
     getHumanProperties() {
         return this.humanProperties;
     }
+    update() {
+        if (this.remainingTime <= 0) {
+            this.destroy();
+            this.humanEmployer.cancel(this);
+            return;
+        }
+        this.remainingGauge.setValue(this.remainingTime / this.availabilityTime);
+        this.remainingGauge.update();
+    }
+    destroy() {
+        this.sprite.destroy(true);
+        this.name.destroy(true);
+        this.typeText.destroy(true);
+        this.square.destroy(true);
+        this.remainingGauge.destroy(true);
+    }
 }
 
 
 /***/ }),
-/* 58 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const UserInterface_1 = __webpack_require__(6);
-const app_1 = __webpack_require__(2);
+const app_1 = __webpack_require__(3);
 const Play_1 = __webpack_require__(0);
-const Pico8Colors_1 = __webpack_require__(3);
+const Pico8Colors_1 = __webpack_require__(2);
 const HEIGHT = 80;
 const GRAPH_GAP = 2;
 class InfoPanel {
@@ -4281,91 +4497,6 @@ exports.InfoPanel = InfoPanel;
 
 
 /***/ }),
-/* 59 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const Play_1 = __webpack_require__(0);
-const UserInterface_1 = __webpack_require__(6);
-const app_1 = __webpack_require__(2);
-const HumanPropertiesFactory_1 = __webpack_require__(10);
-const Pico8Colors_1 = __webpack_require__(3);
-const BAR_HEIGHT = 10;
-const GAP = 3;
-const TOP = 12;
-class LevelDisplayer {
-    constructor(worldKnowledge) {
-        this.worldKnowledge = worldKnowledge;
-    }
-    create(game, groups) {
-        this.graphics = game.add.graphics(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH, TOP, groups[Play_1.GROUP_INTERFACE]);
-        this.update();
-    }
-    update() {
-        const width = Math.floor((UserInterface_1.INTERFACE_WIDTH - 4 * GAP) / 3);
-        this.graphics.clear();
-        [HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER, HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE, HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING].forEach((type, i) => {
-            this.graphics.lineStyle(0);
-            this.graphics.beginFill(Pico8Colors_1.COLOR.RED);
-            this.graphics.drawRect(GAP + i * (width + GAP), 0.5, width * this.worldKnowledge.getLevelProgress(type), BAR_HEIGHT);
-            this.graphics.endFill();
-            this.graphics.lineStyle(1, Pico8Colors_1.COLOR.WHITE);
-            this.graphics.drawRect(GAP + i * (width + GAP), 0.5, width, BAR_HEIGHT);
-        });
-    }
-}
-exports.LevelDisplayer = LevelDisplayer;
-
-
-/***/ }),
-/* 60 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const TextStyle_1 = __webpack_require__(9);
-const Play_1 = __webpack_require__(0);
-const Pico8Colors_1 = __webpack_require__(3);
-const app_1 = __webpack_require__(2);
-class Tooltip {
-    create(game, groups) {
-        this.game = game;
-        this.box = game.add.graphics(0, 0, groups[Play_1.GROUP_INTERFACE]);
-        this.text = game.add.text(0, 0, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
-    }
-    update() {
-        this.cursorPosition = new PIXI.Point(app_1.SCALE * Math.round(this.game.input.mousePointer.position.x / app_1.SCALE) + 0.5, app_1.SCALE * Math.round(this.game.input.mousePointer.position.y / app_1.SCALE) + 0.5);
-        this.text.x = this.cursorPosition.x + 6;
-        this.text.y = this.cursorPosition.y + 12;
-        this.updateBox();
-    }
-    setText(text) {
-        this.text.text = text;
-        this.updateBox();
-    }
-    show() {
-        this.text.alpha = 1;
-        this.box.alpha = 1;
-    }
-    hide() {
-        this.text.alpha = 0;
-        this.box.alpha = 0;
-        this.box.clear();
-    }
-    updateBox() {
-        this.box.clear();
-        this.box.beginFill(Pico8Colors_1.COLOR.BLACK);
-        this.box.lineStyle(1, Pico8Colors_1.COLOR.WHITE);
-        this.box.drawRect(this.cursorPosition.x + 4, this.cursorPosition.y + 13, this.text.width + 1, 8);
-    }
-}
-exports.Tooltip = Tooltip;
-
-
-/***/ }),
 /* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -4373,41 +4504,108 @@ exports.Tooltip = Tooltip;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const UserInterface_1 = __webpack_require__(6);
-const app_1 = __webpack_require__(2);
-const TextStyle_1 = __webpack_require__(9);
+const app_1 = __webpack_require__(3);
+const HumanPropertiesFactory_1 = __webpack_require__(12);
+const Pico8Colors_1 = __webpack_require__(2);
+const Gauge_1 = __webpack_require__(21);
+const Tooltip_1 = __webpack_require__(25);
+const GAP = 3;
+const TOP = 12;
+class LevelDisplayer {
+    constructor(worldKnowledge) {
+        this.worldKnowledge = worldKnowledge;
+        this.gauges = {};
+        this.tooltips = {};
+        const width = Math.floor((UserInterface_1.INTERFACE_WIDTH - 4 * GAP) / 3);
+        this.gauges[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER] = new Gauge_1.Gauge(width, Pico8Colors_1.COLOR.LIGHT_GREEN);
+        this.gauges[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE] = new Gauge_1.Gauge(width, Pico8Colors_1.COLOR.RED);
+        this.gauges[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING] = new Gauge_1.Gauge(width, Pico8Colors_1.COLOR.ROSE);
+        this.tooltips[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER] = new Tooltip_1.Tooltip(() => {
+            return Math.round(this.worldKnowledge.getLevelProgress(HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER) * 1000) + ' lines coded';
+        });
+        this.tooltips[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE] = new Tooltip_1.Tooltip(() => {
+            return Math.round(this.worldKnowledge.getLevelProgress(HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE) * 10) + ' licence sell';
+        });
+        this.tooltips[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING] = new Tooltip_1.Tooltip(() => {
+            return Math.round(this.worldKnowledge.getLevelProgress(HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING) * 10) + ' campaigns done';
+        });
+    }
+    create(game, groups) {
+        const width = Math.floor((UserInterface_1.INTERFACE_WIDTH - 4 * GAP) / 3);
+        for (let i = 0; i < Object.keys(this.gauges).length; i++) {
+            this.gauges[Object.keys(this.gauges)[i]].create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAP + (width + GAP) * i, TOP));
+        }
+        Object.keys(this.tooltips).forEach((employeeType) => {
+            this.tooltips[employeeType].create(game, groups);
+            this.tooltips[employeeType].setInput(this, this.gauges[parseInt(employeeType)].getGraphics());
+        });
+    }
+    update() {
+        Object.keys(this.gauges).forEach((employeeType) => {
+            this.gauges[employeeType].setValue(this.worldKnowledge.getLevelProgress(parseInt(employeeType)));
+            this.gauges[employeeType].update();
+        });
+        Object.keys(this.tooltips).forEach((employeeType) => {
+            this.tooltips[employeeType].update();
+        });
+    }
+}
+exports.LevelDisplayer = LevelDisplayer;
+
+
+/***/ }),
+/* 62 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const UserInterface_1 = __webpack_require__(6);
+const app_1 = __webpack_require__(3);
+const Play_1 = __webpack_require__(0);
+const TextStyle_1 = __webpack_require__(10);
 const HumanMoodManager_1 = __webpack_require__(19);
-const Camembert_1 = __webpack_require__(56);
+const Camembert_1 = __webpack_require__(58);
 const HumanStateManager_1 = __webpack_require__(1);
+const Gauge_1 = __webpack_require__(21);
+const Pico8Colors_1 = __webpack_require__(2);
 const HEIGHT = 80;
 const GRAPH_GAP = 2;
+const GAP_BETWEEN_LINES = 10;
+const GAUGE_GAP = 100;
 class UserInfoPanel {
     constructor(worldKnowledge) {
         this.worldKnowledge = worldKnowledge;
         this.visible = true;
         this.camembert = new Camembert_1.Camembert();
+        const gaugeWidth = UserInterface_1.INTERFACE_WIDTH - GAUGE_GAP - GRAPH_GAP;
+        this.moodRelaxationGauge = new Gauge_1.Gauge(gaugeWidth, Pico8Colors_1.COLOR.WHITE, 8);
+        this.moodHungerGauge = new Gauge_1.Gauge(gaugeWidth, Pico8Colors_1.COLOR.WHITE, 8);
+        this.moodSocialGauge = new Gauge_1.Gauge(gaugeWidth, Pico8Colors_1.COLOR.WHITE, 8);
     }
     create(game, groups) {
         const left = app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GRAPH_GAP;
-        const top = UserInterface_1.TOP_GAP;
-        const gap = 10;
-        this.employeeName = game.add.text(left, top, '', TextStyle_1.TEXT_STYLE);
-        this.moodRelaxationText = game.add.text(left, top + gap, 'Relax', TextStyle_1.TEXT_STYLE);
-        this.moodHungerText = game.add.text(left, top + 2 * gap, 'Hunger', TextStyle_1.TEXT_STYLE);
-        this.moodSocialText = game.add.text(left, top + 3 * gap, 'Social', TextStyle_1.TEXT_STYLE);
-        this.currentState = game.add.text(left, top + 4 * gap, '', TextStyle_1.TEXT_STYLE);
+        this.employeeName = game.add.text(left, UserInterface_1.TOP_GAP, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.moodRelaxationText = game.add.text(left, UserInterface_1.TOP_GAP + GAP_BETWEEN_LINES, 'Relax', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.moodHungerText = game.add.text(left, UserInterface_1.TOP_GAP + 2 * GAP_BETWEEN_LINES, 'Hunger', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.moodSocialText = game.add.text(left, UserInterface_1.TOP_GAP + 3 * GAP_BETWEEN_LINES, 'Social', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.currentState = game.add.text(left, UserInterface_1.TOP_GAP + 4 * GAP_BETWEEN_LINES, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
         this.camembert.create(game, groups);
+        this.moodRelaxationGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + GAP_BETWEEN_LINES - 3.5));
+        this.moodHungerGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + 2 * GAP_BETWEEN_LINES - 3.5));
+        this.moodSocialGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + 3 * GAP_BETWEEN_LINES - 3.5));
     }
     update() {
         if (this.human) {
-            this.moodRelaxationText.setText('Relax  ' + UserInfoPanel.getPercentageStr(this.human.getMood(HumanMoodManager_1.MOOD.RELAXATION)));
-            this.moodHungerText.setText('Hunger ' + UserInfoPanel.getPercentageStr(this.human.getMood(HumanMoodManager_1.MOOD.HUNGER)));
-            this.moodSocialText.setText('Social ' + UserInfoPanel.getPercentageStr(this.human.getMood(HumanMoodManager_1.MOOD.SOCIAL)));
+            this.moodRelaxationGauge.setValue(this.human.getMood(HumanMoodManager_1.MOOD.RELAXATION));
+            this.moodHungerGauge.setValue(this.human.getMood(HumanMoodManager_1.MOOD.HUNGER));
+            this.moodSocialGauge.setValue(this.human.getMood(HumanMoodManager_1.MOOD.SOCIAL));
+            this.moodRelaxationGauge.update();
+            this.moodHungerGauge.update();
+            this.moodSocialGauge.update();
             this.camembert.update();
             this.currentState.setText('State: ' + HumanStateManager_1.HumanStateManager.getStr(this.human.getState()));
         }
-    }
-    static getPercentageStr(percentage) {
-        return Math.round(percentage * 100) + '%';
     }
     show() {
         if (!this.visible) {
@@ -4417,6 +4615,9 @@ class UserInfoPanel {
             this.moodHungerText.position.x -= UserInterface_1.INTERFACE_WIDTH;
             this.moodSocialText.position.x -= UserInterface_1.INTERFACE_WIDTH;
             this.currentState.position.x -= UserInterface_1.INTERFACE_WIDTH;
+            this.moodRelaxationGauge.show();
+            this.moodHungerGauge.show();
+            this.moodSocialGauge.show();
         }
         this.visible = true;
     }
@@ -4428,6 +4629,9 @@ class UserInfoPanel {
             this.moodHungerText.position.x += UserInterface_1.INTERFACE_WIDTH;
             this.moodSocialText.position.x += UserInterface_1.INTERFACE_WIDTH;
             this.currentState.position.x += UserInterface_1.INTERFACE_WIDTH;
+            this.moodRelaxationGauge.hide();
+            this.moodHungerGauge.hide();
+            this.moodSocialGauge.hide();
         }
         this.visible = false;
     }
@@ -4441,10 +4645,10 @@ exports.UserInfoPanel = UserInfoPanel;
 
 
 /***/ }),
-/* 62 */
+/* 63 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(2);
+module.exports = __webpack_require__(3);
 
 
 /***/ })

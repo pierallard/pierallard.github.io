@@ -7,6 +7,7 @@ const ObjectSeller_1 = require("./ObjectSeller");
 const Play_1 = require("../game_state/Play");
 const TextStyle_1 = require("../TextStyle");
 const Pico8Colors_1 = require("../Pico8Colors");
+const Gauge_1 = require("./Gauge");
 class HumanEmployer {
     constructor(worldKnowledge) {
         this.worldKnowledge = worldKnowledge;
@@ -23,6 +24,11 @@ class HumanEmployer {
         this.applicantButtons.forEach((applicant) => {
             applicant.create(game, groups, i);
             i++;
+        });
+    }
+    update() {
+        this.applicantButtons.forEach((applicantButton) => {
+            applicantButton.update();
         });
     }
     hide() {
@@ -42,10 +48,16 @@ class HumanEmployer {
         this.visible = true;
     }
     employ(applicant) {
+        this.cancel(applicant);
+        this.worldKnowledge.addEmployee(applicant.getHumanProperties());
+    }
+    cancel(applicant) {
         const index = this.applicantButtons.indexOf(applicant);
         this.applicantButtons[index] = new ApplicantButton(this, HumanPropertiesFactory_1.HumanPropertiesFactory.create(), this.worldKnowledge);
         this.applicantButtons[index].create(this.game, this.groups, index);
-        this.worldKnowledge.addEmployee(applicant.getHumanProperties());
+        if (!this.visible) {
+            this.applicantButtons[index].hide();
+        }
     }
 }
 exports.HumanEmployer = HumanEmployer;
@@ -54,6 +66,9 @@ class ApplicantButton {
         this.humanEmployer = humanEmployer;
         this.humanProperties = humanProperties;
         this.worldKnowledge = worldKnowledge;
+        this.availabilityTime = (45 + Math.random() * 45) * Phaser.Timer.SECOND;
+        this.remainingTime = this.availabilityTime;
+        this.remainingGauge = new Gauge_1.Gauge(ObjectSeller_1.OBJECT_SELLER_CELL_SIZE, Pico8Colors_1.COLOR.YELLOW, 5);
     }
     create(game, groups, index) {
         const left = app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH;
@@ -71,28 +86,48 @@ class ApplicantButton {
         this.sprite.events.onInputDown.add(this.click, this, 0);
         this.name = game.add.text(left + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE + 3, top, this.humanProperties.getName(), TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
         this.typeText = game.add.text(left + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE + 3, top + 8, this.humanProperties.getStrType(), TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.remainingGauge.create(game, groups, new PIXI.Point(left, top + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE - 5 - 0.5));
+        this.remainingGauge.setValue(1);
+        game.add.tween(this).to({
+            remainingTime: 0
+        }, this.availabilityTime, 'Linear', true);
     }
     hide() {
         this.sprite.position.x += UserInterface_1.INTERFACE_WIDTH;
         this.name.position.x += UserInterface_1.INTERFACE_WIDTH;
         this.typeText.position.x += UserInterface_1.INTERFACE_WIDTH;
         this.square.position.x += UserInterface_1.INTERFACE_WIDTH + 10;
+        this.remainingGauge.hide();
     }
     show() {
         this.sprite.position.x -= UserInterface_1.INTERFACE_WIDTH;
         this.name.position.x -= UserInterface_1.INTERFACE_WIDTH;
         this.typeText.position.x -= UserInterface_1.INTERFACE_WIDTH;
         this.square.position.x -= UserInterface_1.INTERFACE_WIDTH + 10;
+        this.remainingGauge.show();
     }
     click() {
-        this.sprite.destroy(true);
-        this.name.destroy(true);
-        this.typeText.destroy(true);
-        this.square.destroy(true);
+        this.destroy();
         this.humanEmployer.employ(this);
     }
     getHumanProperties() {
         return this.humanProperties;
+    }
+    update() {
+        if (this.remainingTime <= 0) {
+            this.destroy();
+            this.humanEmployer.cancel(this);
+            return;
+        }
+        this.remainingGauge.setValue(this.remainingTime / this.availabilityTime);
+        this.remainingGauge.update();
+    }
+    destroy() {
+        this.sprite.destroy(true);
+        this.name.destroy(true);
+        this.typeText.destroy(true);
+        this.square.destroy(true);
+        this.remainingGauge.destroy(true);
     }
 }
 //# sourceMappingURL=HumanEmployer.js.map

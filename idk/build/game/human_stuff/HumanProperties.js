@@ -1,20 +1,24 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanPropertiesFactory_1 = require("./HumanPropertiesFactory");
+const Price_1 = require("../objects/Price");
+const MAX_WAGE = 50;
+const MIN_WAGE = 10;
 class HumanProperties {
-    constructor(type, name, salary, speed, quality, perseverance) {
+    constructor(spriteVariation, type, name, speed, quality, perseverance) {
+        this.spriteVariation = spriteVariation;
         this.type = type;
         this.name = name;
-        this.salary = salary;
         this.speed = speed;
         this.quality = quality;
         this.perseverance = perseverance;
+        this.wage = this.computeWage();
     }
     getSpriteKey() {
         switch (this.type) {
-            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER: return 'human';
-            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING: return 'human_pink';
-            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE: return 'human_red';
+            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER: return this.spriteVariation + '_green';
+            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING: return this.spriteVariation + '_pink';
+            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE: return this.spriteVariation + '_red';
         }
     }
     getName() {
@@ -35,6 +39,18 @@ class HumanProperties {
     }
     getType() {
         return this.type;
+    }
+    getWage() {
+        return this.wage;
+    }
+    getQuality() {
+        return this.quality;
+    }
+    computeWage() {
+        return (this.speed + this.perseverance + 2 * this.quality) / 4;
+    }
+    getRealWage() {
+        return new Price_1.Price(-(MIN_WAGE + this.wage * (MAX_WAGE - MIN_WAGE)));
     }
 }
 exports.HumanProperties = HumanProperties;

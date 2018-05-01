@@ -7,16 +7,20 @@ class RageState extends AbstractState_1.AbstractState {
     constructor(human, rageImage) {
         super(human);
         this.rageImage = rageImage;
+        this.isRaging = false;
     }
-    start(game) {
-        super.start(game);
-        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.RAGE);
-        this.human.showThoughtBubble(this.rageImage);
-        this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.RAGE), () => {
-            this.active = false;
-            this.human.hideThoughtBubble();
-        }, this));
-        return true;
+    getNextState() {
+        if (!this.isRaging && !this.human.isMoving()) {
+            this.isRaging = true;
+            this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.RAGE);
+            this.human.updateMoodFromState();
+            this.human.showThoughtBubble(this.rageImage);
+            this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.RAGE), () => {
+                this.active = false;
+                this.human.hideThoughtBubble();
+            }, this));
+        }
+        return super.getNextState();
     }
     getState() {
         return HumanStateManager_1.STATE.RAGE;

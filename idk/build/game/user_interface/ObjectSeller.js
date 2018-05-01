@@ -2,24 +2,26 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const UserInterface_1 = require("./UserInterface");
 const app_1 = require("../../app");
-const ObjectInfoRegistry_1 = require("../objects/ObjectInfoRegistry");
+const ObjectDescriptionRegistry_1 = require("../objects/ObjectDescriptionRegistry");
 const ObjectPhantom_1 = require("../objects/ObjectPhantom");
 const Play_1 = require("../game_state/Play");
 const TextStyle_1 = require("../TextStyle");
 const PositionTransformer_1 = require("../PositionTransformer");
 const Pico8Colors_1 = require("../Pico8Colors");
+const ObjectOrientation_1 = require("../objects/ObjectOrientation");
 exports.OBJECT_SELLER_CELL_SIZE = 41;
 const CIRCLE_GAP = 7;
 class ObjectSeller {
     constructor(worldKnowledge) {
         this.worldKnowledge = worldKnowledge;
         this.visible = true;
-        this.objectProvisionnerButtons = ObjectInfoRegistry_1.ObjectInfoRegistry
-            .getSellableObjects()
-            .map((object) => new ObjectProvisionnerButton(object, this.worldKnowledge));
-        this.sellerButtons = ObjectInfoRegistry_1.ObjectInfoRegistry
-            .getSellableObjects()
+        this.objectProvisionnerButtons = ObjectDescriptionRegistry_1.ObjectDescriptionRegistry
+            .getSalableObjects()
+            .map((object) => new ObjectProvisionnerButton(this, object, this.worldKnowledge));
+        this.sellerButtons = ObjectDescriptionRegistry_1.ObjectDescriptionRegistry
+            .getSalableObjects()
             .map((object) => new SellerButton(object, this.worldKnowledge));
+        this.currentPhantom = null;
     }
     create(game, groups) {
         let i = 0;
@@ -66,6 +68,15 @@ class ObjectSeller {
         }
         this.visible = true;
     }
+    setCurrentPhantom(phantom) {
+        this.currentPhantom = phantom;
+    }
+    removeCurrentPhantom() {
+        this.currentPhantom = null;
+    }
+    getCurrentPhantom() {
+        return this.currentPhantom;
+    }
 }
 exports.ObjectSeller = ObjectSeller;
 class SellerButton {
@@ -92,7 +103,7 @@ class SellerButton {
             this.button.loadTexture(this.button.key, 1);
         }
         else {
-            if (this.objectInfo.isSellable(this.worldKnowledge.getMoneyInWallet())) {
+            if (this.objectInfo.isSalable(this.worldKnowledge.getMoneyInWallet())) {
                 this.button.loadTexture(this.button.key, 0);
             }
             else {
@@ -101,7 +112,7 @@ class SellerButton {
         }
     }
     buy() {
-        if (this.objectInfo.isSellable(this.worldKnowledge.getMoneyInWallet())) {
+        if (this.objectInfo.isSalable(this.worldKnowledge.getMoneyInWallet())) {
             this.isDown = true;
             this.worldKnowledge.buy(this.objectInfo.getName(), this.objectInfo.getPrice());
         }
@@ -119,7 +130,8 @@ class SellerButton {
     }
 }
 class ObjectProvisionnerButton {
-    constructor(objectInfo, worldKnowledge) {
+    constructor(objectSeller, objectInfo, worldKnowledge) {
+        this.objectSeller = objectSeller;
         this.objectInfo = objectInfo;
         this.worldKnowledge = worldKnowledge;
         this.sprites = [];
@@ -131,23 +143,31 @@ class ObjectProvisionnerButton {
         const spriteOrigin = new PIXI.Point(left + exports.OBJECT_SELLER_CELL_SIZE / 2, top + exports.OBJECT_SELLER_CELL_SIZE);
         let width = 1;
         let height = 1;
-        this.objectInfo.getCellGaps(false).forEach((gap) => {
+        this.objectInfo.getUniqueCellOffsets(ObjectOrientation_1.DIRECTION_LOOP[0]).forEach((gap) => {
             width = Math.max(width, 1 + gap.x);
             height = Math.max(height, 1 + gap.y);
         });
         const scale = 2 / (width + height);
+        if (height !== width) {
+            // TODO, works not for every case.
+            spriteOrigin.x = left + exports.OBJECT_SELLER_CELL_SIZE / (height + width) * (1);
+            // W = 1 H = 2 => 1/3 1 - 2 = -1
+            // W = 1 H = 1 => 1/2 1 - 1 = 0
+            // W = 2 H = 1 => 2/3 2 - 1 = 1
+            // Change sprite Origin
+        }
         this.square = game.add.graphics(left, UserInterface_1.TOP_GAP + index * exports.OBJECT_SELLER_CELL_SIZE, groups[Play_1.GROUP_INTERFACE]);
         this.square.lineStyle(1, Pico8Colors_1.COLOR.WHITE);
         this.square.drawRect(0, 0, exports.OBJECT_SELLER_CELL_SIZE, exports.OBJECT_SELLER_CELL_SIZE);
-        this.objectInfo.getCellGaps(false).forEach((cellGap) => {
+        this.objectInfo.getUniqueCellOffsets(ObjectOrientation_1.DIRECTION_LOOP[0]).forEach((cellGap) => {
             const fakeCell = game.add.sprite(spriteOrigin.x - (cellGap.x - cellGap.y) * (PositionTransformer_1.CELL_WIDTH / 2) * scale, spriteOrigin.y - (cellGap.x + cellGap.y) * (PositionTransformer_1.CELL_HEIGHT / 2) * scale, 'casedefault');
             fakeCell.scale.set(scale, scale);
             fakeCell.anchor.set(0.5, 1);
             groups[Play_1.GROUP_INTERFACE].add(fakeCell);
             this.fakeCells.push(fakeCell);
         });
-        this.objectInfo.getSpriteInfos().forEach((spriteInfo) => {
-            const seller = game.add.sprite(spriteInfo.getRealPositionFromOrigin(spriteOrigin, false, scale).x, spriteInfo.getRealPositionFromOrigin(spriteOrigin, false, scale).y, spriteInfo.getSpriteName());
+        this.objectInfo.getSpriteInfos(ObjectOrientation_1.DIRECTION_LOOP[0]).forEach((spriteInfo) => {
+            const seller = game.add.sprite(spriteInfo.getRealPositionFromOrigin(spriteOrigin, ObjectOrientation_1.DIRECTION_LOOP[0], scale).x, spriteInfo.getRealPositionFromOrigin(spriteOrigin, ObjectOrientation_1.DIRECTION_LOOP[0], scale).y, spriteInfo.getSpriteKey());
             seller.scale.set(scale, scale);
             seller.anchor.set(spriteInfo.getAnchor(seller).x, spriteInfo.getAnchor(seller).y);
             seller.inputEnabled = true;
@@ -177,10 +197,18 @@ class ObjectProvisionnerButton {
         this.counter.position.x -= diff * 3;
     }
     createPhantom(sprite, pointer, game, groups) {
+        if (this.objectSeller.getCurrentPhantom() && this.objectSeller.getCurrentPhantom().getName() === this.objectInfo.getName()) {
+            this.objectSeller.getCurrentPhantom().cancel(game);
+            return;
+        }
+        if (this.objectSeller.getCurrentPhantom() && this.objectSeller.getCurrentPhantom().getName() !== this.objectInfo.getName()) {
+            this.objectSeller.getCurrentPhantom().cancel(game);
+        }
         if (this.worldKnowledge.getDepot().getCount(this.objectInfo.getName()) > 0) {
             this.worldKnowledge.getDepot().remove(this.objectInfo.getName());
-            const phantom = new ObjectPhantom_1.ObjectPhantom(this.objectInfo.getName(), game, this.worldKnowledge);
+            const phantom = new ObjectPhantom_1.ObjectPhantom(this.objectSeller, this.objectInfo.getName(), game, this.worldKnowledge);
             phantom.create(game, groups);
+            this.objectSeller.setCurrentPhantom(phantom);
         }
     }
     hide() {

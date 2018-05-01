@@ -28,31 +28,32 @@ class UserInterface {
         this.userInfoPanel = new UserInfoPanel_1.UserInfoPanel(worldKnowledge);
         this.levelDisplayer = new LevelDisplayer_1.LevelDisplayer(worldKnowledge);
         this.buttons = [];
+        let i = 0;
+        [['info', PANEL.INFO], ['usr', PANEL.USR], ['obj', PANEL.OBJ]].forEach((panelInfo) => {
+            this.buttons.push(new InterfaceTab(this, i, panelInfo[0], panelInfo[1]));
+            i++;
+        });
         this.selectedPanel = PANEL.OBJ;
     }
     create(game, groups) {
         const interfaceGroup = groups[Play_1.GROUP_INTERFACE];
         this.backgroundGraphics = game.add.graphics(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH, 0, interfaceGroup);
+        this.backgroundGraphics.beginFill(Pico8Colors_1.COLOR.BLACK);
+        this.backgroundGraphics.drawRect(-0.5, 0, exports.INTERFACE_WIDTH, exports.TOP_GAP_2);
         this.backgroundGraphics.beginFill(Pico8Colors_1.COLOR.DARK_BLUE);
-        this.backgroundGraphics.drawRect(-0.5, 0, exports.INTERFACE_WIDTH, app_1.CAMERA_HEIGHT_PIXELS);
+        this.backgroundGraphics.drawRect(-0.5, exports.TOP_GAP_2, exports.INTERFACE_WIDTH, app_1.CAMERA_HEIGHT_PIXELS - exports.TOP_GAP_2);
         interfaceGroup.add(this.backgroundGraphics);
         this.objectSeller.create(game, groups);
         this.humanEmployer.create(game, groups);
         this.infoPanel.create(game, groups);
         this.userInfoPanel.create(game, groups);
         this.levelDisplayer.create(game, groups);
-        const buttonWidth = exports.INTERFACE_WIDTH / 3;
-        this.moneyCounter = game.add.text(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH + 2, 0, this.worldKnowledge.getMoneyInWallet().getStringValue(), TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
-        let i = 0;
-        [['info', PANEL.INFO], ['usr', PANEL.USR], ['obj', PANEL.OBJ]].forEach((panelInfo) => {
-            const button = game.add.text(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH + i * buttonWidth, exports.TOP_GAP_2, panelInfo[0], TextStyle_1.TEXT_STYLE, interfaceGroup);
-            button.inputEnabled = true;
-            button.input.useHandCursor = true;
-            button.events.onInputDown.add(() => {
-                this.selectPanel(panelInfo[1]);
-            });
-            this.buttons.push(button);
-            i++;
+        this.levelText = game.add.text(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH + 2, 0, 'Lvl 1', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.moneyCounter = game.add.text(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH + 2 + 50, 0, this.worldKnowledge.getMoneyInWallet().getStringValue(), TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        const backgroundTabs = game.add.sprite(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH, exports.TOP_GAP_2, 'interfacetabs', 2, groups[Play_1.GROUP_INTERFACE]);
+        backgroundTabs.scale.set(10, 1);
+        this.buttons.forEach((button) => {
+            button.create(game, groups);
         });
         this.selectPanel(PANEL.INFO);
     }
@@ -63,6 +64,7 @@ class UserInterface {
         this.userInfoPanel.update();
         this.humanEmployer.update();
         this.moneyCounter.setText(this.worldKnowledge.getMoneyInWallet().getStringValue());
+        this.levelText.setText('Lvl ' + this.worldKnowledge.getLevel());
     }
     selectPanel(panel) {
         if (this.selectedPanel === panel) {
@@ -75,6 +77,7 @@ class UserInterface {
             this.infoPanel.show();
             this.userInfoPanel.hide();
             this.worldKnowledge.unselectHuman(false);
+            this.highlightButton(PANEL.INFO);
         }
         else if (this.selectedPanel === PANEL.USR) {
             this.objectSeller.hide();
@@ -82,6 +85,7 @@ class UserInterface {
             this.infoPanel.hide();
             this.userInfoPanel.hide();
             this.worldKnowledge.unselectHuman(false);
+            this.highlightButton(PANEL.USR);
         }
         else if (this.selectedPanel === PANEL.OBJ) {
             this.objectSeller.show();
@@ -89,18 +93,48 @@ class UserInterface {
             this.infoPanel.hide();
             this.userInfoPanel.hide();
             this.worldKnowledge.unselectHuman(false);
+            this.highlightButton(PANEL.OBJ);
         }
         else if (this.selectedPanel === PANEL.USER_INFO) {
             this.objectSeller.hide();
             this.humanEmployer.hide();
             this.infoPanel.hide();
             this.userInfoPanel.show();
+            this.highlightButton(PANEL.INFO);
         }
     }
     setSelectedHuman(param) {
         this.selectPanel(PANEL.USER_INFO);
         this.userInfoPanel.showEmployeeInfoPanelForYohan(param);
     }
+    highlightButton(panel) {
+        this.buttons.forEach((button) => {
+            button.highlight(button.getPanel() === panel);
+        });
+    }
 }
 exports.UserInterface = UserInterface;
+class InterfaceTab {
+    constructor(userInterface, i, text, panel) {
+        this.position = new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH + i * (28 + 5), exports.TOP_GAP_2);
+        this.text = text;
+        this.panel = panel;
+        this.userInterface = userInterface;
+    }
+    create(game, groups) {
+        this.buttonSprite = game.add.sprite(this.position.x, this.position.y, 'interfacetabs', 0, groups[Play_1.GROUP_INTERFACE]);
+        this.buttonText = game.add.text(this.position.x + 4, this.position.y, this.text, TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.buttonSprite.inputEnabled = true;
+        this.buttonSprite.input.useHandCursor = true;
+        this.buttonSprite.events.onInputDown.add(() => {
+            this.userInterface.selectPanel(this.panel);
+        });
+    }
+    getPanel() {
+        return this.panel;
+    }
+    highlight(value) {
+        this.buttonSprite.loadTexture('interfacetabs', value ? 1 : 0);
+    }
+}
 //# sourceMappingURL=UserInterface.js.map

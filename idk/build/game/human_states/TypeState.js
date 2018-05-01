@@ -4,8 +4,8 @@ const HumanAnimationManager_1 = require("../human_stuff/HumanAnimationManager");
 const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
 const RageState_1 = require("./RageState");
 const MoveThenActAbstractState_1 = require("./MoveThenActAbstractState");
-const Price_1 = require("../objects/Price");
 const ThoughtBubble_1 = require("../human_stuff/ThoughtBubble");
+const SECOND_MAX = 60 * Phaser.Timer.SECOND;
 class TypeState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
     retry() {
         const nextDeskReferer = this.worldKnowledge.getClosestReferer(['Desk'], 1, this.human.getPosition());
@@ -19,12 +19,12 @@ class TypeState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
         }
     }
     act() {
-        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN, this.objectReferer.getObject().forceOrientation(this.objectReferer.getIdentifier()));
+        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN, this.objectReferer.getObject().forceLeftOrientation(this.objectReferer.getIdentifier()));
         this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SIT_DOWN), () => {
-            this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.TYPE);
-            this.worldKnowledge.addProgress(this.human.getType(), 1);
-            this.worldKnowledge.addMoneyInWallet(new Price_1.Price(100));
-            this.events.push(this.game.time.events.add(Phaser.Math.random(15, 60) * Phaser.Timer.SECOND, () => {
+            this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.TYPE, this.objectReferer.forceLeftOrientation(), this.objectReferer.forceTopOrientation());
+            const time = Phaser.Math.random(15 * Phaser.Timer.SECOND, SECOND_MAX);
+            this.worldKnowledge.addProgress(this.human.getType(), time / SECOND_MAX, time);
+            this.events.push(this.game.time.events.add(time, () => {
                 this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.STAND_UP);
                 this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.STAND_UP) + 100, () => {
                     this.human.goToFreeCell(this.objectReferer);

@@ -13,11 +13,15 @@ const Depot_1 = require("./objects/Depot");
 const Direction_1 = require("./Direction");
 const MoodRegister_1 = require("./human_stuff/MoodRegister");
 const Table_1 = require("./objects/Table");
-const LevelManager_1 = require("./LevelManager");
+const LevelManager_1 = require("./user_interface/LevelManager");
+const HumanPropertiesFactory_1 = require("./human_stuff/HumanPropertiesFactory");
 const Price_1 = require("./objects/Price");
-const ObjectInfoRegistry_1 = require("./objects/ObjectInfoRegistry");
+const ObjectDescriptionRegistry_1 = require("./objects/ObjectDescriptionRegistry");
 const SmoothValue_1 = require("./SmoothValue");
 const UserInterface_1 = require("./user_interface/UserInterface");
+const ObjectOrientation_1 = require("./objects/ObjectOrientation");
+const Couch_1 = require("./objects/Couch");
+const EmployeeCountRegister_1 = require("./human_stuff/EmployeeCountRegister");
 exports.GRID_WIDTH = 16;
 exports.GRID_HEIGHT = 16;
 exports.DEBUG_WORLD = false;
@@ -33,13 +37,13 @@ class WorldKnowledge {
         this.wallRepository = new WallRepository_1.WallRepository();
         this.levelManager = new LevelManager_1.LevelManager();
         this.depot = new Depot_1.Depot();
-        this.wallet = new SmoothValue_1.SmoothValue(130);
+        this.wallet = new SmoothValue_1.SmoothValue(1500);
         if (exports.DEBUG_WORLD) {
             this.wallRepository.addWall(new PIXI.Point(5, 5));
             this.wallRepository.addWall(new PIXI.Point(6, 5));
-            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 5), this, false));
-            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 6), this, false));
-            this.objects.push(new Dispenser_1.Dispenser(new PIXI.Point(5, 4), this, false));
+            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 5), this, ObjectOrientation_1.DIRECTION_LOOP[0]));
+            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 6), this, ObjectOrientation_1.DIRECTION_LOOP[0]));
+            this.objects.push(new Dispenser_1.Dispenser(new PIXI.Point(5, 4), this, ObjectOrientation_1.DIRECTION_LOOP[0]));
         }
         else {
             for (let x = 0; x < exports.GRID_WIDTH; x++) {
@@ -67,6 +71,7 @@ class WorldKnowledge {
         }
         this.humanRepository = new HumanRepository_1.HumanRepository(this);
         this.moodRegister = new MoodRegister_1.MoodRegister(this.humanRepository);
+        this.employeeCountRegister = new EmployeeCountRegister_1.EmployeeCountRegister(this.humanRepository);
     }
     create(game, groups) {
         this.game = game;
@@ -82,10 +87,13 @@ class WorldKnowledge {
         this.wallRepository.create(game, noname);
         this.humanRepository.create(game, groups, this);
         this.moodRegister.create(game);
+        this.employeeCountRegister.create(game);
     }
     update() {
         this.humanRepository.update();
-        this.levelManager.update();
+        if (this.levelManager.update()) {
+            this.addMoneyInWallet(this.levelManager.getEarnedMoney());
+        }
     }
     humanMoved(positions) {
         const walls = this.wallRepository.getWalls();
@@ -116,9 +124,6 @@ class WorldKnowledge {
     }
     getMoneyInWallet() {
         return new Price_1.Price(this.wallet.getValue());
-    }
-    getSelectedHumanSprite() {
-        return this.humanRepository.getSelectedHumanSprite();
     }
     resetAStar(position) {
         this.humanRepository.humans.forEach((human) => {
@@ -266,82 +271,75 @@ class WorldKnowledge {
         this.depot.add(objectName);
         this.wallet.add(-price.getValue());
     }
-    canPutHere(objectInfo, origin, leftOriented) {
-        return this.areAllTheCellsFree(objectInfo, origin, leftOriented) &&
-            this.areAllSpritesEnterable(objectInfo, origin, leftOriented) &&
-            this.isNewObjectNotBlockingExistingOne(objectInfo, origin, leftOriented);
+    canPutHere(objectInfo, origin, orientation) {
+        return this.areAllTheCellsFree(objectInfo, origin, orientation) &&
+            this.areAllSpritesEnterable(objectInfo, origin, orientation) &&
+            this.isNewObjectNotBlockingExistingOne(origin);
     }
     ;
-    areAllTheCellsFree(objectInfo, origin, leftOriented) {
-        for (let i = 0; i < objectInfo.getSpriteInfos().length; i++) {
-            const spriteInfo = objectInfo.getSpriteInfo(i);
-            const gap = spriteInfo.getPositionGapFromOrigin(leftOriented);
+    areAllTheCellsFree(objectInfo, origin, orientation) {
+        for (let i = 0; i < objectInfo.getSpriteInfos(orientation).length; i++) {
+            const spriteInfo = objectInfo.getSpriteInfo(orientation, i);
+            const gap = spriteInfo.getCellOffset(orientation);
             if (!this.isFree(new PIXI.Point(origin.x + gap.x, origin.y + gap.y))) {
                 return false;
             }
         }
         return true;
     }
-    areAllSpritesEnterable(objectInfo, origin, leftOriented) {
-        for (let i = 0; i < objectInfo.getSpriteInfos().length; i++) {
-            const spriteInfo = objectInfo.getSpriteInfo(i);
-            if (spriteInfo.getEntryPoints(leftOriented).length > 0) {
-                let isEntryPossible = false;
-                spriteInfo.getEntryPoints(leftOriented).forEach((entry) => {
-                    const gap = spriteInfo.getPositionGapFromOrigin(leftOriented);
-                    isEntryPossible = isEntryPossible || this.isEntryAccessibleForObject(origin, gap, entry);
-                });
-                if (isEntryPossible === false) {
-                    return false;
-                }
+    areAllSpritesEnterable(objectInfo, origin, orientation) {
+        for (let i = 0; i < objectInfo.getInteractivePoints(orientation).length; i++) {
+            const interactivePoint = objectInfo.getInteractivePoints(orientation)[i];
+            let isEntryPossible = false;
+            interactivePoint.getEntryPoints(orientation).forEach((entry) => {
+                const gap = interactivePoint.getCellOffset(orientation);
+                isEntryPossible = isEntryPossible || this.isEntryAccessibleForObject(origin, gap, entry);
+            });
+            if (isEntryPossible === false) {
+                return false;
             }
         }
         return true;
     }
-    isNewObjectNotBlockingExistingOne(objectInfo, origin, leftOriented) {
-        const newObjectCells = objectInfo.getCellGaps(leftOriented).map((gap) => {
-            return new PIXI.Point(origin.x + gap.x, origin.y + gap.y);
-        });
-        this.objects.forEach((object) => {
-            const otherObjectInfo = ObjectInfoRegistry_1.ObjectInfoRegistry.getObjectInfo(object.constructor.name);
+    isNewObjectNotBlockingExistingOne(origin) {
+        for (let o = 0; o < this.objects.length; o++) {
+            /* TODO This method is buggy, it does not take account every entry points. I have to parse sprite by sprite
+             * and check it's not blocking for every sprite, instead of looking if there is a unique entry point.
+             */
+            const object = this.objects[o];
+            const objectInfo = ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getObjectDescription(object.constructor.name);
             let isEntryPossible = false;
-            otherObjectInfo.getEntryCells(object.getOrigin(), leftOriented).forEach((cell) => {
-                if (this.isFree(cell)) {
-                    let isCellBlocking = false;
-                    newObjectCells.forEach((newObjectCell) => {
-                        if (cell.x === newObjectCell.x && cell.y === newObjectCell.y) {
-                            isCellBlocking = true;
-                        }
-                    });
-                    if (!isCellBlocking) {
-                        isEntryPossible = true;
-                    }
-                }
-            });
-            if (!isEntryPossible) {
+            const entryCells = objectInfo.getEntryCells(object.getOrigin(), object.getOrientation());
+            for (let i = 0; i < entryCells.length; i++) {
+                isEntryPossible = isEntryPossible || (this.isFree(entryCells[i]) && (entryCells[i].x !== origin.x || entryCells[i].y !== origin.y));
+            }
+            if (isEntryPossible === false) {
                 return false;
             }
-        });
+        }
         return true;
     }
     isEntryAccessibleForObject(origin, gap, entry) {
         const gappedPosition = new PIXI.Point(origin.x + gap.x, origin.y + gap.y);
         return this.isFree(Direction_1.Direction.getNeighbor(gappedPosition, entry));
     }
-    add(name, position, leftOriented) {
+    add(name, position, orientation) {
         let object = null;
         switch (name) {
             case 'Desk':
-                object = new Desk_1.Desk(position, this, leftOriented);
+                object = new Desk_1.Desk(position, this, orientation);
                 break;
             case 'Sofa':
-                object = new Sofa_1.Sofa(position, this, leftOriented);
+                object = new Sofa_1.Sofa(position, this, orientation);
                 break;
             case 'Dispenser':
-                object = new Dispenser_1.Dispenser(position, this, leftOriented);
+                object = new Dispenser_1.Dispenser(position, this, orientation);
                 break;
             case 'Table':
-                object = new Table_1.Table(position, this, leftOriented);
+                object = new Table_1.Table(position, this, orientation);
+                break;
+            case 'Couch':
+                object = new Couch_1.Couch(position, this, orientation);
                 break;
             default: throw 'Unknown object ' + name;
         }
@@ -363,11 +361,14 @@ class WorldKnowledge {
     getLevelProgress(type) {
         return this.levelManager.getLevelProgress(type);
     }
-    addProgress(type, value) {
-        this.levelManager.addLevelProgress(type, value);
+    addProgress(type, value, time) {
+        this.levelManager.addLevelProgress(type, value, time);
+        if (type === HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE) {
+            this.addMoneyInWallet(new Price_1.Price(value * this.levelManager.getSoftwarePrice().getValue()), time);
+        }
     }
-    addMoneyInWallet(price) {
-        this.wallet.add(price.getValue());
+    addMoneyInWallet(price, milliseconds = Phaser.Timer.SECOND) {
+        this.wallet.add(price.getValue(), milliseconds);
     }
     setSelectedHuman(employee) {
         this.userInterface.setSelectedHuman(employee);
@@ -387,6 +388,24 @@ class WorldKnowledge {
         this.humanRepository.humans.forEach((human) => {
             human.unselect();
         });
+    }
+    getLevelValue(type) {
+        return this.levelManager.getLevelValue(type);
+    }
+    getLevelGoal(type) {
+        return this.levelManager.getGoal(type);
+    }
+    getLevel() {
+        return this.levelManager.getLevel();
+    }
+    getSoftwarePrice() {
+        return this.levelManager.getSoftwarePrice();
+    }
+    getEmployeeCount(type) {
+        return this.humanRepository.getCount(type);
+    }
+    getLastEmployeesCount() {
+        return this.employeeCountRegister.getLastCounts();
     }
 }
 exports.WorldKnowledge = WorldKnowledge;

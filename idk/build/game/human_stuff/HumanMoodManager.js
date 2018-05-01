@@ -42,7 +42,7 @@ class HumanMoodManager {
         }
     }
     updateFromState(state) {
-        this.updateFromStateInner(HumanStateManager_1.HumanStateManager.getMoodGains(state));
+        this.updateFromStateInner(HumanStateManager_1.HumanStateManager.getMoodGains(state), 5 * Phaser.Timer.SECOND);
     }
     updateFromStateInner(moods, time = Phaser.Timer.SECOND) {
         Object.keys(moods).forEach((mood) => {

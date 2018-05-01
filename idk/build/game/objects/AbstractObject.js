@@ -1,39 +1,53 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = require("../game_state/Play");
-const ObjectInfoRegistry_1 = require("./ObjectInfoRegistry");
+const ObjectDescriptionRegistry_1 = require("./ObjectDescriptionRegistry");
 const ObjectReferer_1 = require("./ObjectReferer");
+const ObjectOrientation_1 = require("./ObjectOrientation");
+const Pico8Colors_1 = require("../Pico8Colors");
+exports.SPRITE_DEBUG = false;
 class AbstractObject {
-    constructor(point, worldKnowledge, leftOriented) {
+    constructor(point, worldKnowledge, orientation) {
         this.position = point;
-        this.leftOriented = leftOriented;
+        this.orientation = orientation;
         this.worldKnowledge = worldKnowledge;
         this.usedIdentifiers = [];
     }
     create(game, groups) {
-        const infos = ObjectInfoRegistry_1.ObjectInfoRegistry.getObjectInfo(this.constructor.name);
+        const infos = ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getObjectDescription(this.constructor.name);
         this.sprites = [];
-        infos.getSpriteInfos().forEach((spriteInfo) => {
-            const sprite = game.add.sprite(spriteInfo.getRealPosition(this.position, this.leftOriented).x, spriteInfo.getRealPosition(this.position, this.leftOriented).y, spriteInfo.getSpriteName());
+        infos.getSpriteInfos(this.orientation).forEach((spriteInfo) => {
+            const sprite = game.add.sprite(spriteInfo.getRealPosition(this.position, this.orientation).x, spriteInfo.getRealPosition(this.position, this.orientation).y, spriteInfo.getSpriteKey());
             sprite.anchor.set(spriteInfo.getAnchor(sprite).x, spriteInfo.getAnchor(sprite).y);
-            if (this.leftOriented) {
+            if (ObjectOrientation_1.ObjectOrientation.isHorizontalMirror(this.orientation)) {
                 sprite.scale.set(-1, 1);
             }
             this.sprites.push(sprite);
             groups[Play_1.GROUP_OBJECTS_AND_HUMANS].add(sprite);
         });
+        if (exports.SPRITE_DEBUG) {
+            this.debugGraphics = game.add.graphics(0, 0, groups[Play_1.GROUP_INTERFACE]);
+            infos.getSpriteInfos(this.orientation).forEach((spriteInfo) => {
+                this.debugGraphics.lineStyle(1, Pico8Colors_1.COLOR.LIGHT_GREEN);
+                const realPosition = spriteInfo.getRealPosition(this.position, this.orientation);
+                this.debugGraphics.moveTo(realPosition.x - 1.5, realPosition.y + 0.5);
+                this.debugGraphics.lineTo(realPosition.x + 2.5, realPosition.y + 0.5);
+                this.debugGraphics.moveTo(realPosition.x + 0.5, realPosition.y - 1.5);
+                this.debugGraphics.lineTo(realPosition.x + 0.5, realPosition.y + 2.5);
+            });
+        }
     }
-    getPositionGap(subObjectNumber) {
-        const sittableObjectInfos = ObjectInfoRegistry_1.ObjectInfoRegistry
-            .getObjectInfo(this.constructor.name)
-            .getSpriteInfo(subObjectNumber);
-        return sittableObjectInfos.getSittablePosition(this.leftOriented);
+    getPositionGap(interactivePointIdentifier) {
+        const interactivePointDescription = ObjectDescriptionRegistry_1.ObjectDescriptionRegistry
+            .getObjectDescription(this.constructor.name)
+            .getInteractivePoints(this.orientation)[interactivePointIdentifier];
+        return interactivePointDescription.getInteractionPosition(this.orientation);
     }
     getEntries(objectNumber) {
-        return ObjectInfoRegistry_1.ObjectInfoRegistry.getObjectInfo(this.constructor.name).getEntryPoints(this.leftOriented, objectNumber);
+        return ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getObjectDescription(this.constructor.name).getInteractivePointEntryPoints(this.orientation, objectNumber);
     }
     getPositions() {
-        return ObjectInfoRegistry_1.ObjectInfoRegistry.getObjectInfo(this.constructor.name).getCellGaps(this.leftOriented).map((gap) => {
+        return ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getObjectDescription(this.constructor.name).getUniqueCellOffsets(this.orientation).map((gap) => {
             return new PIXI.Point(this.position.x + gap.x, this.position.y + gap.y);
         });
     }
@@ -45,49 +59,53 @@ class AbstractObject {
         this.getSprites().forEach((sprite) => {
             sprite.destroy(true);
         });
+        if (this.debugGraphics) {
+            this.debugGraphics.destroy(true);
+        }
     }
-    forceOrientation(subObjectNumber) {
-        const infos = ObjectInfoRegistry_1.ObjectInfoRegistry.getObjectInfo(this.constructor.name);
-        return infos.getSpriteInfo(subObjectNumber).getOrientation(this.leftOriented);
+    forceLeftOrientation(interactivePointIdentifier) {
+        const infos = ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getObjectDescription(this.constructor.name);
+        return infos.getInteractivePoints(this.orientation)[interactivePointIdentifier].isHumanLeftLooking(this.orientation);
     }
-    forceTopOrientation(subObjectNumber) {
-        const infos = ObjectInfoRegistry_1.ObjectInfoRegistry.getObjectInfo(this.constructor.name);
-        return infos.getSpriteInfo(subObjectNumber).getTopOrientation();
+    forceTopOrientation(interactivePointIdentifier) {
+        const infos = ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getObjectDescription(this.constructor.name);
+        return infos.getInteractivePoints(this.orientation)[interactivePointIdentifier].isHumanTopLooking();
     }
-    getCellPositionSubObject(subObjectNumber) {
-        const infos = ObjectInfoRegistry_1.ObjectInfoRegistry.getObjectInfo(this.constructor.name);
-        return new PIXI.Point(this.position.x + infos.getPositionGapOfSubObject(this.leftOriented, subObjectNumber).x, this.position.y + infos.getPositionGapOfSubObject(this.leftOriented, subObjectNumber).y);
+    getCellPositionSubObject(interactivePointIdentifier) {
+        const infos = ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getObjectDescription(this.constructor.name);
+        return new PIXI.Point(this.position.x + infos.getInteractivePointCellOffset(this.orientation, interactivePointIdentifier).x, this.position.y + infos.getInteractivePointCellOffset(this.orientation, interactivePointIdentifier).y);
     }
-    isUsed(subObjectNumber) {
-        return this.getHumanAt(subObjectNumber) !== null;
+    isUsed(interactivePointIdentifier) {
+        return this.getHumanAt(interactivePointIdentifier) !== null;
     }
-    getHumanAt(subObjectNumber) {
-        return this.usedIdentifiers[subObjectNumber] ? this.usedIdentifiers[subObjectNumber] : null;
+    getHumanAt(interactivePointIdentifier) {
+        return this.usedIdentifiers[interactivePointIdentifier] ? this.usedIdentifiers[interactivePointIdentifier] : null;
     }
     getOrigin() {
         return this.position;
     }
-    setUsed(subObjectNumber, human) {
-        if (this.getHumanAt(subObjectNumber)) {
+    setUsed(interactivePointIdentifier, human) {
+        if (this.getHumanAt(interactivePointIdentifier)) {
             debugger;
             throw "This subobject is already taken!";
         }
-        this.usedIdentifiers[subObjectNumber] = human;
+        this.usedIdentifiers[interactivePointIdentifier] = human;
     }
-    setUnused(subObjectNumber) {
-        this.usedIdentifiers[subObjectNumber] = null;
+    setUnused(interactivePointIdentifier) {
+        this.usedIdentifiers[interactivePointIdentifier] = null;
     }
     getUnusedReferers() {
         let result = [];
-        const infos = ObjectInfoRegistry_1.ObjectInfoRegistry.getObjectInfo(this.constructor.name);
-        for (let i = 0; i < infos.getSpriteInfos().length; i++) {
-            if (infos.getSpriteInfos()[i].getEntryPoints(this.leftOriented).length > 0) {
-                if (!this.isUsed(i)) {
-                    result.push(new ObjectReferer_1.ObjectReferer(this, i));
-                }
+        const description = ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getObjectDescription(this.constructor.name);
+        for (let i = 0; i < description.getInteractivePoints(this.orientation).length; i++) {
+            if (!this.isUsed(i)) {
+                result.push(new ObjectReferer_1.ObjectReferer(this, i));
             }
         }
         return result;
+    }
+    getOrientation() {
+        return this.orientation;
     }
 }
 exports.AbstractObject = AbstractObject;

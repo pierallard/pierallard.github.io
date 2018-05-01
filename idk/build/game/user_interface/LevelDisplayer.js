@@ -18,13 +18,13 @@ class LevelDisplayer {
         this.gauges[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE] = new Gauge_1.Gauge(width, Pico8Colors_1.COLOR.RED);
         this.gauges[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING] = new Gauge_1.Gauge(width, Pico8Colors_1.COLOR.ROSE);
         this.tooltips[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER] = new Tooltip_1.Tooltip(() => {
-            return Math.round(this.worldKnowledge.getLevelProgress(HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER) * 1000) + ' lines coded';
+            return Math.floor(this.worldKnowledge.getLevelValue(HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER)) + '/' + this.worldKnowledge.getLevelGoal(HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER) + ' lines coded';
         });
         this.tooltips[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE] = new Tooltip_1.Tooltip(() => {
-            return Math.round(this.worldKnowledge.getLevelProgress(HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE) * 10) + ' licence sell';
+            return Math.floor(this.worldKnowledge.getLevelValue(HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE)) + '/' + this.worldKnowledge.getLevelGoal(HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE) + ' licence sell';
         });
         this.tooltips[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING] = new Tooltip_1.Tooltip(() => {
-            return Math.round(this.worldKnowledge.getLevelProgress(HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING) * 10) + ' campaigns done';
+            return Math.floor(this.worldKnowledge.getLevelValue(HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING)) + '/' + this.worldKnowledge.getLevelGoal(HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING) + ' campaigns done';
         });
     }
     create(game, groups) {
@@ -34,11 +34,17 @@ class LevelDisplayer {
         }
         Object.keys(this.tooltips).forEach((employeeType) => {
             this.tooltips[employeeType].create(game, groups);
-            this.tooltips[employeeType].setInput(this, this.gauges[parseInt(employeeType)].getGraphics());
+            this.tooltips[employeeType].setInput(this, [this.gauges[parseInt(employeeType)].getGraphics()]);
         });
     }
     update() {
         Object.keys(this.gauges).forEach((employeeType) => {
+            if (this.worldKnowledge.getLevelGoal(parseInt(employeeType)) <= 0) {
+                this.gauges[employeeType].hide();
+            }
+            else {
+                this.gauges[employeeType].show();
+            }
             this.gauges[employeeType].setValue(this.worldKnowledge.getLevelProgress(parseInt(employeeType)));
             this.gauges[employeeType].update();
         });

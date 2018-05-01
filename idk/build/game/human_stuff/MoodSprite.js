@@ -21,16 +21,19 @@ class MoodSprite {
         }
         for (let i = 0; i < moods.length; i++) {
             this.sprite.moveTo(0, i * 2);
-            if (moods[i] < 0.1) {
-                this.sprite.lineStyle(2, Pico8Colors_1.COLOR.RED);
-            }
-            else if (moods[i] < 0.5) {
-                this.sprite.lineStyle(2, Pico8Colors_1.COLOR.ORANGE);
-            }
-            else {
-                this.sprite.lineStyle(2, Pico8Colors_1.COLOR.LIGHT_GREEN);
-            }
+            this.sprite.lineStyle(2, MoodSprite.getColor(moods[i]));
             this.sprite.lineTo(moods[i] * 15 + 1, i * 2);
+        }
+    }
+    static getColor(mood) {
+        if (mood < 0.1) {
+            return Pico8Colors_1.COLOR.RED;
+        }
+        else if (mood < 0.5) {
+            return Pico8Colors_1.COLOR.ORANGE;
+        }
+        else {
+            return Pico8Colors_1.COLOR.LIGHT_GREEN;
         }
     }
 }

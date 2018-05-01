@@ -13,6 +13,7 @@ class Tooltip {
         this.box = game.add.graphics(0, 0, groups[Play_1.GROUP_TOOLTIP]);
         this.text = game.add.text(0, 0, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_TOOLTIP]);
         this.hide();
+        return this;
     }
     update() {
         if (this.text.alpha > 0) {
@@ -38,10 +39,13 @@ class Tooltip {
         this.box.drawRect(this.getTooltipPosition().x - 2, this.getTooltipPosition().y + 1, this.getBoxWidth(), 8);
     }
     setInput(tooltipable, graphics) {
-        graphics.inputEnabled = true;
-        graphics.events.onInputOver.add(this.show, this, 0);
-        graphics.events.onInputOut.add(this.hide, this, 0);
+        graphics.forEach((graphic) => {
+            graphic.inputEnabled = true;
+            graphic.events.onInputOver.add(this.show, this, 0);
+            graphic.events.onInputOut.add(this.hide, this, 0);
+        });
         this.tooltipable = tooltipable;
+        return this;
     }
     getTooltipPosition() {
         this.cursorPosition = new PIXI.Point(app_1.SCALE * Math.round(this.game.input.mousePointer.position.x / app_1.SCALE) + 0.5, app_1.SCALE * Math.round(this.game.input.mousePointer.position.y / app_1.SCALE) + 0.5);

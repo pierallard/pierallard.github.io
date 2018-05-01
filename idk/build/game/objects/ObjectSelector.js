@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const SELECTED = '_selected';
+exports.SELECTED = '_selected';
 class ObjectSelector {
     static makeSelectable(sprites, fallbackSelect = () => { }, fallbackUnselect = () => { }) {
         sprites.forEach((sprite) => {
@@ -17,7 +17,7 @@ class ObjectSelector {
             this.getNonSelectedKey(sprite.key), sprite.frame, false);
     }
     static isSelected(tile) {
-        return tile.key.indexOf(SELECTED) > -1;
+        return tile.key.indexOf(exports.SELECTED) > -1;
     }
     static click(sprite, _pointer, sprites, fallbackSelect = () => { }, fallbackUnselect = () => { }) {
         const isSelected = this.isSelected(sprite);
@@ -32,13 +32,13 @@ class ObjectSelector {
         }
     }
     static getNonSelectedKey(key) {
-        return key.replace(SELECTED, '');
+        return key.replace(exports.SELECTED, '');
     }
     static getSelectedKey(key) {
-        if (key.indexOf(SELECTED) > -1) {
+        if (key.indexOf(exports.SELECTED) > -1) {
             return key;
         }
-        return key + SELECTED;
+        return key + exports.SELECTED;
     }
 }
 exports.ObjectSelector = ObjectSelector;

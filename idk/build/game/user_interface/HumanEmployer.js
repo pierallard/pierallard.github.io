@@ -7,14 +7,16 @@ const ObjectSeller_1 = require("./ObjectSeller");
 const Play_1 = require("../game_state/Play");
 const TextStyle_1 = require("../TextStyle");
 const Pico8Colors_1 = require("../Pico8Colors");
-const Gauge_1 = require("./Gauge");
+const ColoredGauge_1 = require("./ColoredGauge");
+const Tooltip_1 = require("./Tooltip");
+const STARS = 5;
 class HumanEmployer {
     constructor(worldKnowledge) {
         this.worldKnowledge = worldKnowledge;
         this.applicantButtons = [];
         this.visible = true;
         for (let i = 0; i < 6; i++) {
-            this.applicantButtons.push(new ApplicantButton(this, HumanPropertiesFactory_1.HumanPropertiesFactory.create(), this.worldKnowledge));
+            this.applicantButtons.push(new ApplicantButton(this, HumanPropertiesFactory_1.HumanPropertiesFactory.create(this.getEmployeeTypes()), this.worldKnowledge));
         }
     }
     create(game, groups) {
@@ -53,11 +55,21 @@ class HumanEmployer {
     }
     cancel(applicant) {
         const index = this.applicantButtons.indexOf(applicant);
-        this.applicantButtons[index] = new ApplicantButton(this, HumanPropertiesFactory_1.HumanPropertiesFactory.create(), this.worldKnowledge);
+        this.applicantButtons[index] = new ApplicantButton(this, HumanPropertiesFactory_1.HumanPropertiesFactory.create(this.getEmployeeTypes()), this.worldKnowledge);
         this.applicantButtons[index].create(this.game, this.groups, index);
         if (!this.visible) {
             this.applicantButtons[index].hide();
         }
+    }
+    getEmployeeTypes() {
+        let result = [HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER];
+        if (this.worldKnowledge.getLevel() > 1) {
+            result.push(HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE);
+        }
+        if (this.worldKnowledge.getLevel() > 2) {
+            result.push(HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING);
+        }
+        return result;
     }
 }
 exports.HumanEmployer = HumanEmployer;
@@ -68,7 +80,9 @@ class ApplicantButton {
         this.worldKnowledge = worldKnowledge;
         this.availabilityTime = (45 + Math.random() * 45) * Phaser.Timer.SECOND;
         this.remainingTime = this.availabilityTime;
-        this.remainingGauge = new Gauge_1.Gauge(ObjectSeller_1.OBJECT_SELLER_CELL_SIZE, Pico8Colors_1.COLOR.YELLOW, 5);
+        this.remainingGauge = new ColoredGauge_1.ColoredGauge(ObjectSeller_1.OBJECT_SELLER_CELL_SIZE, 5);
+        this.stars = [];
+        this.tooltips = [];
     }
     create(game, groups, index) {
         const left = app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH;
@@ -91,6 +105,22 @@ class ApplicantButton {
         game.add.tween(this).to({
             remainingTime: 0
         }, this.availabilityTime, 'Linear', true);
+        this.tooltips.push(new Tooltip_1.Tooltip(() => {
+            return 'Wage: ' + this.humanProperties.getRealWage().getStringValue() + '/day';
+        }).setInput(this, this.drawStars(game, 'coin', this.humanProperties.getWage(), left + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE + 2, top + 18, groups[Play_1.GROUP_INTERFACE]))
+            .create(game, groups));
+        this.tooltips.push(new Tooltip_1.Tooltip(() => {
+            return 'Exp: ' + Math.round(this.humanProperties.getQuality() * 100) + '%';
+        }).setInput(this, this.drawStars(game, 'star', this.humanProperties.getQuality(), left + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE + 55, top + 18, groups[Play_1.GROUP_INTERFACE]))
+            .create(game, groups));
+        this.tooltips.push(new Tooltip_1.Tooltip(() => {
+            return 'Speed: ' + Math.round(this.humanProperties.getSpeed() * 100) + '%';
+        }).setInput(this, this.drawStars(game, 'star', this.humanProperties.getSpeed(), left + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE + 2, top + 28, groups[Play_1.GROUP_INTERFACE]))
+            .create(game, groups));
+        this.tooltips.push(new Tooltip_1.Tooltip(() => {
+            return 'Perseverance: ' + Math.round(this.humanProperties.getPerseverance() * 100) + '%';
+        }).setInput(this, this.drawStars(game, 'star', this.humanProperties.getPerseverance(), left + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE + 55, top + 28, groups[Play_1.GROUP_INTERFACE]))
+            .create(game, groups));
     }
     hide() {
         this.sprite.position.x += UserInterface_1.INTERFACE_WIDTH;
@@ -98,6 +128,9 @@ class ApplicantButton {
         this.typeText.position.x += UserInterface_1.INTERFACE_WIDTH;
         this.square.position.x += UserInterface_1.INTERFACE_WIDTH + 10;
         this.remainingGauge.hide();
+        this.stars.forEach((star) => {
+            star.position.x += UserInterface_1.INTERFACE_WIDTH;
+        });
     }
     show() {
         this.sprite.position.x -= UserInterface_1.INTERFACE_WIDTH;
@@ -105,6 +138,9 @@ class ApplicantButton {
         this.typeText.position.x -= UserInterface_1.INTERFACE_WIDTH;
         this.square.position.x -= UserInterface_1.INTERFACE_WIDTH + 10;
         this.remainingGauge.show();
+        this.stars.forEach((star) => {
+            star.position.x -= UserInterface_1.INTERFACE_WIDTH;
+        });
     }
     click() {
         this.destroy();
@@ -119,6 +155,9 @@ class ApplicantButton {
             this.humanEmployer.cancel(this);
             return;
         }
+        this.tooltips.forEach((tooltip) => {
+            tooltip.update();
+        });
         this.remainingGauge.setValue(this.remainingTime / this.availabilityTime);
         this.remainingGauge.update();
     }
@@ -128,6 +167,28 @@ class ApplicantButton {
         this.typeText.destroy(true);
         this.square.destroy(true);
         this.remainingGauge.destroy(true);
+        this.stars.forEach((star) => {
+            star.destroy(true);
+        });
+    }
+    drawStars(game, key, value, left, top, group) {
+        let stars = [];
+        const gap = 1 / (STARS * 2 - 1);
+        for (let i = 0; i < STARS; i++) {
+            let star = null;
+            if (value < (i * 2) * gap) {
+                star = game.add.sprite(left + i * 8, top, key, 2, group);
+            }
+            else if (value < (i * 2 + 1) * gap) {
+                star = game.add.sprite(left + i * 8, top, key, 1, group);
+            }
+            else {
+                star = game.add.sprite(left + i * 8, top, key, 0, group);
+            }
+            this.stars.push(star);
+            stars.push(star);
+        }
+        return stars;
     }
 }
 //# sourceMappingURL=HumanEmployer.js.map

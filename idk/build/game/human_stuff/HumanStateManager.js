@@ -56,7 +56,7 @@ class HumanStateManager {
                 this.state = new MoveRandomState_1.MoveRandomState(this.human, this.worldKnowledge);
                 break;
             case STATE.SIT:
-                this.state = new SitState_1.SitState(this.human, this.worldKnowledge.getClosestReferer(['Sofa'], 1, this.human.getPosition()), this.worldKnowledge);
+                this.state = new SitState_1.SitState(this.human, this.worldKnowledge.getClosestReferer(['Sofa', 'Couch'], 1, this.human.getPosition()), this.worldKnowledge);
                 break;
             case STATE.TYPE:
                 this.state = new TypeState_1.TypeState(this.human, this.worldKnowledge.getClosestReferer(['Desk'], 1, this.human.getPosition()), this.worldKnowledge);
@@ -120,7 +120,7 @@ class HumanStateManager {
         if (this.worldKnowledge.getClosestReferer(['Dispenser']) !== null) {
             states.push({ state: STATE.COFFEE, probability: this.getProbability(STATE.COFFEE) });
         }
-        if (this.worldKnowledge.getClosestReferer(['Sofa']) !== null) {
+        if (this.worldKnowledge.getClosestReferer(['Sofa', 'Couch']) !== null) {
             states.push({ state: STATE.SIT, probability: this.getProbability(STATE.SIT) });
         }
         if (this.worldKnowledge.getAnotherFreeHuman(this.human) !== null) {
@@ -147,7 +147,7 @@ class HumanStateManager {
                 result = 8;
                 break;
             case STATE.SIT:
-                result = 4;
+                result = 5;
                 break;
             case STATE.COFFEE:
                 result = 6;
@@ -156,7 +156,7 @@ class HumanStateManager {
                 result = 6;
                 break;
             case STATE.TYPE:
-                result = (5 + 1 + 2 + 8 + 2 + 6 + 6);
+                result = (5 + 3 + 2 + 8 + 5 + 6 + 6);
                 break;
         }
         if (state === this.state.getState()) {
@@ -177,11 +177,14 @@ class HumanStateManager {
                 result = result / 3;
             }
         }
+        if (state === STATE.TYPE && this.worldKnowledge.getLevelProgress(this.human.getType()) >= 1) {
+            result = result / 20;
+        }
         HumanMoodManager_1.HumanMoodManager.getMoods().forEach((mood) => {
             if (this.human.getMood(mood) < LIMIT) {
                 if (HumanStateManager.getMoodGains(state)[mood] > 0) {
                     let ratio = 1 - this.human.getMood(mood) / LIMIT;
-                    ratio = ratio * HumanStateManager.getMoodGains(state)[mood] * 8;
+                    ratio = ratio * HumanStateManager.getMoodGains(state)[mood] * 15;
                     result = result * (1 + ratio);
                 }
             }
@@ -195,16 +198,21 @@ class HumanStateManager {
                 result[HumanMoodManager_1.MOOD.RELAXATION] = 0.1;
                 break;
             case STATE.TALK:
-                result[HumanMoodManager_1.MOOD.SOCIAL] = 0.5;
+                result[HumanMoodManager_1.MOOD.SOCIAL] = 0.4;
+                result[HumanMoodManager_1.MOOD.RELAXATION] += 0.1;
                 break;
             case STATE.SIT:
-                result[HumanMoodManager_1.MOOD.RELAXATION] = 0.2;
+                result[HumanMoodManager_1.MOOD.RELAXATION] = 0.35;
                 break;
             case STATE.COFFEE:
                 result[HumanMoodManager_1.MOOD.HUNGER] = 0.5;
+                result[HumanMoodManager_1.MOOD.RELAXATION] -= 0.1;
                 break;
             case STATE.SIT_TALK:
                 result[HumanMoodManager_1.MOOD.SOCIAL] = 0.6;
+                break;
+            case STATE.RAGE:
+                result[HumanMoodManager_1.MOOD.RELAXATION] = -0.2;
                 break;
         }
         return result;

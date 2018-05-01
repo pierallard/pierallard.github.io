@@ -12,12 +12,17 @@ const MoodSprite_1 = require("./MoodSprite");
 const Play_1 = require("../game_state/Play");
 const ThoughtBubble_1 = require("./ThoughtBubble");
 const Pico8Colors_1 = require("../Pico8Colors");
+const AbstractObject_1 = require("../objects/AbstractObject");
+const ObjectOrientation_1 = require("../objects/ObjectOrientation");
 const MAX_WALK_CELL_DURATION = 1500;
 const MIN_WALK_CELL_DURATION = 800;
+const DAY_LENGTH = 60 * Phaser.Timer.SECOND;
 const MAX_RETRIES = 3;
 const MIN_RETRIES = 0;
 const GAP_FROM_BOTTOM = -8;
 const PATH_DEBUG = false;
+exports.HUMAN_SPRITE_VARIATIONS = ['human1', 'human2', 'human3'];
+exports.HUMAN_SPRITE_COLORS = ['green', 'pink', 'red'];
 class Employee {
     constructor(cell, humanProperties) {
         this.cell = cell;
@@ -51,10 +56,13 @@ class Employee {
         this.talkBubble.create(this.sprite, this.game, groups[Play_1.GROUP_OBJECTS_AND_HUMANS]);
         this.thoughtBubble.create(this.sprite, this.game, groups[Play_1.GROUP_OBJECTS_AND_HUMANS]);
         this.moodSprite.create(this.sprite, this.game, groups[Play_1.GROUP_INFOS]);
-        if (PATH_DEBUG) {
-            this.pathGraphics = game.add.graphics(0, 0, groups[Play_1.GROUP_INFOS]);
-            groups[Play_1.GROUP_INFOS].add(this.pathGraphics);
+        if (PATH_DEBUG || AbstractObject_1.SPRITE_DEBUG) {
+            this.debugGraphics = game.add.graphics(0, 0, groups[Play_1.GROUP_INTERFACE]);
         }
+        this.worldKnowledge.addMoneyInWallet(this.humanProperties.getRealWage(), 3 * Phaser.Timer.SECOND);
+        this.game.time.events.loop(DAY_LENGTH, () => {
+            this.worldKnowledge.addMoneyInWallet(this.humanProperties.getRealWage(), 3 * Phaser.Timer.SECOND);
+        });
     }
     update() {
         this.talkBubble.update();
@@ -67,14 +75,23 @@ class Employee {
             this.moodManager.getMood(HumanMoodManager_1.MOOD.RELAXATION)
         ]);
         if (PATH_DEBUG) {
-            this.pathGraphics.clear();
-            this.pathGraphics.lineStyle(2, Pico8Colors_1.COLOR.LIGHT_GREEN);
+            this.debugGraphics.clear();
+            this.debugGraphics.lineStyle(2, Pico8Colors_1.COLOR.LIGHT_GREEN);
             if (this.path !== null && this.path.length > 0) {
-                this.pathGraphics.moveTo(this.sprite.position.x, this.sprite.position.y);
+                this.debugGraphics.moveTo(this.sprite.position.x, this.sprite.position.y);
                 this.path.forEach((pathItem) => {
-                    this.pathGraphics.lineTo(PositionTransformer_1.PositionTransformer.getRealPosition(pathItem).x, PositionTransformer_1.PositionTransformer.getRealPosition(pathItem).y - PositionTransformer_1.CELL_HEIGHT / 2);
+                    this.debugGraphics.lineTo(PositionTransformer_1.PositionTransformer.getRealPosition(pathItem).x, PositionTransformer_1.PositionTransformer.getRealPosition(pathItem).y - PositionTransformer_1.CELL_HEIGHT / 2);
                 });
             }
+        }
+        if (AbstractObject_1.SPRITE_DEBUG) {
+            this.debugGraphics.clear();
+            this.debugGraphics.lineStyle(1, Pico8Colors_1.COLOR.LIGHT_BLUE);
+            const realPosition = this.sprite.position;
+            this.debugGraphics.moveTo(realPosition.x - 1.5, realPosition.y + 0.5);
+            this.debugGraphics.lineTo(realPosition.x + 2.5, realPosition.y + 0.5);
+            this.debugGraphics.moveTo(realPosition.x + 0.5, realPosition.y - 1.5);
+            this.debugGraphics.lineTo(realPosition.x + 0.5, realPosition.y + 2.5);
         }
     }
     goMeeting(meeting) {
@@ -91,7 +108,7 @@ class Employee {
         }
         this.path = path;
         if (!this.moving) {
-            this.popPath(null, null);
+            this.popPath();
         }
         return true;
     }
@@ -103,33 +120,29 @@ class Employee {
         }
         this.path = path;
         if (!this.moving) {
-            this.popPath(null, null);
+            this.popPath();
         }
         return true;
     }
     animateMove(direction) {
-        const isLeft = Employee.isHumanLeft(direction);
-        const isTop = Employee.isHumanTop(direction);
-        this.animationManager.loadAnimation(HumanAnimationManager_1.ANIMATION.WALK, isLeft, isTop);
+        const isLeftLooking = Employee.isHumanLeftLooking(direction);
+        const isTopLooking = Employee.isHumanTopLooking(direction);
+        this.animationManager.loadAnimation(HumanAnimationManager_1.ANIMATION.WALK, isLeftLooking, isTopLooking);
         this.moving = true;
         this.game.add.tween(this.sprite.position).to({
             x: PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).x + this.anchorPixels.x,
             y: PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).y + this.anchorPixels.y
-        }, this.getWalkDuration(), 'Linear', true)
-            .onComplete.add((_tweenValues, _game, isLeft, isTop) => {
-            this.popPath(isLeft, isTop);
-        }, this, 0, isLeft, isTop);
+        }, this.getWalkDuration(), 'Linear', true).onComplete.add(() => {
+            this.popPath();
+        }, this);
     }
     getWalkDuration() {
         return MIN_WALK_CELL_DURATION + (MAX_WALK_CELL_DURATION - MIN_WALK_CELL_DURATION) * (1 - this.humanProperties.getSpeed());
     }
-    popPath(isLeft, isTop) {
+    popPath() {
         this.moving = false;
         let humanPositions = [this.cell];
-        if (this.path === null || this.path.length == 0) {
-            // this.animationManager.loadAnimation(ANIMATION.FREEZE, isLeft, isTop);
-        }
-        else {
+        if (this.path !== null && this.path.length > 0) {
             const next = this.path.shift();
             const direction = Direction_1.Direction.getNeighborDirection(this.cell, next);
             if (!this.moving) {
@@ -150,7 +163,7 @@ class Employee {
     }
     interactWith(objectReferer, isLeft = null) {
         const direction = Direction_1.Direction.getNeighborDirection(this.cell, objectReferer.getPosition());
-        const side = (isLeft !== null) ? isLeft : Employee.isHumanLeft(direction);
+        const side = (isLeft !== null) ? isLeft : Employee.isHumanLeftLooking(direction);
         // Employee has to gap 5px from the sofa to be sit properly, and 1px from the bottom.
         this.anchorPixels.x = objectReferer.getPositionGap().x + (side ? -5 : 5);
         this.anchorPixels.y = objectReferer.getPositionGap().y - 1;
@@ -158,11 +171,11 @@ class Employee {
         objectReferer.setUsed(this);
         this.animateMove(direction);
     }
-    static isHumanLeft(direction) {
-        return [Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.BOTTOM].indexOf(direction) > -1;
+    static isHumanLeftLooking(direction) {
+        return ObjectOrientation_1.ObjectOrientation.isHorizontalMirror(direction);
     }
-    static isHumanTop(direction) {
-        return [Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.TOP].indexOf(direction) > -1;
+    static isHumanTopLooking(direction) {
+        return ObjectOrientation_1.ObjectOrientation.isVerticalMirror(direction);
     }
     goToFreeCell(objectReferer) {
         objectReferer.setUnused();
@@ -179,11 +192,11 @@ class Employee {
         }
         this.path = [cells[Math.floor(Math.random() * cells.length)]];
         if (!this.moving) {
-            this.popPath(null, null);
+            this.popPath();
         }
     }
-    loadAnimation(animation, isLeft = null, isTop = null) {
-        this.animationManager.loadAnimation(animation, isLeft, isTop);
+    loadAnimation(animation, isLeftLooking = null, isTopLooking = null) {
+        this.animationManager.loadAnimation(animation, isLeftLooking, isTopLooking);
     }
     isSelected() {
         return ObjectSelector_1.ObjectSelector.isSelected(this.sprite);

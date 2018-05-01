@@ -27,9 +27,9 @@ class SitTalkState extends AbstractState_1.AbstractState {
         else {
             if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
                 this.isHumanOnTheRightCell = true;
-                this.human.interactWith(this.meeting.getCell(this.human), this.meeting.getTable().forceOrientation(this.meeting.getCell(this.human).getIdentifier()));
+                this.human.interactWith(this.meeting.getCell(this.human), this.meeting.getTable().forceLeftOrientation(this.meeting.getCell(this.human).getIdentifier()));
                 this.events.push(this.game.time.events.add(this.human.getWalkDuration() + 100, () => {
-                    this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN, this.meeting.getTable().forceOrientation(this.meeting.getCell(this.human).getIdentifier()), this.table.forceTopOrientation(this.meeting.getCell(this.human).getIdentifier()));
+                    this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN, this.meeting.getTable().forceLeftOrientation(this.meeting.getCell(this.human).getIdentifier()), this.table.forceTopOrientation(this.meeting.getCell(this.human).getIdentifier()));
                     this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SIT_DOWN) + 100, () => {
                         this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE_SIT);
                     }, this));
@@ -91,7 +91,7 @@ class SitTalkState extends AbstractState_1.AbstractState {
             this.game.time.events.remove(event);
         });
         this.human.hideTalkBubble();
-        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.STAND_UP, this.meeting.getTable().forceOrientation(this.meeting.getCell(this.human).getIdentifier()));
+        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.STAND_UP, this.meeting.getTable().forceLeftOrientation(this.meeting.getCell(this.human).getIdentifier()));
         this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.STAND_UP) + 100, () => {
             this.human.goToFreeCell(this.meeting.getCell(this.human));
             this.events.push(this.game.time.events.add(this.human.getWalkDuration() + 100, () => {

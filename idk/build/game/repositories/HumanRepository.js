@@ -5,7 +5,7 @@ const HumanPropertiesFactory_1 = require("../human_stuff/HumanPropertiesFactory"
 class HumanRepository {
     constructor(worldKnowledge) {
         this.humans = [
-            new Employee_1.Employee(worldKnowledge.getRandomCell(), HumanPropertiesFactory_1.HumanPropertiesFactory.create())
+            new Employee_1.Employee(worldKnowledge.getRandomCell(), HumanPropertiesFactory_1.HumanPropertiesFactory.create([HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER]))
         ];
     }
     create(game, groups, worldKnowledge) {
@@ -18,13 +18,10 @@ class HumanRepository {
             human.update();
         });
     }
-    getSelectedHumanSprite() {
-        for (let i = 0; i < this.humans.length; i++) {
-            if (this.humans[i].isSelected()) {
-                return this.humans[i].getSprite();
-            }
-        }
-        return null;
+    getCount(type) {
+        return this.humans.filter((human) => {
+            return human.getType() === type;
+        }).length;
     }
 }
 exports.HumanRepository = HumanRepository;

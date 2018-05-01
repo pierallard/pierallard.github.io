@@ -7,7 +7,7 @@ class MoodRegister {
         this.moods = [];
     }
     create(game) {
-        game.time.events.loop(Phaser.Timer.SECOND, this.updateMood, this);
+        game.time.events.loop(Phaser.Timer.SECOND * 2, this.updateMood, this);
     }
     updateMood() {
         const moods = this.humanRepository.humans.map((human) => {

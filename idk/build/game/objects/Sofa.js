@@ -8,7 +8,7 @@ class Sofa extends AbstractObject_1.AbstractObject {
         super.create(game, groups);
         ObjectDeleter_1.ObjectDeleter.makeDeletable(this, game, groups[Play_1.GROUP_INFOS]);
     }
-    forceOrientation(subObjectNumber) {
+    forceLeftOrientation(interactivePointIdentifier) {
         return null;
     }
 }

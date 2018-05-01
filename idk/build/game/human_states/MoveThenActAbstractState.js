@@ -27,7 +27,7 @@ class MoveThenActAbstractState extends AbstractState_1.AbstractState {
         }
         if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
             this.isHumanOnTheRightCell = true;
-            this.human.interactWith(this.objectReferer, this.objectReferer.getObject().forceOrientation(this.objectReferer.getIdentifier()));
+            this.human.interactWith(this.objectReferer, this.objectReferer.getObject().forceLeftOrientation(this.objectReferer.getIdentifier()));
             this.events.push(this.game.time.events.add(this.human.getWalkDuration() + 100, () => {
                 this.act();
             }));

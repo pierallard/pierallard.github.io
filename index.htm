@@ -1,211 +1,22 @@
 <html>
 <head>
-  <script type="text/javascript" src="js3dpix.js"></script>
-  <script type="text/javascript" src="query_string.js"></script>
-  <style>
-    body {
-      display: flex;
-      height: 600px;
-    }
-    .grids {
-      display: flex;
-      width: 100%;
-      flex-wrap: wrap;
-      justify-content: space-around;
-      align-content: flex-start;
-    }
-    .grid {
-      display: flex;
-      flex-direction: column;
-      margin: 10px;
-      border-top: 1px solid #ccc;
-      border-left: 1px solid #ccc;
-    }
-    .line {
-      display: flex;
-    }
-    .cell {
-      flex-grow: 1;
-      height: 12px;
-      width: 12px;
-      border-right: 1px solid #ccc;
-      border-bottom: 1px solid #ccc;
-    }
-    #colors {
-      display: flex;
-      justify-content: space-around;
-    }
-    .color {
-      width: 20px;
-      height: 20px;
-    }
-  </style>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-102317332-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-102317332-1');
+</script>
 </head>
 <body>
-<canvas id="c" width="800" height="600"></canvas>
-<div>
-  <div id="colors"></div>
-  <div id="grids" class="grids"></div>
-</div>
-<script type="text/javascript">
-  var canvas = new Js3dCanvas({
-      identifier: 'c',
-      debug: false,
-      cubeSize: 25,
-      rotation: Math.PI/2,
-      shadows: SHADOWS_45,
-  });
-  
-  var pico8palette = ['#000000', '#20337b', '#7e2553', '#008331', '#ab5236', '#454545', '#c2c3c7', '#fff1e8', '#ff004d', '#ffa300', '#ffe727', '#00e232', '#29adff', '#83769c', '#ff77a8', '#ffccaa'];
-
-/*
-  var data =
-      "----------------------------------------6----------------------------------------" +
-      "-------------------------------6-------666-------6-------------------------------" +
-      "------------------------------666------666------666------------------------------" +
-      "------------------------------6D6------D6D------6D6------------------------------" +
-      "------------------------------666------666------666------------------------------" +
-      "------------------------------6D6------D6D------6D6------------------------------" +
-      "------------------------------666------666------666------------------------------" +
-      "----------------------C-------666-----C666C-----666-------C----------------------" +
-      "----------------------C-------666-----C666C-----666-------C----------------------" +
-      "-------------C--------C--------C-----CCC-CCC-----C--------C--------C-------------" +
-      "-------------C-----------------------C-----C-----------------------C-------------" +
-      "-------------C-----------------------C-----C-----------------------C-------------" +
-      "--BBBBB---BBBBBBB-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB-BBBBBBB---BBBBB--";
-
-  var sizeX = 9;
-  var sizeY = 9;
-  var sizeZ = 13;
-*/
-
-  var sizeX = 14;
-  var sizeY = 7;
-  var sizeZ = 18;
-
-  var data =
-      '---------------------------------5555----------5555----------5555---------------------------------' +
-      '-------------------5555---------5----5--------5----5--------5----5---------5555-------------------' +
-      '------------------FF5FFF-------5------5------5------5------5------5-------555555------------------' +
-      '------------------F5FF5F-------F------F------5------5------5------5-------555555------------------' +
-      '------------------F0FF0F-------F------F------F------F------5------5-------555555------------------' +
-      '------------------FFFFFF-------F------F------F------F------F------F-------555555------------------' +
-      '------------------FFFFFF--------F----F--------F----F--------F----F---------5555-------------------' +
-      '-------------------FFFF----------FFFF----------FFFF----------FFFF---------------------------------' +
-      '--------------------------------CCCCCC-------CC----CC------CC----CC---------99--------------------' +
-      '--------------------------------C8AA8C------CC------CC----CC------CC-------9999-------------------' +
-      '--------------------------------CCCCCC-----CCC------CCC--CCC------CCC-----999999------------------' +
-      '--------------------------------CCCCCC-----CCC------CCC--CCC------CCC----99999999-----------------' +
-      '--------------------------------888888-----FFF------FFF--FFF------FFF---9999999999----------------' +
-      '-------------------------------CCC88CCC----FF--------FF--FF--------FF---9999999999----------------' +
-      '-------------------------------CCC--CCC------CCC--CCC------CCC--CCC-----9999999999----------------' +
-      '------------------------------888----888----888----888----888----888-----99999999-----------------' +
-      '---------------8888----8888--8888----8888--8888----8888--8888----8888-----------------------------' +
-      'DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD';
-
-/*
-   var data =
-       '----------------' +
-       '------E---------' +
-       '----------------' +
-       'BBBBBBBBBBBBBBBB';
-   var sizeX = 4;
-   var sizeY = 4;
-   var sizeZ = 4;
-*/
-
-  if (QueryString.data && QueryString.x && QueryString.y && QueryString.z) {
-    data = QueryString.data;
-    sizeX = QueryString.x;
-    sizeY = QueryString.y;
-    sizeZ = QueryString.z;
-  }
-
-//  window.history.pushState('', '', generateUrl({x: sizeX, y: sizeY, z: sizeZ, data: data}));
-
-  var i = 0;
-  for (var z = 0; z < sizeZ; z++) {
-      for (var y = 0; y < sizeY; y++) {
-          for (var x = 0; x < sizeX; x++) {
-              var letter = data[i];
-              if (undefined !== letter && letter.match(/[0-9A-F]/i)) {
-                  var integer = parseInt(letter, 16);
-                  canvas.addCube(new Js3dCube(pico8palette[integer], x - sizeX/2, y - sizeY/2, z - sizeZ/2));
-              }
-              i++;
-          }
-      }
-  }
-
-  canvas.render();
-
-  var grids = [];
-  for (z = 0; z < sizeZ; z++) {
-      var lines = [];
-      for (y = 0; y < sizeY; y++) {
-          var cells = [];
-          for (x = 0; x < sizeX; x++) {
-              var cube = canvas.getCube(x - sizeX/2, y - sizeY/2, z - sizeZ/2);
-              var cell = '<div class="cell" data-x="' + (x - sizeX/2) + '" data-y="' + (y - sizeY/2) + '" data-z="' + (z - sizeZ/2) + '" data-color-id="' + getColorIdFromColor(cube ? cube.color : null) + '" style="background-color:' + (cube ? cube.color : '#ffffff') + '" onclick="changeColor(this)"></div>';
-              cells.push(cell);
-          }
-          var line = '<div class="line">' + cells.join('') + '</div>';
-          lines.push(line);
-      }
-      var grid = '<div class="grid">' + lines.join('') + '</div>';
-      grids.push(grid);
-  }
-
-  function getColorIdFromColor(color) {
-      for (var i = 0; i < pico8palette.length; i++) {
-          if (color === pico8palette[i]) {
-              return i;
-          }
-      }
-
-      return pico8palette.length;
-  }
-
-  function changeColor(element) {
-      var colorId = parseInt(element.dataset.colorId);
-      colorId = (colorId + 1) % (pico8palette.length + 1);
-      element.dataset.colorId = colorId;
-      var x = parseFloat(element.dataset.x);
-      var y = parseFloat(element.dataset.y);
-      var z = parseFloat(element.dataset.z);
-
-      if (colorId === pico8palette.length) {
-          // Remove cube
-          element.style.backgroundColor = '#ffffff';
-          canvas.removeCube(x, y, z);
-      }
-      else {
-          element.style.backgroundColor = pico8palette[colorId];
-          var cube = canvas.getCube(x, y, z);
-          if (null === cube) {
-              canvas.addCube(new Js3dCube(pico8palette[colorId],x, y, z));
-          } else {
-              cube.setColor(pico8palette[colorId]);
-          }
-      }
-  }
-
-  (function() {
-      document.getElementById('grids').innerHTML = '<div class="grids">' + grids.join('') + '</div>';
-
-      var colors = [];
-      for (var i = 0; i < pico8palette.length; i++) {
-          colors.push('<div class="color" style="background-color:' + pico8palette[i] + '"></div>');
-      }
-
-      document.getElementById('colors').innerHTML = colors.join('');
-
-      window.setInterval(function () {
-          canvas.rotation += 0.005;
-          canvas.rotation = canvas.rotation % (Math.PI * 2);
-          canvas.render();
-      }, 25);
-  })();
-</script>
+  <ul>
+    <li><a href="akeneo-game-jam-4/">akeneo-game-jam-4</a></li>
+    <li><a href="ass17/">ass17</a></li>
+    <li><a href="cac/">cac</a></li>
+    <li><a href="idk/">idk</a></li>
+    <li><a href="js3dpix">js3dpix</a></li>
+  </ul>
 </body>
 </html>

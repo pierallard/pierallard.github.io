@@ -1,0 +1,167 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'VT323', monospace;
+    font-size: 58px;
+    font-smooth: never;
+    -webkit-font-smoothing : none;
+    color: white;
+    text-shadow: 5px 5px black;
+    overflow: hidden;
+}
+
+#main {
+    width: 100%;
+    height: 100%;
+    background: black;
+    background-image: url('bar.png');
+    background-size: cover;
+    background-position: 50% 50%;
+    image-rendering: pixelated;
+}
+
+#gauges {
+    position: absolute;
+    top: 50px;
+    right: 50px;
+    width: calc(100% - 100px);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+.gauge {
+    border: 10px solid #4b4c4e;
+    height: 60px;
+    margin: 10px;
+    width: 20%;
+    position: relative;
+    background: #6a6d72;
+}
+.gaugeInner {
+    position: absolute;
+    height: 40px;
+    background: #8b479a;
+    top: 0;
+    border: 10px solid #a26aab;
+}
+.gaugeInner.red {
+    background: #d03b3f;
+    border-color: #b63434;
+}
+.gaugeInner.red .gaugeInnerTop {
+    border-color: #e05858;
+}
+.gaugeInnerTop {
+    position: absolute;
+    width: 100%;
+    border-top: 10px solid #e6bfda;
+}
+.gaugeText {
+    position: absolute;
+    width: 100%;
+}
+
+#products {
+    position: absolute;
+    bottom: 50px;
+    left: 30px;
+    width: calc(100% - 80px);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+.product {
+    border: 10px solid #4b4c4e;
+    background: #6a6d72;
+    height: 100px;
+    width: 100px;
+    margin: 0 10px;
+    background-size: 100% 100%;
+    position: relative;
+    image-rendering: pixelated;
+}
+.product:not(.disabled):hover {
+    border-color: mediumpurple;
+    cursor: pointer;
+}
+.productHide {
+    background: rgba(255,0,0,0.5);
+    width: 100px;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 0%;
+}
+
+#hover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    text-align: center;
+    width:100%;
+    background: rgba(0,0,0,0.5);
+}
+
+#hover2 {
+    position: absolute;
+    top: 50px;
+    left: 5%;
+    text-align: center;
+    width:70%;
+    z-index: 1000;
+    background: rgba(0,0,0,0.5);
+}
+
+#dancer {
+    height: 306px;
+    width: 182px;
+    background-image: url('dancer.png');
+    position:absolute;
+    top: calc(50% - (306px / 2) - 25px);
+    left: calc(50% - (182px / 2) - 100px);
+    background-size: 400%;
+    image-rendering: pixelated;
+    background-position-y: 0;
+}
+
+#time {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#bigHover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 200px);
+    background: rgba(0,0,0,0.5);
+    padding-top: 200px;
+    text-align: center;
+    display: none;
+}
+
+#jukebox {
+    position: absolute;
+    top: 24%;
+    height: 300px;
+    width: 210px;
+    cursor: pointer;
+}
+
+.title {
+    font-size: 200px;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.play {
+    color: white;
+    background: black;
+}
+.play:hover {
+    color: black;
+    background: white;
+}

@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanProperties_1 = require("./HumanProperties");
 const Employee_1 = require("./Employee");
+const HumanStateManager_1 = require("./HumanStateManager");
 const MEN = [
     'Michel',
     'Jean-Paul',
@@ -23,15 +24,18 @@ var EMPLOYEE_TYPE;
 })(EMPLOYEE_TYPE = exports.EMPLOYEE_TYPE || (exports.EMPLOYEE_TYPE = {}));
 const USE_API = false;
 class HumanPropertiesFactory {
-    static create(types = [
-            EMPLOYEE_TYPE.DEVELOPER,
-            EMPLOYEE_TYPE.MARKETING,
-            EMPLOYEE_TYPE.SALE
-        ]) {
+    static create(typeProbabilities = this.getDefaultTypeProbabilities()) {
         const variation = Employee_1.HUMAN_SPRITE_VARIATIONS[Math.floor(Math.random() * Employee_1.HUMAN_SPRITE_VARIATIONS.length)];
         const isWoman = ['human3'].indexOf(variation) > -1;
         const names = isWoman ? WOMEN : MEN;
-        return new HumanProperties_1.HumanProperties(variation, types[Math.floor(Math.random() * types.length)], USE_API ? this.generateName(isWoman) : names[Math.floor(Math.random() * names.length)], Math.random(), Math.random(), Math.random());
+        return new HumanProperties_1.HumanProperties(variation, HumanStateManager_1.HumanStateManager.getRandomWithProbabilities(typeProbabilities), USE_API ? this.generateName(isWoman) : names[Math.floor(Math.random() * names.length)], Math.random(), Math.random(), Math.random());
+    }
+    static getDefaultTypeProbabilities() {
+        let result = {};
+        result[EMPLOYEE_TYPE.DEVELOPER] = 1;
+        result[EMPLOYEE_TYPE.MARKETING] = 1;
+        result[EMPLOYEE_TYPE.SALE] = 1;
+        return result;
     }
     static generateName(isWoman) {
         const xhr = new XMLHttpRequest();

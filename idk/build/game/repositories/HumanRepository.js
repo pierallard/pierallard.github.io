@@ -4,8 +4,10 @@ const Employee_1 = require("../human_stuff/Employee");
 const HumanPropertiesFactory_1 = require("../human_stuff/HumanPropertiesFactory");
 class HumanRepository {
     constructor(worldKnowledge) {
+        const probabilities = {};
+        probabilities[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER] = 1;
         this.humans = [
-            new Employee_1.Employee(worldKnowledge.getRandomCell(), HumanPropertiesFactory_1.HumanPropertiesFactory.create([HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER]))
+            new Employee_1.Employee(worldKnowledge.getRandomCell(), HumanPropertiesFactory_1.HumanPropertiesFactory.create(probabilities))
         ];
     }
     create(game, groups, worldKnowledge) {

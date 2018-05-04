@@ -10,13 +10,14 @@ const Pico8Colors_1 = require("../Pico8Colors");
 const ColoredGauge_1 = require("./ColoredGauge");
 const Tooltip_1 = require("./Tooltip");
 const STARS = 5;
+const MAX_APPLICANTS = 6;
 class HumanEmployer {
     constructor(worldKnowledge) {
         this.worldKnowledge = worldKnowledge;
         this.applicantButtons = [];
         this.visible = true;
-        for (let i = 0; i < 6; i++) {
-            this.applicantButtons.push(new ApplicantButton(this, HumanPropertiesFactory_1.HumanPropertiesFactory.create(this.getEmployeeTypes()), this.worldKnowledge));
+        for (let i = 0; i < this.getMaxApplicants(); i++) {
+            this.applicantButtons.push(new ApplicantButton(this, HumanPropertiesFactory_1.HumanPropertiesFactory.create(this.getEmployeeTypeProbabilities()), this.worldKnowledge));
         }
     }
     create(game, groups) {
@@ -29,6 +30,13 @@ class HumanEmployer {
         });
     }
     update() {
+        if (this.applicantButtons.length < this.getMaxApplicants()) {
+            for (let i = this.applicantButtons.length; i < this.getMaxApplicants(); i++) {
+                const toto = new ApplicantButton(this, HumanPropertiesFactory_1.HumanPropertiesFactory.create(this.getEmployeeTypeProbabilities()), this.worldKnowledge);
+                toto.create(this.game, this.groups, i);
+                this.applicantButtons.push(toto);
+            }
+        }
         this.applicantButtons.forEach((applicantButton) => {
             applicantButton.update();
         });
@@ -55,21 +63,31 @@ class HumanEmployer {
     }
     cancel(applicant) {
         const index = this.applicantButtons.indexOf(applicant);
-        this.applicantButtons[index] = new ApplicantButton(this, HumanPropertiesFactory_1.HumanPropertiesFactory.create(this.getEmployeeTypes()), this.worldKnowledge);
+        this.applicantButtons[index] = new ApplicantButton(this, HumanPropertiesFactory_1.HumanPropertiesFactory.create(this.getEmployeeTypeProbabilities()), this.worldKnowledge);
         this.applicantButtons[index].create(this.game, this.groups, index);
         if (!this.visible) {
             this.applicantButtons[index].hide();
         }
     }
-    getEmployeeTypes() {
-        let result = [HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER];
+    getEmployeeTypeProbabilities() {
+        const result = {};
+        result[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER] = 1;
         if (this.worldKnowledge.getLevel() > 1) {
-            result.push(HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE);
+            result[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE] = 1;
         }
         if (this.worldKnowledge.getLevel() > 2) {
-            result.push(HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING);
+            result[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING] = 1;
         }
         return result;
+    }
+    getMaxApplicants() {
+        if (this.worldKnowledge.getLevel() < 2) {
+            return MAX_APPLICANTS / 3;
+        }
+        if (this.worldKnowledge.getLevel() < 3) {
+            return MAX_APPLICANTS * 2 / 3;
+        }
+        return MAX_APPLICANTS;
     }
 }
 exports.HumanEmployer = HumanEmployer;

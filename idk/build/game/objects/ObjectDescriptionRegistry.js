@@ -5,6 +5,7 @@ const InteractivePoint_1 = require("./InteractivePoint");
 const Direction_1 = require("../Direction");
 const SpriteInfo_1 = require("./SpriteInfo");
 const Price_1 = require("./Price");
+const PositionTransformer_1 = require("../PositionTransformer");
 class ObjectDescriptionRegistry {
     static getObjectDescription(name) {
         if (this.objectDescriptions === null) {
@@ -20,10 +21,14 @@ class ObjectDescriptionRegistry {
     static generateObjectDescriptions() {
         this.objectDescriptions = [];
         this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Dispenser', [
-            new SpriteInfo_1.SpriteInfo('dispenser', new PIXI.Point(-4, -4), 3, new PIXI.Point(0, 0))
-        ], [], [
-            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT], new PIXI.Point(0, 0), new PIXI.Point(0, 0))
-        ], [], new Price_1.Price(70)));
+            new SpriteInfo_1.SpriteInfo('dispenser', new PIXI.Point(-4, -4), 3)
+        ], [
+            new SpriteInfo_1.SpriteInfo('dispenser_reverse', new PIXI.Point(-4, -4), 0)
+        ], [
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT], new PIXI.Point(5, -3))
+        ], [
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP], new PIXI.Point(5, -PositionTransformer_1.CELL_HEIGHT + 3))
+        ], new Price_1.Price(70)));
         this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Sofa', [
             new SpriteInfo_1.SpriteInfo('sofa', new PIXI.Point(0, -8), 3, new PIXI.Point(0, 0))
         ], [], [
@@ -58,10 +63,17 @@ class ObjectDescriptionRegistry {
         this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Couch', [
             new SpriteInfo_1.SpriteInfo('couch_part1', new PIXI.Point(10, 0), 12),
             new SpriteInfo_1.SpriteInfo('couch_part2', new PIXI.Point(10 - 20, 10), 22, new PIXI.Point(0, 1))
-        ], [], [
+        ], [
+            new SpriteInfo_1.SpriteInfo('couch_reverse_part1', new PIXI.Point(-13, 0), 12),
+            new SpriteInfo_1.SpriteInfo('couch_reverse_part2', new PIXI.Point(-(13 - 20), 10), 22, new PIXI.Point(1, 0)),
+            new SpriteInfo_1.SpriteInfo('couch_reverse_cache', new PIXI.Point(-13, 0), 0),
+        ], [
             new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT], new PIXI.Point(0, -8), new PIXI.Point(0, 0)),
             new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT], new PIXI.Point(0, -8), new PIXI.Point(0, 1)),
-        ], [], new Price_1.Price(1)));
+        ], [
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP], new PIXI.Point(-1, -8), new PIXI.Point(0, 0), false, true),
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP], new PIXI.Point(-1, -8), new PIXI.Point(1, 0), false, true),
+        ], new Price_1.Price(1)));
     }
     static getSalableObjects() {
         if (this.objectDescriptions === null) {

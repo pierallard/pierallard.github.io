@@ -142,34 +142,6 @@ exports.default = Play;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var COLOR;
-(function (COLOR) {
-    COLOR[COLOR["BLACK"] = 512] = "BLACK";
-    COLOR[COLOR["WHITE"] = 16773349] = "WHITE";
-    COLOR[COLOR["DARK_GREY"] = 4802887] = "DARK_GREY";
-    COLOR[COLOR["LIGHT_GREY"] = 13025990] = "LIGHT_GREY";
-    COLOR[COLOR["MARROON"] = 11030581] = "MARROON";
-    COLOR[COLOR["SKIN"] = 16698281] = "SKIN";
-    COLOR[COLOR["ORANGE"] = 16556547] = "ORANGE";
-    COLOR[COLOR["YELLOW"] = 16508205] = "YELLOW";
-    COLOR[COLOR["DARK_GREEN"] = 885038] = "DARK_GREEN";
-    COLOR[COLOR["LIGHT_GREEN"] = 56877] = "LIGHT_GREEN";
-    COLOR[COLOR["LIGHT_BLUE"] = 2338302] = "LIGHT_BLUE";
-    COLOR[COLOR["DARK_BLUE"] = 2566752] = "DARK_BLUE";
-    COLOR[COLOR["LIGHT_PURPLE"] = 8878490] = "LIGHT_PURPLE";
-    COLOR[COLOR["DARK_PURPLE"] = 8267345] = "DARK_PURPLE";
-    COLOR[COLOR["RED"] = 16711757] = "RED";
-    COLOR[COLOR["ROSE"] = 16611753] = "ROSE";
-})(COLOR = exports.COLOR || (exports.COLOR = {}));
-
-
-/***/ }),
-/* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
 const FreezeState_1 = __webpack_require__(35);
 const SmokeState_1 = __webpack_require__(40);
 const SitState_1 = __webpack_require__(38);
@@ -254,51 +226,43 @@ class HumanStateManager {
     }
     randomNextStepName() {
         const states = this.getNextProbabilities();
-        let debug = '';
-        debug += 'Rlx[' + Math.ceil(this.human.getMood(HumanMoodManager_1.MOOD.RELAXATION) * 100) + '%], ';
-        debug += 'Hng[' + Math.ceil(this.human.getMood(HumanMoodManager_1.MOOD.HUNGER) * 100) + '%], ';
-        debug += 'Soc[' + Math.ceil(this.human.getMood(HumanMoodManager_1.MOOD.SOCIAL) * 100) + '%] ---> ';
-        debug += 'Smk(' + Math.ceil(this.getProbability(STATE.SMOKE)) + '), ';
-        debug += 'Frz(' + Math.ceil(this.getProbability(STATE.FREEZE)) + '), ';
-        debug += 'MvR(' + Math.ceil(this.getProbability(STATE.MOVE_RANDOM)) + '), ';
-        debug += 'Tak(' + Math.ceil(this.getProbability(STATE.TALK)) + '), ';
-        debug += 'Sit(' + Math.ceil(this.getProbability(STATE.SIT)) + '), ';
-        debug += 'Typ(' + Math.ceil(this.getProbability(STATE.TYPE)) + '), ';
-        debug += 'Cof(' + Math.ceil(this.getProbability(STATE.COFFEE)) + '), ';
-        console.log(debug);
-        const sum = states.reduce((prev, state) => {
-            return prev + state.probability;
+        return HumanStateManager.getRandomWithProbabilities(states);
+    }
+    static getRandomWithProbabilities(states) {
+        const sum = Object.keys(states).reduce((prev, key) => {
+            return prev + states[key];
         }, 0);
         const random = Phaser.Math.random(0, sum);
         let counter = 0;
-        for (let i = 0; i < states.length; i++) {
-            counter += states[i].probability;
+        for (let i = 0; i < Object.keys(states).length; i++) {
+            counter += states[Object.keys(states)[i]];
             if (counter > random) {
-                return states[i].state;
+                return parseInt(Object.keys(states)[i]);
             }
         }
+        debugger;
     }
     getNextProbabilities() {
-        const states = [];
+        const states = {};
         if (this.worldKnowledge.getClosestReferer(['Desk']) !== null) {
-            states.push({ state: STATE.TYPE, probability: this.getProbability(STATE.TYPE) });
+            states[STATE.TYPE] = this.getProbability(STATE.TYPE);
         }
         if (this.worldKnowledge.getClosestReferer(['Table'], 4) !== null &&
             this.worldKnowledge.getAnotherFreeHumans(this.human, 3).length === 3) {
-            states.push({ state: STATE.SIT_TALK, probability: this.getProbability(STATE.SIT_TALK) });
+            states[STATE.SIT_TALK] = this.getProbability(STATE.SIT_TALK);
         }
         if (this.worldKnowledge.getClosestReferer(['Dispenser']) !== null) {
-            states.push({ state: STATE.COFFEE, probability: this.getProbability(STATE.COFFEE) });
+            states[STATE.COFFEE] = this.getProbability(STATE.COFFEE);
         }
         if (this.worldKnowledge.getClosestReferer(['Sofa', 'Couch']) !== null) {
-            states.push({ state: STATE.SIT, probability: this.getProbability(STATE.SIT) });
+            states[STATE.SIT] = this.getProbability(STATE.SIT);
         }
         if (this.worldKnowledge.getAnotherFreeHuman(this.human) !== null) {
-            states.push({ state: STATE.TALK, probability: this.getProbability(STATE.TALK) });
+            states[STATE.TALK] = this.getProbability(STATE.TALK);
         }
-        states.push({ state: STATE.FREEZE, probability: this.getProbability(STATE.FREEZE) });
-        states.push({ state: STATE.MOVE_RANDOM, probability: this.getProbability(STATE.MOVE_RANDOM) });
-        states.push({ state: STATE.SMOKE, probability: this.getProbability(STATE.SMOKE) });
+        states[STATE.FREEZE] = this.getProbability(STATE.FREEZE);
+        states[STATE.MOVE_RANDOM] = this.getProbability(STATE.MOVE_RANDOM);
+        states[STATE.SMOKE] = this.getProbability(STATE.SMOKE);
         return states;
     }
     getProbability(state) {
@@ -422,6 +386,34 @@ exports.HumanStateManager = HumanStateManager;
 
 
 /***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var COLOR;
+(function (COLOR) {
+    COLOR[COLOR["BLACK"] = 512] = "BLACK";
+    COLOR[COLOR["WHITE"] = 16773349] = "WHITE";
+    COLOR[COLOR["DARK_GREY"] = 4802887] = "DARK_GREY";
+    COLOR[COLOR["LIGHT_GREY"] = 13025990] = "LIGHT_GREY";
+    COLOR[COLOR["MARROON"] = 11030581] = "MARROON";
+    COLOR[COLOR["SKIN"] = 16698281] = "SKIN";
+    COLOR[COLOR["ORANGE"] = 16556547] = "ORANGE";
+    COLOR[COLOR["YELLOW"] = 16508205] = "YELLOW";
+    COLOR[COLOR["DARK_GREEN"] = 885038] = "DARK_GREEN";
+    COLOR[COLOR["LIGHT_GREEN"] = 56877] = "LIGHT_GREEN";
+    COLOR[COLOR["LIGHT_BLUE"] = 2338302] = "LIGHT_BLUE";
+    COLOR[COLOR["DARK_BLUE"] = 2566752] = "DARK_BLUE";
+    COLOR[COLOR["LIGHT_PURPLE"] = 8878490] = "LIGHT_PURPLE";
+    COLOR[COLOR["DARK_PURPLE"] = 8267345] = "DARK_PURPLE";
+    COLOR[COLOR["RED"] = 16711757] = "RED";
+    COLOR[COLOR["ROSE"] = 16611753] = "ROSE";
+})(COLOR = exports.COLOR || (exports.COLOR = {}));
+
+
+/***/ }),
 /* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -508,7 +500,7 @@ const HumanEmployer_1 = __webpack_require__(63);
 const InfoPanel_1 = __webpack_require__(64);
 const LevelDisplayer_1 = __webpack_require__(65);
 const UserInfoPanel_1 = __webpack_require__(30);
-const Pico8Colors_1 = __webpack_require__(1);
+const Pico8Colors_1 = __webpack_require__(2);
 exports.INTERFACE_WIDTH = 150.5;
 exports.TOP_GAP_2 = 15.5 + 12;
 exports.TOP_GAP = exports.TOP_GAP_2 + 15;
@@ -877,6 +869,7 @@ exports.HumanAnimationManager = HumanAnimationManager;
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanProperties_1 = __webpack_require__(46);
 const Employee_1 = __webpack_require__(17);
+const HumanStateManager_1 = __webpack_require__(1);
 const MEN = [
     'Michel',
     'Jean-Paul',
@@ -898,15 +891,18 @@ var EMPLOYEE_TYPE;
 })(EMPLOYEE_TYPE = exports.EMPLOYEE_TYPE || (exports.EMPLOYEE_TYPE = {}));
 const USE_API = false;
 class HumanPropertiesFactory {
-    static create(types = [
-            EMPLOYEE_TYPE.DEVELOPER,
-            EMPLOYEE_TYPE.MARKETING,
-            EMPLOYEE_TYPE.SALE
-        ]) {
+    static create(typeProbabilities = this.getDefaultTypeProbabilities()) {
         const variation = Employee_1.HUMAN_SPRITE_VARIATIONS[Math.floor(Math.random() * Employee_1.HUMAN_SPRITE_VARIATIONS.length)];
         const isWoman = ['human3'].indexOf(variation) > -1;
         const names = isWoman ? WOMEN : MEN;
-        return new HumanProperties_1.HumanProperties(variation, types[Math.floor(Math.random() * types.length)], USE_API ? this.generateName(isWoman) : names[Math.floor(Math.random() * names.length)], Math.random(), Math.random(), Math.random());
+        return new HumanProperties_1.HumanProperties(variation, HumanStateManager_1.HumanStateManager.getRandomWithProbabilities(typeProbabilities), USE_API ? this.generateName(isWoman) : names[Math.floor(Math.random() * names.length)], Math.random(), Math.random(), Math.random());
+    }
+    static getDefaultTypeProbabilities() {
+        let result = {};
+        result[EMPLOYEE_TYPE.DEVELOPER] = 1;
+        result[EMPLOYEE_TYPE.MARKETING] = 1;
+        result[EMPLOYEE_TYPE.SALE] = 1;
+        return result;
     }
     static generateName(isWoman) {
         const xhr = new XMLHttpRequest();
@@ -1029,7 +1025,7 @@ const Play_1 = __webpack_require__(0);
 const ObjectDescriptionRegistry_1 = __webpack_require__(18);
 const ObjectReferer_1 = __webpack_require__(56);
 const ObjectOrientation_1 = __webpack_require__(9);
-const Pico8Colors_1 = __webpack_require__(1);
+const Pico8Colors_1 = __webpack_require__(2);
 exports.SPRITE_DEBUG = false;
 class AbstractObject {
     constructor(point, worldKnowledge, orientation) {
@@ -1143,7 +1139,7 @@ exports.AbstractObject = AbstractObject;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Pico8Colors_1 = __webpack_require__(1);
+const Pico8Colors_1 = __webpack_require__(2);
 const POINTS = 20;
 const RADIUS = 6;
 const DELAY = 750;
@@ -1239,7 +1235,7 @@ class PartialCircle extends Phaser.Graphics {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanStateManager_1 = __webpack_require__(2);
+const HumanStateManager_1 = __webpack_require__(1);
 const HumanAnimationManager_1 = __webpack_require__(7);
 const AbstractState_1 = __webpack_require__(10);
 class RageState extends AbstractState_1.AbstractState {
@@ -1334,14 +1330,14 @@ const PositionTransformer_1 = __webpack_require__(4);
 const ClosestPathFinder_1 = __webpack_require__(44);
 const Direction_1 = __webpack_require__(6);
 const HumanAnimationManager_1 = __webpack_require__(7);
-const HumanStateManager_1 = __webpack_require__(2);
+const HumanStateManager_1 = __webpack_require__(1);
 const ObjectSelector_1 = __webpack_require__(26);
 const TalkBubble_1 = __webpack_require__(48);
 const HumanMoodManager_1 = __webpack_require__(22);
 const MoodSprite_1 = __webpack_require__(23);
 const Play_1 = __webpack_require__(0);
 const ThoughtBubble_1 = __webpack_require__(12);
-const Pico8Colors_1 = __webpack_require__(1);
+const Pico8Colors_1 = __webpack_require__(2);
 const AbstractObject_1 = __webpack_require__(13);
 const ObjectOrientation_1 = __webpack_require__(9);
 const MAX_WALK_CELL_DURATION = 1500;
@@ -1616,6 +1612,7 @@ const InteractivePoint_1 = __webpack_require__(53);
 const Direction_1 = __webpack_require__(6);
 const SpriteInfo_1 = __webpack_require__(58);
 const Price_1 = __webpack_require__(19);
+const PositionTransformer_1 = __webpack_require__(4);
 class ObjectDescriptionRegistry {
     static getObjectDescription(name) {
         if (this.objectDescriptions === null) {
@@ -1631,10 +1628,14 @@ class ObjectDescriptionRegistry {
     static generateObjectDescriptions() {
         this.objectDescriptions = [];
         this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Dispenser', [
-            new SpriteInfo_1.SpriteInfo('dispenser', new PIXI.Point(-4, -4), 3, new PIXI.Point(0, 0))
-        ], [], [
-            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT], new PIXI.Point(0, 0), new PIXI.Point(0, 0))
-        ], [], new Price_1.Price(70)));
+            new SpriteInfo_1.SpriteInfo('dispenser', new PIXI.Point(-4, -4), 3)
+        ], [
+            new SpriteInfo_1.SpriteInfo('dispenser_reverse', new PIXI.Point(-4, -4), 0)
+        ], [
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT], new PIXI.Point(5, -3))
+        ], [
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP], new PIXI.Point(5, -PositionTransformer_1.CELL_HEIGHT + 3))
+        ], new Price_1.Price(70)));
         this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Sofa', [
             new SpriteInfo_1.SpriteInfo('sofa', new PIXI.Point(0, -8), 3, new PIXI.Point(0, 0))
         ], [], [
@@ -1669,10 +1670,17 @@ class ObjectDescriptionRegistry {
         this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Couch', [
             new SpriteInfo_1.SpriteInfo('couch_part1', new PIXI.Point(10, 0), 12),
             new SpriteInfo_1.SpriteInfo('couch_part2', new PIXI.Point(10 - 20, 10), 22, new PIXI.Point(0, 1))
-        ], [], [
+        ], [
+            new SpriteInfo_1.SpriteInfo('couch_reverse_part1', new PIXI.Point(-13, 0), 12),
+            new SpriteInfo_1.SpriteInfo('couch_reverse_part2', new PIXI.Point(-(13 - 20), 10), 22, new PIXI.Point(1, 0)),
+            new SpriteInfo_1.SpriteInfo('couch_reverse_cache', new PIXI.Point(-13, 0), 0),
+        ], [
             new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT], new PIXI.Point(0, -8), new PIXI.Point(0, 0)),
             new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT], new PIXI.Point(0, -8), new PIXI.Point(0, 1)),
-        ], [], new Price_1.Price(1)));
+        ], [
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP], new PIXI.Point(-1, -8), new PIXI.Point(0, 0), false, true),
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP], new PIXI.Point(-1, -8), new PIXI.Point(1, 0), false, true),
+        ], new Price_1.Price(1)));
     }
     static getSalableObjects() {
         if (this.objectDescriptions === null) {
@@ -1999,7 +2007,7 @@ class WorldKnowledge {
     canPutHere(objectInfo, origin, orientation) {
         return this.areAllTheCellsFree(objectInfo, origin, orientation) &&
             this.areAllSpritesEnterable(objectInfo, origin, orientation) &&
-            this.isNewObjectNotBlockingExistingOne(origin);
+            this.isNewObjectNotBlockingExistingOne(objectInfo, origin, orientation);
     }
     ;
     areAllTheCellsFree(objectInfo, origin, orientation) {
@@ -2026,20 +2034,35 @@ class WorldKnowledge {
         }
         return true;
     }
-    isNewObjectNotBlockingExistingOne(origin) {
+    isNewObjectNotBlockingExistingOne(objectInfo, origin, orientation) {
+        const cellOffsets = objectInfo.getUniqueCellOffsets(orientation);
+        const cellPositions = cellOffsets.map((offset) => {
+            return new PIXI.Point(origin.x + offset.x, origin.y + offset.y);
+        });
         for (let o = 0; o < this.objects.length; o++) {
-            /* TODO This method is buggy, it does not take account every entry points. I have to parse sprite by sprite
-             * and check it's not blocking for every sprite, instead of looking if there is a unique entry point.
-             */
             const object = this.objects[o];
             const objectInfo = ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getObjectDescription(object.constructor.name);
-            let isEntryPossible = false;
-            const entryCells = objectInfo.getEntryCells(object.getOrigin(), object.getOrientation());
-            for (let i = 0; i < entryCells.length; i++) {
-                isEntryPossible = isEntryPossible || (this.isFree(entryCells[i]) && (entryCells[i].x !== origin.x || entryCells[i].y !== origin.y));
-            }
-            if (isEntryPossible === false) {
-                return false;
+            const interactivePoints = objectInfo.getInteractivePoints(object.getOrientation());
+            for (let i = 0; i < interactivePoints.length; i++) {
+                const cellOffset = interactivePoints[i].getCellOffset(object.getOrientation());
+                const cell = new PIXI.Point(object.getOrigin().x + cellOffset.x, object.getOrigin().y + cellOffset.y);
+                const entryPoints = interactivePoints[i].getEntryPoints(object.getOrientation());
+                let isEntryPossible = false;
+                for (let j = 0; j < entryPoints.length; j++) {
+                    const entryCell = Direction_1.Direction.getNeighbor(cell, entryPoints[j]);
+                    if (this.isFree(entryCell)) {
+                        let isNewObjectNotBlockingThisEntry = true;
+                        cellPositions.forEach((cellPosition) => {
+                            if (cellPosition.x === entryCell.x && cellPosition.y === entryCell.y) {
+                                isNewObjectNotBlockingThisEntry = false;
+                            }
+                        });
+                        isEntryPossible = isEntryPossible || isNewObjectNotBlockingThisEntry;
+                    }
+                }
+                if (isEntryPossible === false) {
+                    return false;
+                }
             }
         }
         return true;
@@ -2192,7 +2215,7 @@ exports.MoveThenActAbstractState = MoveThenActAbstractState;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanStateManager_1 = __webpack_require__(2);
+const HumanStateManager_1 = __webpack_require__(1);
 const SmoothValue_1 = __webpack_require__(16);
 const LOSS = -0.05;
 const DEFAULT = 0.8;
@@ -2265,7 +2288,7 @@ exports.HumanMoodManager = HumanMoodManager;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Pico8Colors_1 = __webpack_require__(1);
+const Pico8Colors_1 = __webpack_require__(2);
 const GAP_X = -7;
 const GAP_Y = 1;
 const DEBUG = false;
@@ -2314,7 +2337,7 @@ exports.MoodSprite = MoodSprite;
 Object.defineProperty(exports, "__esModule", { value: true });
 const TextStyle_1 = __webpack_require__(11);
 const Play_1 = __webpack_require__(0);
-const Pico8Colors_1 = __webpack_require__(1);
+const Pico8Colors_1 = __webpack_require__(2);
 const app_1 = __webpack_require__(3);
 class Tooltip {
     constructor(getValueFunction) {
@@ -2470,7 +2493,7 @@ exports.ObjectSelector = ObjectSelector;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Gauge_1 = __webpack_require__(28);
-const Pico8Colors_1 = __webpack_require__(1);
+const Pico8Colors_1 = __webpack_require__(2);
 const MoodSprite_1 = __webpack_require__(23);
 class ColoredGauge extends Gauge_1.Gauge {
     constructor(width, height = null) {
@@ -2491,7 +2514,7 @@ exports.ColoredGauge = ColoredGauge;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = __webpack_require__(0);
-const Pico8Colors_1 = __webpack_require__(1);
+const Pico8Colors_1 = __webpack_require__(2);
 exports.DEFAULT_BAR_HEIGHT = 10;
 class Gauge {
     constructor(width, color, height = null) {
@@ -2557,7 +2580,7 @@ const ObjectPhantom_1 = __webpack_require__(55);
 const Play_1 = __webpack_require__(0);
 const TextStyle_1 = __webpack_require__(11);
 const PositionTransformer_1 = __webpack_require__(4);
-const Pico8Colors_1 = __webpack_require__(1);
+const Pico8Colors_1 = __webpack_require__(2);
 const ObjectOrientation_1 = __webpack_require__(9);
 exports.OBJECT_SELLER_CELL_SIZE = 41;
 const CIRCLE_GAP = 7;
@@ -2799,7 +2822,7 @@ const Play_1 = __webpack_require__(0);
 const TextStyle_1 = __webpack_require__(11);
 const HumanMoodManager_1 = __webpack_require__(22);
 const PieChart_1 = __webpack_require__(67);
-const HumanStateManager_1 = __webpack_require__(2);
+const HumanStateManager_1 = __webpack_require__(1);
 const ColoredGauge_1 = __webpack_require__(27);
 const GRAPH_GAP = 2;
 exports.GAP_BETWEEN_LINES = 10;
@@ -2971,6 +2994,7 @@ class Preload extends Phaser.State {
         this.game.load.spritesheet('wall', 'assets/wall.png', 40, 37, 16);
         this.game.load.spritesheet('sofa', 'assets/sofa.png', 8, 6);
         this.game.load.spritesheet('dispenser', 'assets/dispenser.png', 26, 35);
+        this.game.load.spritesheet('dispenser_reverse', 'assets/dispenser_reverse.png', 26, 35);
         this.game.load.spritesheet('dispenser_selected', 'assets/dispenser_selected.png', 26, 35);
         this.game.load.spritesheet('sofa_selected', 'assets/sofa_selected.png', 8, 6);
         this.game.load.spritesheet('bubble', 'assets/bubble.png', 13, 15);
@@ -2981,6 +3005,9 @@ class Preload extends Phaser.State {
         this.game.load.spritesheet('interfacetabs', 'assets/interfacetabs.png', 28, 12);
         this.game.load.spritesheet('couch_part1', 'assets/couch_part1.png', 60, 39);
         this.game.load.spritesheet('couch_part2', 'assets/couch_part2.png', 60, 39);
+        this.game.load.spritesheet('couch_reverse_part1', 'assets/couch_reverse_part1.png', 60, 39);
+        this.game.load.spritesheet('couch_reverse_part2', 'assets/couch_reverse_part2.png', 60, 39);
+        this.game.load.spritesheet('couch_reverse_cache', 'assets/couch_reverse_cache.png', 60, 39);
         this.game.load.spritesheet('coin', 'assets/coin.png', 7, 9);
         this.game.load.spritesheet('star', 'assets/star.png', 9, 9);
     }
@@ -2998,7 +3025,7 @@ exports.default = Preload;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanStateManager_1 = __webpack_require__(2);
+const HumanStateManager_1 = __webpack_require__(1);
 const HumanAnimationManager_1 = __webpack_require__(7);
 const RageState_1 = __webpack_require__(15);
 const MoveThenActAbstractState_1 = __webpack_require__(21);
@@ -3040,7 +3067,7 @@ exports.CoffeeState = CoffeeState;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanAnimationManager_1 = __webpack_require__(7);
-const HumanStateManager_1 = __webpack_require__(2);
+const HumanStateManager_1 = __webpack_require__(1);
 const AbstractState_1 = __webpack_require__(10);
 class FreezeState extends AbstractState_1.AbstractState {
     start(game) {
@@ -3065,7 +3092,7 @@ exports.FreezeState = FreezeState;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanStateManager_1 = __webpack_require__(2);
+const HumanStateManager_1 = __webpack_require__(1);
 class Meeting {
     constructor(humans, time, worldKnowledge) {
         const cells = worldKnowledge.getMeetingCells(humans.map((human) => {
@@ -3133,7 +3160,7 @@ exports.Meeting = Meeting;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanStateManager_1 = __webpack_require__(2);
+const HumanStateManager_1 = __webpack_require__(1);
 const AbstractState_1 = __webpack_require__(10);
 class MoveRandomState extends AbstractState_1.AbstractState {
     constructor(human, worldKnowledge) {
@@ -3171,7 +3198,7 @@ exports.MoveRandomState = MoveRandomState;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanAnimationManager_1 = __webpack_require__(7);
-const HumanStateManager_1 = __webpack_require__(2);
+const HumanStateManager_1 = __webpack_require__(1);
 const RageState_1 = __webpack_require__(15);
 const MoveThenActAbstractState_1 = __webpack_require__(21);
 const ThoughtBubble_1 = __webpack_require__(12);
@@ -3215,7 +3242,7 @@ exports.SitState = SitState;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanAnimationManager_1 = __webpack_require__(7);
-const HumanStateManager_1 = __webpack_require__(2);
+const HumanStateManager_1 = __webpack_require__(1);
 const AbstractState_1 = __webpack_require__(10);
 const TableMeeting_1 = __webpack_require__(41);
 const PositionTransformer_1 = __webpack_require__(4);
@@ -3335,7 +3362,7 @@ exports.SitTalkState = SitTalkState;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanAnimationManager_1 = __webpack_require__(7);
-const HumanStateManager_1 = __webpack_require__(2);
+const HumanStateManager_1 = __webpack_require__(1);
 const AbstractState_1 = __webpack_require__(10);
 class SmokeState extends AbstractState_1.AbstractState {
     start(game) {
@@ -3435,7 +3462,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const HumanAnimationManager_1 = __webpack_require__(7);
 const Meeting_1 = __webpack_require__(36);
 const Direction_1 = __webpack_require__(6);
-const HumanStateManager_1 = __webpack_require__(2);
+const HumanStateManager_1 = __webpack_require__(1);
 const AbstractState_1 = __webpack_require__(10);
 class TalkState extends AbstractState_1.AbstractState {
     constructor(human, anotherHuman, worldKnowledge, meeting = null) {
@@ -3517,7 +3544,7 @@ exports.TalkState = TalkState;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanAnimationManager_1 = __webpack_require__(7);
-const HumanStateManager_1 = __webpack_require__(2);
+const HumanStateManager_1 = __webpack_require__(1);
 const RageState_1 = __webpack_require__(15);
 const MoveThenActAbstractState_1 = __webpack_require__(21);
 const ThoughtBubble_1 = __webpack_require__(12);
@@ -4102,7 +4129,7 @@ const PositionTransformer_1 = __webpack_require__(4);
 const ObjectDeleter_1 = __webpack_require__(14);
 const Direction_1 = __webpack_require__(6);
 const Play_1 = __webpack_require__(0);
-const Pico8Colors_1 = __webpack_require__(1);
+const Pico8Colors_1 = __webpack_require__(2);
 const ObjectOrientation_1 = __webpack_require__(9);
 const ARROW_SIZE = 0.9;
 const GAP = 4;
@@ -4520,8 +4547,10 @@ const Employee_1 = __webpack_require__(17);
 const HumanPropertiesFactory_1 = __webpack_require__(8);
 class HumanRepository {
     constructor(worldKnowledge) {
+        const probabilities = {};
+        probabilities[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER] = 1;
         this.humans = [
-            new Employee_1.Employee(worldKnowledge.getRandomCell(), HumanPropertiesFactory_1.HumanPropertiesFactory.create([HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER]))
+            new Employee_1.Employee(worldKnowledge.getRandomCell(), HumanPropertiesFactory_1.HumanPropertiesFactory.create(probabilities))
         ];
     }
     create(game, groups, worldKnowledge) {
@@ -4594,17 +4623,18 @@ const app_1 = __webpack_require__(3);
 const ObjectSeller_1 = __webpack_require__(29);
 const Play_1 = __webpack_require__(0);
 const TextStyle_1 = __webpack_require__(11);
-const Pico8Colors_1 = __webpack_require__(1);
+const Pico8Colors_1 = __webpack_require__(2);
 const ColoredGauge_1 = __webpack_require__(27);
 const Tooltip_1 = __webpack_require__(24);
 const STARS = 5;
+const MAX_APPLICANTS = 6;
 class HumanEmployer {
     constructor(worldKnowledge) {
         this.worldKnowledge = worldKnowledge;
         this.applicantButtons = [];
         this.visible = true;
-        for (let i = 0; i < 6; i++) {
-            this.applicantButtons.push(new ApplicantButton(this, HumanPropertiesFactory_1.HumanPropertiesFactory.create(this.getEmployeeTypes()), this.worldKnowledge));
+        for (let i = 0; i < this.getMaxApplicants(); i++) {
+            this.applicantButtons.push(new ApplicantButton(this, HumanPropertiesFactory_1.HumanPropertiesFactory.create(this.getEmployeeTypeProbabilities()), this.worldKnowledge));
         }
     }
     create(game, groups) {
@@ -4617,6 +4647,13 @@ class HumanEmployer {
         });
     }
     update() {
+        if (this.applicantButtons.length < this.getMaxApplicants()) {
+            for (let i = this.applicantButtons.length; i < this.getMaxApplicants(); i++) {
+                const toto = new ApplicantButton(this, HumanPropertiesFactory_1.HumanPropertiesFactory.create(this.getEmployeeTypeProbabilities()), this.worldKnowledge);
+                toto.create(this.game, this.groups, i);
+                this.applicantButtons.push(toto);
+            }
+        }
         this.applicantButtons.forEach((applicantButton) => {
             applicantButton.update();
         });
@@ -4643,21 +4680,31 @@ class HumanEmployer {
     }
     cancel(applicant) {
         const index = this.applicantButtons.indexOf(applicant);
-        this.applicantButtons[index] = new ApplicantButton(this, HumanPropertiesFactory_1.HumanPropertiesFactory.create(this.getEmployeeTypes()), this.worldKnowledge);
+        this.applicantButtons[index] = new ApplicantButton(this, HumanPropertiesFactory_1.HumanPropertiesFactory.create(this.getEmployeeTypeProbabilities()), this.worldKnowledge);
         this.applicantButtons[index].create(this.game, this.groups, index);
         if (!this.visible) {
             this.applicantButtons[index].hide();
         }
     }
-    getEmployeeTypes() {
-        let result = [HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER];
+    getEmployeeTypeProbabilities() {
+        const result = {};
+        result[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER] = 1;
         if (this.worldKnowledge.getLevel() > 1) {
-            result.push(HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE);
+            result[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE] = 1;
         }
         if (this.worldKnowledge.getLevel() > 2) {
-            result.push(HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING);
+            result[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING] = 1;
         }
         return result;
+    }
+    getMaxApplicants() {
+        if (this.worldKnowledge.getLevel() < 2) {
+            return MAX_APPLICANTS / 3;
+        }
+        if (this.worldKnowledge.getLevel() < 3) {
+            return MAX_APPLICANTS * 2 / 3;
+        }
+        return MAX_APPLICANTS;
     }
 }
 exports.HumanEmployer = HumanEmployer;
@@ -4791,7 +4838,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const UserInterface_1 = __webpack_require__(5);
 const app_1 = __webpack_require__(3);
 const Play_1 = __webpack_require__(0);
-const Pico8Colors_1 = __webpack_require__(1);
+const Pico8Colors_1 = __webpack_require__(2);
 const MoodSprite_1 = __webpack_require__(23);
 const TextStyle_1 = __webpack_require__(11);
 const UserInfoPanel_1 = __webpack_require__(30);
@@ -4904,7 +4951,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const UserInterface_1 = __webpack_require__(5);
 const app_1 = __webpack_require__(3);
 const HumanPropertiesFactory_1 = __webpack_require__(8);
-const Pico8Colors_1 = __webpack_require__(1);
+const Pico8Colors_1 = __webpack_require__(2);
 const Gauge_1 = __webpack_require__(28);
 const Tooltip_1 = __webpack_require__(24);
 const GAP = 3;
@@ -5051,10 +5098,10 @@ exports.LevelManager = LevelManager;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = __webpack_require__(0);
-const Pico8Colors_1 = __webpack_require__(1);
+const Pico8Colors_1 = __webpack_require__(2);
 const UserInterface_1 = __webpack_require__(5);
 const app_1 = __webpack_require__(3);
-const HumanStateManager_1 = __webpack_require__(2);
+const HumanStateManager_1 = __webpack_require__(1);
 const Tooltip_1 = __webpack_require__(24);
 const SmoothValue_1 = __webpack_require__(16);
 const PARTS = 36;
@@ -5119,18 +5166,20 @@ class PieChart {
     }
     refreshData() {
         let foundIdentifiers = [];
-        this.human.getNextProbabilities().forEach((state) => {
+        const probabilities = this.human.getNextProbabilities();
+        Object.keys(probabilities).forEach((key) => {
+            const state = parseInt(key);
             let found = false;
             for (let i = 0; i < this.data.length; i++) {
                 const pieChartPart = this.data[i];
-                if (pieChartPart.getState() === state.state) {
-                    pieChartPart.setValue(state.probability);
+                if (pieChartPart.getState() === state) {
+                    pieChartPart.setValue(probabilities[state]);
                     found = true;
                     foundIdentifiers.push(i);
                 }
             }
             if (!found) {
-                this.data.push(new PieChartPart(state.state, state.probability, PieChart.getColor(state.state), HumanStateManager_1.HumanStateManager.getStr(state.state)));
+                this.data.push(new PieChartPart(state, probabilities[state], PieChart.getColor(state), HumanStateManager_1.HumanStateManager.getStr(state)));
             }
         });
         for (let i = 0; i < this.data.length; i++) {

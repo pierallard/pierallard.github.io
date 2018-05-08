@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const HumanPropertiesFactory_1 = require("../human_stuff/HumanPropertiesFactory");
 const SmoothValue_1 = require("../SmoothValue");
 const Price_1 = require("../objects/Price");
-const DEVELOPER_RATIO = 1000;
+const DEVELOPER_RATIO = 500;
 const MARKETING_RATIO = 5;
 const SALE_RATIO = 10;
 const STARTING_LEVEL = 1;
@@ -19,6 +19,11 @@ class LevelManager {
         this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER] = new SmoothValue_1.SmoothValue(0);
         this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING] = new SmoothValue_1.SmoothValue(0);
         this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE] = new SmoothValue_1.SmoothValue(0);
+    }
+    create(game) {
+        this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER].create(game);
+        this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING].create(game);
+        this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE].create(game);
     }
     getLevelProgress(type) {
         return Math.min((this.levels[type].getValue() - this.starts[type]) / (this.getGoal(type) - this.starts[type]), 1);

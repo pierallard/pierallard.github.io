@@ -4,20 +4,30 @@ const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
 const HumanAnimationManager_1 = require("../human_stuff/HumanAnimationManager");
 const AbstractState_1 = require("./AbstractState");
 class RageState extends AbstractState_1.AbstractState {
-    constructor(human, rageImage) {
+    constructor(human, sourceState) {
         super(human);
-        this.rageImage = rageImage;
+        this.sourceState = sourceState;
         this.isRaging = false;
     }
     getNextState() {
         if (!this.isRaging && !this.human.isMoving()) {
             this.isRaging = true;
-            this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.RAGE);
+            if (this.human.getMood() < 0.5) {
+                this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.RAGE);
+            }
+            else {
+                this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE);
+            }
             this.human.updateMoodFromState();
-            this.human.showThoughtBubble(this.rageImage);
+            const time = HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.RAGE) + 3 * Phaser.Timer.SECOND;
+            this.startTimer(time);
+            this.human.showThoughtBubble(this.sourceState.getRageImage());
             this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.RAGE), () => {
-                this.active = false;
                 this.human.hideThoughtBubble();
+                this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE);
+                this.events.push(this.game.time.events.add(3 * Phaser.Timer.SECOND, () => {
+                    this.active = false;
+                }, this));
             }, this));
         }
         return super.getNextState();
@@ -26,7 +36,10 @@ class RageState extends AbstractState_1.AbstractState {
         return HumanStateManager_1.STATE.RAGE;
     }
     getRageImage() {
-        return this.rageImage;
+        return this.sourceState.getRageImage();
+    }
+    getSourceState() {
+        return this.sourceState;
     }
 }
 exports.RageState = RageState;

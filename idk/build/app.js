@@ -15,8 +15,16 @@ exports.WORLD_WIDTH = WorldKnowledge_1.GRID_WIDTH * PositionTransformer_1.CELL_W
 exports.WORLD_HEIGHT = WorldKnowledge_1.GRID_WIDTH * PositionTransformer_1.CELL_HEIGHT / 2 + WorldKnowledge_1.GRID_HEIGHT * PositionTransformer_1.CELL_HEIGHT / 2 + 15;
 class SimpleGame extends Phaser.Game {
     constructor() {
-        super(exports.CAMERA_WIDTH_PIXELS, exports.CAMERA_HEIGHT_PIXELS, Phaser.CANVAS, // Open GL for effect / shader ?
-        'content', null, false, false, false);
+        super({
+            width: exports.CAMERA_WIDTH_PIXELS,
+            height: exports.CAMERA_HEIGHT_PIXELS,
+            renderer: Phaser.CANVAS,
+            parent: null,
+            state: 'content',
+            transparent: false,
+            antialias: false,
+            physicsConfig: false,
+        });
         this.antialias = false;
         this.state.add('Boot', Boot_1.default);
         this.state.add('Preload', Preload_1.default);

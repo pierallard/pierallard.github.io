@@ -7,20 +7,26 @@ class SmoothValue {
         this.minValue = null;
         this.value = value;
     }
+    create(game) {
+        this.game = game;
+    }
     getValue() {
         return this.value;
     }
     add(value, milliseconds = Phaser.Timer.SECOND) {
+        if (isNaN(value)) {
+            debugger;
+        }
         if (milliseconds < TIME_GAP) {
             this.value += value;
         }
         else {
-            setTimeout(() => {
+            this.game.time.events.add(TIME_GAP, () => {
                 const numberOfSteps = milliseconds / TIME_GAP;
                 const valuePerStep = value / numberOfSteps;
                 this.value += valuePerStep;
                 this.add(value - valuePerStep, milliseconds - TIME_GAP);
-            }, TIME_GAP);
+            }, this);
         }
         if (this.maxValue !== null) {
             this.value = Math.min(this.value, this.maxValue);

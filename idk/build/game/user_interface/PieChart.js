@@ -82,7 +82,9 @@ class PieChart {
                 }
             }
             if (!found) {
-                this.data.push(new PieChartPart(state, probabilities[state], PieChart.getColor(state), HumanStateManager_1.HumanStateManager.getStr(state)));
+                const pieChartPart = new PieChartPart(state, probabilities[state], PieChart.getColor(state), HumanStateManager_1.HumanStateManager.getStr(state));
+                pieChartPart.create(this.game);
+                this.data.push(pieChartPart);
             }
         });
         for (let i = 0; i < this.data.length; i++) {
@@ -140,6 +142,9 @@ class PieChartPart {
         this.value = new SmoothValue_1.SmoothValue(value);
         this.color = color;
         this.text = text;
+    }
+    create(game) {
+        this.value.create(game);
     }
     getValue() {
         return this.value.getValue();

@@ -10,13 +10,13 @@ const TalkBubble_1 = require("./TalkBubble");
 const HumanMoodManager_1 = require("./HumanMoodManager");
 const MoodSprite_1 = require("./MoodSprite");
 const Play_1 = require("../game_state/Play");
+const HumanProperties_1 = require("./HumanProperties");
 const ThoughtBubble_1 = require("./ThoughtBubble");
 const Pico8Colors_1 = require("../Pico8Colors");
 const AbstractObject_1 = require("../objects/AbstractObject");
 const ObjectOrientation_1 = require("../objects/ObjectOrientation");
 const MAX_WALK_CELL_DURATION = 1500;
 const MIN_WALK_CELL_DURATION = 800;
-const DAY_LENGTH = 60 * Phaser.Timer.SECOND;
 const MAX_RETRIES = 3;
 const MIN_RETRIES = 0;
 const GAP_FROM_BOTTOM = -8;
@@ -60,7 +60,7 @@ class Employee {
             this.debugGraphics = game.add.graphics(0, 0, groups[Play_1.GROUP_INTERFACE]);
         }
         this.worldKnowledge.addMoneyInWallet(this.humanProperties.getRealWage(), 3 * Phaser.Timer.SECOND);
-        this.game.time.events.loop(DAY_LENGTH, () => {
+        this.game.time.events.loop(HumanProperties_1.DAY_DURATION, () => {
             this.worldKnowledge.addMoneyInWallet(this.humanProperties.getRealWage(), 3 * Phaser.Timer.SECOND);
         });
     }
@@ -103,6 +103,7 @@ class Employee {
     moveTo(cell) {
         const path = this.closestPathFinder.getPath(this.cell, cell);
         if (path === null) {
+            this.path = [];
             this.stateManager.reset(this.game);
             return false;
         }
@@ -115,7 +116,7 @@ class Employee {
     moveToClosest(cell, entries = [Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT]) {
         const path = this.closestPathFinder.getNeighborPath(this.cell, cell, entries);
         if (path === null) {
-            this.stateManager.reset(this.game);
+            this.path = [];
             return false;
         }
         this.path = path;
@@ -141,7 +142,6 @@ class Employee {
     }
     popPath() {
         this.moving = false;
-        let humanPositions = [this.cell];
         if (this.path !== null && this.path.length > 0) {
             const next = this.path.shift();
             const direction = Direction_1.Direction.getNeighborDirection(this.cell, next);
@@ -151,9 +151,8 @@ class Employee {
                 this.anchorPixels.y = GAP_FROM_BOTTOM;
                 this.animateMove(direction);
             }
-            humanPositions.push(this.cell);
         }
-        this.worldKnowledge.humanMoved(humanPositions);
+        this.worldKnowledge.humanMoved();
     }
     getPosition() {
         return this.cell;
@@ -201,12 +200,9 @@ class Employee {
     isSelected() {
         return ObjectSelector_1.ObjectSelector.isSelected(this.sprite);
     }
-    getSprite() {
-        return this.sprite;
-    }
-    resetAStar(newNonEmptyCell) {
+    resetAStar(newNonEmptyCell = null) {
         this.closestPathFinder.reset();
-        if (this.path !== null) {
+        if (newNonEmptyCell && this.path !== null) {
             // If human wants to go to a non-empty cell
             const matchingPath = this.path.filter((cell) => {
                 return cell.x === newNonEmptyCell.x && cell.y === newNonEmptyCell.y;
@@ -224,7 +220,10 @@ class Employee {
         }
     }
     isFree() {
-        return [HumanStateManager_1.STATE.MOVE_RANDOM, HumanStateManager_1.STATE.FREEZE, HumanStateManager_1.STATE.SMOKE].indexOf(this.getState()) > -1;
+        return [HumanStateManager_1.STATE.MOVE_RANDOM, HumanStateManager_1.STATE.FREEZE, HumanStateManager_1.STATE.SMOKE].indexOf(this.getStateType()) > -1;
+    }
+    getStateType() {
+        return this.stateManager.getStateType();
     }
     getState() {
         return this.stateManager.getState();
@@ -236,7 +235,7 @@ class Employee {
         this.talkBubble.hide();
     }
     updateMoodFromState() {
-        this.moodManager.updateFromState(this.getState());
+        this.moodManager.updateFromState(this.getStateType());
     }
     getMood(mood = null) {
         if (mood === null) {
@@ -269,6 +268,18 @@ class Employee {
         if (this.isSelected()) {
             ObjectSelector_1.ObjectSelector.click(this.sprite, null, [this.sprite]);
         }
+    }
+    getRealWage() {
+        return this.humanProperties.getRealWage();
+    }
+    getMoveTime() {
+        return this.path.length * this.getWalkDuration();
+    }
+    pause() {
+        this.animationManager.pause();
+    }
+    resume() {
+        this.animationManager.resume();
     }
 }
 exports.Employee = Employee;

@@ -27,6 +27,9 @@ class HumanMoodManager {
     }
     create(game) {
         this.game = game;
+        this.moods[MOOD.RELAXATION].create(game);
+        this.moods[MOOD.HUNGER].create(game);
+        this.moods[MOOD.SOCIAL].create(game);
     }
     update() {
         if (this.hasToBeUpdated) {
@@ -46,7 +49,7 @@ class HumanMoodManager {
     }
     updateFromStateInner(moods, time = Phaser.Timer.SECOND) {
         Object.keys(moods).forEach((mood) => {
-            this.moods[mood].add(moods[mood], time);
+            this.moods[parseInt(mood)].add(moods[parseInt(mood)], time);
         });
     }
     static getMoods() {

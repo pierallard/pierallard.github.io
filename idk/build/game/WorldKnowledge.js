@@ -22,6 +22,7 @@ const UserInterface_1 = require("./user_interface/UserInterface");
 const ObjectOrientation_1 = require("./objects/ObjectOrientation");
 const Couch_1 = require("./objects/Couch");
 const EmployeeCountRegister_1 = require("./human_stuff/EmployeeCountRegister");
+const Console_1 = require("./objects/Console");
 exports.GRID_WIDTH = 16;
 exports.GRID_HEIGHT = 16;
 exports.DEBUG_WORLD = false;
@@ -76,6 +77,8 @@ class WorldKnowledge {
     create(game, groups) {
         this.game = game;
         this.groups = groups;
+        this.wallet.create(game);
+        this.levelManager.create(game);
         const floor = groups[Play_1.GROUP_FLOOR];
         const noname = groups[Play_1.GROUP_OBJECTS_AND_HUMANS];
         this.cells.forEach((cell) => {
@@ -95,16 +98,10 @@ class WorldKnowledge {
             this.addMoneyInWallet(this.levelManager.getEarnedMoney());
         }
     }
-    humanMoved(positions) {
+    humanMoved() {
         const walls = this.wallRepository.getWalls();
         walls.forEach((wall) => {
-            let visible = true;
-            positions.forEach((position) => {
-                if (this.anyHumanIsAboveWall(wall)) {
-                    visible = false;
-                }
-            });
-            wall.setVisibility(visible);
+            wall.setVisibility(!this.anyHumanIsAboveWall(wall));
         });
     }
     anyHumanIsAboveWall(wall) {
@@ -125,7 +122,7 @@ class WorldKnowledge {
     getMoneyInWallet() {
         return new Price_1.Price(this.wallet.getValue());
     }
-    resetAStar(position) {
+    resetAStar(position = null) {
         this.humanRepository.humans.forEach((human) => {
             human.resetAStar(position);
         });
@@ -356,6 +353,9 @@ class WorldKnowledge {
             case 'Couch':
                 object = new Couch_1.Couch(position, this, orientation);
                 break;
+            case 'Console':
+                object = new Console_1.Console(position, this, orientation);
+                break;
             default: throw 'Unknown object ' + name;
         }
         this.objects.push(object);
@@ -421,6 +421,16 @@ class WorldKnowledge {
     }
     getLastEmployeesCount() {
         return this.employeeCountRegister.getLastCounts();
+    }
+    pause() {
+        this.humanRepository.humans.forEach((human) => {
+            human.pause();
+        });
+    }
+    resume() {
+        this.humanRepository.humans.forEach((human) => {
+            human.resume();
+        });
     }
 }
 exports.WorldKnowledge = WorldKnowledge;

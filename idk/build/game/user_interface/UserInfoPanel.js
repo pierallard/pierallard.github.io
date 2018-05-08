@@ -28,21 +28,27 @@ class UserInfoPanel {
         this.moodHungerText = game.add.text(left, UserInterface_1.TOP_GAP + 2 * exports.GAP_BETWEEN_LINES, 'Hunger', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
         this.moodSocialText = game.add.text(left, UserInterface_1.TOP_GAP + 3 * exports.GAP_BETWEEN_LINES, 'Social', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
         this.currentState = game.add.text(left, UserInterface_1.TOP_GAP + 4 * exports.GAP_BETWEEN_LINES, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.wage = game.add.text(left, UserInterface_1.TOP_GAP + 5 * exports.GAP_BETWEEN_LINES, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
         this.pieChart.create(game, groups);
-        this.moodRelaxationGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + exports.GAP_BETWEEN_LINES - 3.5));
-        this.moodHungerGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + 2 * exports.GAP_BETWEEN_LINES - 3.5));
-        this.moodSocialGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + 3 * exports.GAP_BETWEEN_LINES - 3.5));
+        this.moodRelaxationGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + exports.GAP_BETWEEN_LINES + 3.5));
+        this.moodHungerGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + 2 * exports.GAP_BETWEEN_LINES + 3.5));
+        this.moodSocialGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + 3 * exports.GAP_BETWEEN_LINES + 3.5));
     }
     update() {
         if (this.human) {
             this.moodRelaxationGauge.setValue(this.human.getMood(HumanMoodManager_1.MOOD.RELAXATION));
             this.moodHungerGauge.setValue(this.human.getMood(HumanMoodManager_1.MOOD.HUNGER));
             this.moodSocialGauge.setValue(this.human.getMood(HumanMoodManager_1.MOOD.SOCIAL));
+            this.wage.setText('Wage: ' + this.human.getRealWage().getStringValue() + '/day');
             this.moodRelaxationGauge.update();
             this.moodHungerGauge.update();
             this.moodSocialGauge.update();
             this.pieChart.update();
-            this.currentState.setText('State: ' + HumanStateManager_1.HumanStateManager.getStr(this.human.getState()));
+            let stateStr = 'State: ' + HumanStateManager_1.HumanStateManager.getStr(this.human.getStateType());
+            if (this.human.getState().getRemainingSeconds()) {
+                stateStr = stateStr + ' (' + this.human.getState().getRemainingSeconds() + 's left)';
+            }
+            this.currentState.setText(stateStr);
         }
     }
     show() {
@@ -53,6 +59,7 @@ class UserInfoPanel {
             this.moodHungerText.position.x -= UserInterface_1.INTERFACE_WIDTH;
             this.moodSocialText.position.x -= UserInterface_1.INTERFACE_WIDTH;
             this.currentState.position.x -= UserInterface_1.INTERFACE_WIDTH;
+            this.wage.position.x -= UserInterface_1.INTERFACE_WIDTH;
             this.moodRelaxationGauge.show();
             this.moodHungerGauge.show();
             this.moodSocialGauge.show();
@@ -67,6 +74,7 @@ class UserInfoPanel {
             this.moodHungerText.position.x += UserInterface_1.INTERFACE_WIDTH;
             this.moodSocialText.position.x += UserInterface_1.INTERFACE_WIDTH;
             this.currentState.position.x += UserInterface_1.INTERFACE_WIDTH;
+            this.wage.position.x += UserInterface_1.INTERFACE_WIDTH;
             this.moodRelaxationGauge.hide();
             this.moodHungerGauge.hide();
             this.moodSocialGauge.hide();

@@ -4,6 +4,7 @@ const HumanPropertiesFactory_1 = require("./HumanPropertiesFactory");
 const Price_1 = require("../objects/Price");
 const MAX_WAGE = 50;
 const MIN_WAGE = 10;
+exports.DAY_DURATION = 60 * Phaser.Timer.SECOND;
 class HumanProperties {
     constructor(spriteVariation, type, name, speed, quality, perseverance) {
         this.spriteVariation = spriteVariation;

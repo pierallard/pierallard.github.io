@@ -2,33 +2,35 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
 const HumanAnimationManager_1 = require("../human_stuff/HumanAnimationManager");
-const RageState_1 = require("./RageState");
 const MoveThenActAbstractState_1 = require("./MoveThenActAbstractState");
 const ThoughtBubble_1 = require("../human_stuff/ThoughtBubble");
 class CoffeeState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
-    retry() {
-        const nextDispenserReferer = this.worldKnowledge.getClosestReferer(['Dispenser'], 1, this.human.getPosition());
-        if (this.tries > this.human.getMaxRetries() || nextDispenserReferer === null) {
-            this.active = false;
-            this.human.stopWalk();
-            return new RageState_1.RageState(this.human, ThoughtBubble_1.RAGE_IMAGE.COFFEE);
+    start(game) {
+        this.objectReferer = this.worldKnowledge.getClosestReferer(['Dispenser'], 1, this.human.getPosition());
+        if (this.objectReferer === null) {
+            return false;
         }
-        else {
-            return new CoffeeState(this.human, nextDispenserReferer, this.worldKnowledge, this.tries + 1);
-        }
+        this.drinkTime = Math.floor(Phaser.Math.random(2, 4)) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.DRINK);
+        return super.start(game);
     }
     act() {
         this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.DRINK);
         this.human.updateMoodFromState();
-        this.events.push(this.game.time.events.add(Math.floor(Phaser.Math.random(2, 4)) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.DRINK), () => {
-            this.human.goToFreeCell(this.objectReferer);
-            this.events.push(this.game.time.events.add(this.human.getWalkDuration() + 100, () => {
-                this.active = false;
-            }, this));
+        this.events.push(this.game.time.events.add(this.drinkTime, () => {
+            this.finish();
         }, this));
+    }
+    getActTime() {
+        return this.drinkTime + this.human.getWalkDuration();
     }
     getState() {
         return HumanStateManager_1.STATE.COFFEE;
+    }
+    subGetRageImage() {
+        return ThoughtBubble_1.RAGE_IMAGE.COFFEE;
+    }
+    getRetryState() {
+        return new CoffeeState(this.human, this.worldKnowledge, this.tries + 1);
     }
 }
 exports.CoffeeState = CoffeeState;

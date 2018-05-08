@@ -21,9 +21,7 @@ class TalkBubble extends Bubble_1.Bubble {
         this.event = this.game.time.events.add(Phaser.Math.random(2, 4) * Phaser.Timer.SECOND, this.switchImage, this);
     }
     hide() {
-        console.log(this.game.time.events.length);
-        console.log(this.game.time.events.remove(this.event));
-        console.log(this.game.time.events.length);
+        this.game.time.events.remove(this.event);
         super.hide();
     }
     show() {

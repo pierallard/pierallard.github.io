@@ -56,6 +56,7 @@ class AbstractObject {
     }
     remove() {
         this.worldKnowledge.moveToDepot(this);
+        this.worldKnowledge.resetAStar();
         this.getSprites().forEach((sprite) => {
             sprite.destroy(true);
         });

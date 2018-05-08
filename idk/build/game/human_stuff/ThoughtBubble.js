@@ -7,6 +7,7 @@ var RAGE_IMAGE;
     RAGE_IMAGE[RAGE_IMAGE["LAPTOP"] = 1] = "LAPTOP";
     RAGE_IMAGE[RAGE_IMAGE["SLEEP"] = 2] = "SLEEP";
     RAGE_IMAGE[RAGE_IMAGE["TABLE"] = 3] = "TABLE";
+    RAGE_IMAGE[RAGE_IMAGE["PATH"] = 4] = "PATH";
 })(RAGE_IMAGE = exports.RAGE_IMAGE || (exports.RAGE_IMAGE = {}));
 class ThoughtBubble extends Bubble_1.Bubble {
     getSpriteFrame() {

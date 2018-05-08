@@ -173,12 +173,12 @@ class Human {
     getSprite() {
         return this.sprite;
     }
-    resetAStar(startPosition, endPosition) {
-        console.log('Move object -> reset');
+    resetAStar(newNonEmptyCell) {
         this.closestPathFinder.reset();
         if (this.path !== null) {
+            // If human wants to go to a non-empty cell
             const matchingPath = this.path.filter((cell) => {
-                return cell.x === endPosition.x && cell.y === endPosition.y;
+                return cell.x === newNonEmptyCell.x && cell.y === newNonEmptyCell.y;
             });
             if (matchingPath.length > 0) {
                 const goal = this.path[this.path.length - 1];
@@ -186,7 +186,9 @@ class Human {
                 return;
             }
         }
-        if (this.cell.x == startPosition.x && this.cell.y == startPosition.y) {
+    }
+    resetStateIfCellEmpty(newEmptyCell) {
+        if (this.cell.x == newEmptyCell.x && this.cell.y == newEmptyCell.y) {
             this.stateManager.reset(this.game);
         }
     }

@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const TOP_ORIENTED_ANIMATION = '_reverse';
-const FRAME_RATE = 12;
+exports.FRAME_RATE = 12;
 var ANIMATION;
 (function (ANIMATION) {
     ANIMATION[ANIMATION["FREEZE"] = 0] = "FREEZE";
@@ -13,7 +13,7 @@ var ANIMATION;
     ANIMATION[ANIMATION["TALK"] = 6] = "TALK";
     ANIMATION[ANIMATION["DRINK"] = 7] = "DRINK";
     ANIMATION[ANIMATION["RAGE"] = 8] = "RAGE";
-    ANIMATION[ANIMATION["FREEZE_SIT"] = 9] = "FREEZE_SIT";
+    ANIMATION[ANIMATION["SIT_FREEZE"] = 9] = "SIT_FREEZE";
     ANIMATION[ANIMATION["SIT_TALK"] = 10] = "SIT_TALK";
 })(ANIMATION = exports.ANIMATION || (exports.ANIMATION = {}));
 class HumanAnimationManager {
@@ -40,20 +40,20 @@ class HumanAnimationManager {
         if (HumanAnimationManager.hasTopOrientedVariation(animation)) {
             animationName = this.getAnimationName(animation, isTopLooking);
         }
-        if (this.humanTile.animations.name !== animationName) {
-            this.humanTile.animations.play(animationName, FRAME_RATE, HumanAnimationManager.isLooped(animation));
+        if (this.humanTile.animations.name !== animationName || !HumanAnimationManager.isLooped(animation)) {
+            this.humanTile.animations.play(animationName, exports.FRAME_RATE, HumanAnimationManager.isLooped(animation));
         }
         if (isLeftLooking != null) {
             this.humanTile.scale.set(isLeftLooking ? 1 : -1, 1);
         }
     }
     static getAnimationTime(animation) {
-        return this.getAnimationFrames(animation).length * Phaser.Timer.SECOND / FRAME_RATE;
+        return this.getAnimationFrames(animation).length * Phaser.Timer.SECOND / exports.FRAME_RATE;
     }
     static getAnimationFrames(animation, topOriented = null) {
         switch (animation) {
             case ANIMATION.FREEZE: return topOriented ? [18, 19, 20] : [12, 13, 14];
-            case ANIMATION.FREEZE_SIT: return topOriented ? [21, 22, 23] : [15, 16, 17];
+            case ANIMATION.SIT_FREEZE: return topOriented ? [21, 22, 23] : [15, 16, 17];
             case ANIMATION.WALK: return topOriented ? [6, 7, 8, 9, 10, 11] : [0, 1, 2, 3, 4, 5];
             case ANIMATION.SIT_DOWN: return topOriented ? [18, 68, 69, 70, 71] : [12, 32, 33, 34, 35];
             case ANIMATION.STAND_UP: return topOriented ? [71, 70, 69, 68, 18] : [35, 34, 33, 32, 12];
@@ -86,7 +86,7 @@ class HumanAnimationManager {
     }
     static getAnimations() {
         return [
-            ANIMATION.FREEZE_SIT,
+            ANIMATION.SIT_FREEZE,
             ANIMATION.FREEZE,
             ANIMATION.WALK,
             ANIMATION.SMOKE,
@@ -106,7 +106,7 @@ class HumanAnimationManager {
             ANIMATION.TALK,
             ANIMATION.SIT_DOWN,
             ANIMATION.STAND_UP,
-            ANIMATION.FREEZE_SIT,
+            ANIMATION.SIT_FREEZE,
             ANIMATION.SIT_TALK,
             ANIMATION.TYPE,
         ].indexOf(animation) > -1;
@@ -119,14 +119,14 @@ class HumanAnimationManager {
             ANIMATION.SMOKE,
             ANIMATION.TYPE,
             ANIMATION.DRINK,
-            ANIMATION.FREEZE_SIT,
+            ANIMATION.SIT_FREEZE,
             ANIMATION.SIT_TALK,
         ].indexOf(animation) > -1;
     }
     static getAnimationStr(animation) {
         switch (animation) {
             case ANIMATION.FREEZE: return 'FZ';
-            case ANIMATION.FREEZE_SIT: return 'FS';
+            case ANIMATION.SIT_FREEZE: return 'FS';
             case ANIMATION.WALK: return 'WK';
             case ANIMATION.SIT_DOWN: return 'SD';
             case ANIMATION.STAND_UP: return 'SU';
@@ -139,6 +139,12 @@ class HumanAnimationManager {
             default:
                 throw 'UNKNOWN ANIMATION ' + animation;
         }
+    }
+    pause() {
+        this.humanTile.animations.currentAnim.paused = true;
+    }
+    resume() {
+        this.humanTile.animations.currentAnim.paused = false;
     }
 }
 exports.HumanAnimationManager = HumanAnimationManager;

@@ -22,7 +22,7 @@ class SitTalkState extends AbstractState_1.AbstractState {
         if (!this.worldKnowledge.hasObject(this.table)) {
             this.active = false;
             this.human.stopWalk();
-            return new RageState_1.RageState(this.human, ThoughtBubble_1.RAGE_IMAGE.TABLE);
+            return new RageState_1.RageState(this.human, this);
         }
         else {
             if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
@@ -31,7 +31,7 @@ class SitTalkState extends AbstractState_1.AbstractState {
                 this.events.push(this.game.time.events.add(this.human.getWalkDuration() + 100, () => {
                     this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN, this.meeting.getTable().forceLeftOrientation(this.meeting.getCell(this.human).getIdentifier()), this.table.forceTopOrientation(this.meeting.getCell(this.human).getIdentifier()));
                     this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SIT_DOWN) + 100, () => {
-                        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE_SIT);
+                        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_FREEZE);
                     }, this));
                     this.isHumanSit = true;
                 }));
@@ -39,7 +39,7 @@ class SitTalkState extends AbstractState_1.AbstractState {
             if (!this.isHumanOnTheRightCell && !this.meetingStarted && this.meeting.aPlaceWasTakenBySomeoneElse()) {
                 this.active = false;
                 this.human.stopWalk();
-                return new RageState_1.RageState(this.human, ThoughtBubble_1.RAGE_IMAGE.TABLE);
+                return new RageState_1.RageState(this.human, this);
             }
             if (this.isHumanSit && !this.meetingStarted && this.meeting.isReady()) {
                 this.meetingStarted = true;
@@ -107,7 +107,10 @@ class SitTalkState extends AbstractState_1.AbstractState {
             PositionTransformer_1.PositionTransformer.isNeighbor(this.human.getPosition(), this.meeting.getCell(this.human).getPosition());
     }
     static otherAnimation(animation) {
-        return animation === HumanAnimationManager_1.ANIMATION.SIT_TALK ? HumanAnimationManager_1.ANIMATION.FREEZE_SIT : HumanAnimationManager_1.ANIMATION.SIT_TALK;
+        return animation === HumanAnimationManager_1.ANIMATION.SIT_TALK ? HumanAnimationManager_1.ANIMATION.SIT_FREEZE : HumanAnimationManager_1.ANIMATION.SIT_TALK;
+    }
+    getRageImage() {
+        return ThoughtBubble_1.RAGE_IMAGE.PATH;
     }
 }
 exports.SitTalkState = SitTalkState;

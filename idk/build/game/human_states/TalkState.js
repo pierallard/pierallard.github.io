@@ -5,6 +5,7 @@ const Meeting_1 = require("./Meeting");
 const Direction_1 = require("../Direction");
 const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
 const AbstractState_1 = require("./AbstractState");
+const ThoughtBubble_1 = require("../human_stuff/ThoughtBubble");
 class TalkState extends AbstractState_1.AbstractState {
     constructor(human, anotherHuman, worldKnowledge, meeting = null) {
         super(human);
@@ -72,6 +73,9 @@ class TalkState extends AbstractState_1.AbstractState {
     }
     static otherAnimation(animation) {
         return animation === HumanAnimationManager_1.ANIMATION.TALK ? HumanAnimationManager_1.ANIMATION.FREEZE : HumanAnimationManager_1.ANIMATION.TALK;
+    }
+    getRageImage() {
+        return ThoughtBubble_1.RAGE_IMAGE.PATH;
     }
 }
 exports.TalkState = TalkState;

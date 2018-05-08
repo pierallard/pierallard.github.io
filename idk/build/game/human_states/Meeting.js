@@ -51,7 +51,7 @@ class Meeting {
     areAllHumanStillInMeeting() {
         for (let i = 0; i < this.places.length; i++) {
             const human = this.places[i].human;
-            if (human.getState() !== HumanStateManager_1.STATE.TALK) {
+            if (human.getStateType() !== HumanStateManager_1.STATE.TALK) {
                 return false;
             }
         }

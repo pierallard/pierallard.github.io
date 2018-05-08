@@ -22,14 +22,21 @@ class Gauge {
     update() {
         this.graphics.clear();
         if (this.visible) {
-            this.graphics.lineStyle(0);
-            this.graphics.beginFill(Pico8Colors_1.COLOR.BLACK);
-            this.graphics.drawRect(0, 0.5, this.width, this.height);
-            this.graphics.beginFill(this.getColor());
-            this.graphics.drawRect(0, 0.5, Math.floor(this.width * this.value) + 0.5, this.height);
-            this.graphics.endFill();
             this.graphics.lineStyle(1, Pico8Colors_1.COLOR.WHITE);
             this.graphics.drawRect(0, 0.5, this.width, this.height);
+            this.graphics.lineStyle(0);
+            this.graphics.beginFill(Pico8Colors_1.COLOR.BLACK);
+            this.graphics.drawRect(0.5, 1, this.width - 1, this.height - 1);
+            if (this.value > 0) {
+                this.graphics.beginFill(this.getColor());
+                if (this.value >= 1) {
+                    this.graphics.drawRect(0.5, 1, Math.floor(this.width - 2) + 1, this.height - 1);
+                }
+                else {
+                    this.graphics.drawRect(0.5, 1, Math.floor((this.width - 2) * this.value) + 1, this.height - 1);
+                }
+            }
+            this.graphics.endFill();
         }
     }
     show() {

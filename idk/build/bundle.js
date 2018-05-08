@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 68);
+/******/ 	return __webpack_require__(__webpack_require__.s = 70);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -75,7 +75,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const WorldKnowledge_1 = __webpack_require__(20);
 const app_1 = __webpack_require__(3);
-const UserInterface_1 = __webpack_require__(5);
+const UserInterface_1 = __webpack_require__(6);
 exports.GROUP_FLOOR = 'floor';
 exports.GROUP_OBJECTS_AND_HUMANS = 'objects_and_humans';
 exports.GROUP_INFOS = 'infos';
@@ -88,8 +88,10 @@ class Play extends Phaser.State {
         this.worldKnowledge = new WorldKnowledge_1.WorldKnowledge();
         this.userInterface = new UserInterface_1.UserInterface(this.worldKnowledge);
         this.worldKnowledge.setUserInterface(this.userInterface);
+        this.isPaused = false;
     }
     create() {
+        // this.game.stage.disableVisibilityChange = true;
         this.game.stage.backgroundColor = "#494947";
         this.groups = {};
         this.groups[exports.GROUP_FLOOR] = this.game.add.group();
@@ -107,12 +109,29 @@ class Play extends Phaser.State {
         this.downKey = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
         this.leftKey = this.game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
         this.rightKey = this.game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
+        this.pauseKey = this.game.input.keyboard.addKey(Phaser.Keyboard.P);
         // const text = this.game.add.bitmapText(CAMERA_WIDTH_PIXELS - INTERFACE_WIDTH + 60, 2, 'retro_computer','Bitmap Fonts!',7, this.groups[GROUP_INTERFACE]);
     }
     update(game) {
         this.groups[exports.GROUP_OBJECTS_AND_HUMANS].sort('y', Phaser.Group.SORT_ASCENDING);
         this.worldKnowledge.update();
         this.userInterface.update();
+        if (this.pauseKey.isDown && this.pauseKey.justDown) {
+            if (this.isPaused) {
+                this.game.time.events.resume();
+                this.isPaused = false;
+                this.game.stage.backgroundColor = "#494947";
+                this.worldKnowledge.resume();
+                this.game.tweens.resumeAll();
+            }
+            else {
+                this.game.time.events.pause();
+                this.isPaused = true;
+                this.game.stage.backgroundColor = "#ffffff";
+                this.worldKnowledge.pause();
+                this.game.tweens.pauseAll();
+            }
+        }
         if (this.upKey.isDown) {
             this.game.camera.setPosition(this.game.camera.position.x, this.game.camera.position.y - exports.CAMERA_GAP);
         }
@@ -142,17 +161,17 @@ exports.default = Play;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const FreezeState_1 = __webpack_require__(35);
-const SmokeState_1 = __webpack_require__(40);
-const SitState_1 = __webpack_require__(38);
-const MoveRandomState_1 = __webpack_require__(37);
-const TypeState_1 = __webpack_require__(43);
-const TalkState_1 = __webpack_require__(42);
-const CoffeeState_1 = __webpack_require__(34);
+const FreezeState_1 = __webpack_require__(36);
+const SmokeState_1 = __webpack_require__(42);
+const SitState_1 = __webpack_require__(40);
+const MoveRandomState_1 = __webpack_require__(38);
+const TypeState_1 = __webpack_require__(45);
+const TalkState_1 = __webpack_require__(44);
+const CoffeeState_1 = __webpack_require__(35);
 const HumanMoodManager_1 = __webpack_require__(22);
-const SitTalkState_1 = __webpack_require__(39);
-const RageState_1 = __webpack_require__(15);
-const ThoughtBubble_1 = __webpack_require__(12);
+const SitTalkState_1 = __webpack_require__(41);
+const RageState_1 = __webpack_require__(21);
+const SitPlay_1 = __webpack_require__(39);
 const LIMIT = 0.8;
 var STATE;
 (function (STATE) {
@@ -165,6 +184,7 @@ var STATE;
     STATE[STATE["COFFEE"] = 6] = "COFFEE";
     STATE[STATE["RAGE"] = 7] = "RAGE";
     STATE[STATE["SIT_TALK"] = 8] = "SIT_TALK";
+    STATE[STATE["SIT_PLAY"] = 9] = "SIT_PLAY";
 })(STATE = exports.STATE || (exports.STATE = {}));
 class HumanStateManager {
     constructor(human) {
@@ -179,49 +199,50 @@ class HumanStateManager {
     updateState(game) {
         const nextState = this.state.getNextState();
         if (nextState === this.state) {
-            // Do nothing, current state is not ended.
             return;
         }
         if (nextState !== null) {
-            // Next state is forced.
             this.state = nextState;
-            this.state.start(game);
-            console.log('New forced state: ' + this.state.constructor.name);
-            return;
-        }
-        // Generates new state
-        switch (this.randomNextStepName()) {
-            case STATE.SMOKE:
-                this.state = new SmokeState_1.SmokeState(this.human);
-                break;
-            case STATE.MOVE_RANDOM:
-                this.state = new MoveRandomState_1.MoveRandomState(this.human, this.worldKnowledge);
-                break;
-            case STATE.SIT:
-                this.state = new SitState_1.SitState(this.human, this.worldKnowledge.getClosestReferer(['Sofa', 'Couch'], 1, this.human.getPosition()), this.worldKnowledge);
-                break;
-            case STATE.TYPE:
-                this.state = new TypeState_1.TypeState(this.human, this.worldKnowledge.getClosestReferer(['Desk'], 1, this.human.getPosition()), this.worldKnowledge);
-                break;
-            case STATE.COFFEE:
-                this.state = new CoffeeState_1.CoffeeState(this.human, this.worldKnowledge.getClosestReferer(['Dispenser'], 1, this.human.getPosition()), this.worldKnowledge);
-                break;
-            case STATE.TALK:
-                this.state = new TalkState_1.TalkState(this.human, this.worldKnowledge.getAnotherFreeHuman(this.human), this.worldKnowledge);
-                break;
-            case STATE.SIT_TALK:
-                this.state = new SitTalkState_1.SitTalkState(this.human, this.worldKnowledge.getClosestReferer(['Table'], 4, this.human.getPosition()).getObject(), this.worldKnowledge.getAnotherFreeHumans(this.human, 3), this.worldKnowledge);
-                break;
-            case STATE.FREEZE:
-            default:
-                this.state = new FreezeState_1.FreezeState(this.human);
-        }
-        if (this.state.start(game)) {
-            console.log('New random state: ' + this.state.constructor.name);
         }
         else {
-            console.log('State ' + this.state.constructor.name + ' failed. Retry.');
-            this.updateState(game);
+            // Generates new state
+            switch (this.randomNextStepName()) {
+                case STATE.SMOKE:
+                    this.state = new SmokeState_1.SmokeState(this.human);
+                    break;
+                case STATE.MOVE_RANDOM:
+                    this.state = new MoveRandomState_1.MoveRandomState(this.human, this.worldKnowledge);
+                    break;
+                case STATE.SIT:
+                    this.state = new SitState_1.SitState(this.human, this.worldKnowledge);
+                    break;
+                case STATE.TYPE:
+                    this.state = new TypeState_1.TypeState(this.human, this.worldKnowledge);
+                    break;
+                case STATE.COFFEE:
+                    this.state = new CoffeeState_1.CoffeeState(this.human, this.worldKnowledge);
+                    break;
+                case STATE.TALK:
+                    this.state = new TalkState_1.TalkState(this.human, this.worldKnowledge.getAnotherFreeHuman(this.human), this.worldKnowledge);
+                    break;
+                case STATE.SIT_TALK:
+                    this.state = new SitTalkState_1.SitTalkState(this.human, this.worldKnowledge.getClosestReferer(['Table'], 4, this.human.getPosition()).getObject(), this.worldKnowledge.getAnotherFreeHumans(this.human, 3), this.worldKnowledge);
+                    break;
+                case STATE.SIT_PLAY:
+                    this.state = new SitPlay_1.SitPlay(this.human, this.worldKnowledge);
+                    break;
+                case STATE.FREEZE:
+                default:
+                    this.state = new FreezeState_1.FreezeState(this.human);
+            }
+        }
+        if (this.state.start(game)) {
+            // OK !
+        }
+        else {
+            console.log('State ' + this.state.constructor.name + ' failed to start. Rage!');
+            this.state = new RageState_1.RageState(this.human, this.state);
+            this.state.start(game);
         }
     }
     randomNextStepName() {
@@ -244,25 +265,20 @@ class HumanStateManager {
     }
     getNextProbabilities() {
         const states = {};
-        if (this.worldKnowledge.getClosestReferer(['Desk']) !== null) {
-            states[STATE.TYPE] = this.getProbability(STATE.TYPE);
-        }
         if (this.worldKnowledge.getClosestReferer(['Table'], 4) !== null &&
             this.worldKnowledge.getAnotherFreeHumans(this.human, 3).length === 3) {
             states[STATE.SIT_TALK] = this.getProbability(STATE.SIT_TALK);
         }
-        if (this.worldKnowledge.getClosestReferer(['Dispenser']) !== null) {
-            states[STATE.COFFEE] = this.getProbability(STATE.COFFEE);
-        }
-        if (this.worldKnowledge.getClosestReferer(['Sofa', 'Couch']) !== null) {
-            states[STATE.SIT] = this.getProbability(STATE.SIT);
-        }
         if (this.worldKnowledge.getAnotherFreeHuman(this.human) !== null) {
             states[STATE.TALK] = this.getProbability(STATE.TALK);
         }
+        states[STATE.TYPE] = this.getProbability(STATE.TYPE);
+        states[STATE.COFFEE] = this.getProbability(STATE.COFFEE);
+        states[STATE.SIT] = this.getProbability(STATE.SIT);
         states[STATE.FREEZE] = this.getProbability(STATE.FREEZE);
         states[STATE.MOVE_RANDOM] = this.getProbability(STATE.MOVE_RANDOM);
         states[STATE.SMOKE] = this.getProbability(STATE.SMOKE);
+        states[STATE.SIT_PLAY] = this.getProbability(STATE.SIT_PLAY);
         return states;
     }
     getProbability(state) {
@@ -289,25 +305,19 @@ class HumanStateManager {
             case STATE.SIT_TALK:
                 result = 6;
                 break;
+            case STATE.SIT_PLAY:
+                result = 3;
+                break;
             case STATE.TYPE:
-                result = (5 + 3 + 2 + 8 + 5 + 6 + 6);
+                result = (5 + 3 + 2 + 8 + 5 + 6 + 6 + 3);
                 break;
         }
         if (state === this.state.getState()) {
-            result = result / 2;
+            result = result / 1.5;
         }
         if (this.state instanceof RageState_1.RageState) {
             const rageState = this.state;
-            if (rageState.getRageImage() === ThoughtBubble_1.RAGE_IMAGE.COFFEE && state === STATE.COFFEE) {
-                result = result / 3;
-            }
-            if (rageState.getRageImage() === ThoughtBubble_1.RAGE_IMAGE.LAPTOP && state === STATE.TYPE) {
-                result = result / 3;
-            }
-            if (rageState.getRageImage() === ThoughtBubble_1.RAGE_IMAGE.SLEEP && state === STATE.SIT) {
-                result = result / 3;
-            }
-            if (rageState.getRageImage() === ThoughtBubble_1.RAGE_IMAGE.TABLE && state === STATE.SIT_TALK) {
+            if (rageState.getSourceState().getState() === state) {
                 result = result / 3;
             }
         }
@@ -318,7 +328,7 @@ class HumanStateManager {
             if (this.human.getMood(mood) < LIMIT) {
                 if (HumanStateManager.getMoodGains(state)[mood] > 0) {
                     let ratio = 1 - this.human.getMood(mood) / LIMIT;
-                    ratio = ratio * HumanStateManager.getMoodGains(state)[mood] * 15;
+                    ratio = ratio * HumanStateManager.getMoodGains(state)[mood] * 30;
                     result = result * (1 + ratio);
                 }
             }
@@ -333,20 +343,24 @@ class HumanStateManager {
                 break;
             case STATE.TALK:
                 result[HumanMoodManager_1.MOOD.SOCIAL] = 0.4;
-                result[HumanMoodManager_1.MOOD.RELAXATION] += 0.1;
+                result[HumanMoodManager_1.MOOD.RELAXATION] = 0.1;
                 break;
             case STATE.SIT:
                 result[HumanMoodManager_1.MOOD.RELAXATION] = 0.35;
                 break;
             case STATE.COFFEE:
                 result[HumanMoodManager_1.MOOD.HUNGER] = 0.5;
-                result[HumanMoodManager_1.MOOD.RELAXATION] -= 0.1;
+                result[HumanMoodManager_1.MOOD.RELAXATION] = -0.1;
                 break;
             case STATE.SIT_TALK:
                 result[HumanMoodManager_1.MOOD.SOCIAL] = 0.6;
                 break;
             case STATE.RAGE:
-                result[HumanMoodManager_1.MOOD.RELAXATION] = -0.2;
+                result[HumanMoodManager_1.MOOD.RELAXATION] = -0.15;
+                break;
+            case STATE.SIT_PLAY:
+                result[HumanMoodManager_1.MOOD.RELAXATION] = 0.4;
+                result[HumanMoodManager_1.MOOD.SOCIAL] = 0.2;
                 break;
         }
         return result;
@@ -365,8 +379,11 @@ class HumanStateManager {
         this.state = new SitTalkState_1.SitTalkState(this.human, meeting.getTable(), meeting.getAnotherHumans(this.human), this.worldKnowledge, meeting);
         return this.state.start(game);
     }
-    getState() {
+    getStateType() {
         return this.state.getState();
+    }
+    getState() {
+        return this.state;
     }
     static getStr(state) {
         switch (state) {
@@ -379,6 +396,7 @@ class HumanStateManager {
             case STATE.COFFEE: return 'Coffee';
             case STATE.RAGE: return 'Rage';
             case STATE.SIT_TALK: return 'Meeting';
+            case STATE.SIT_PLAY: return 'Play';
         }
     }
 }
@@ -421,8 +439,8 @@ var COLOR;
 /// <reference path="../lib/phaser.d.ts"/>
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Boot_1 = __webpack_require__(32);
-const Preload_1 = __webpack_require__(33);
+const Boot_1 = __webpack_require__(33);
+const Preload_1 = __webpack_require__(34);
 const Play_1 = __webpack_require__(0);
 const PositionTransformer_1 = __webpack_require__(4);
 const WorldKnowledge_1 = __webpack_require__(20);
@@ -435,8 +453,16 @@ exports.WORLD_WIDTH = WorldKnowledge_1.GRID_WIDTH * PositionTransformer_1.CELL_W
 exports.WORLD_HEIGHT = WorldKnowledge_1.GRID_WIDTH * PositionTransformer_1.CELL_HEIGHT / 2 + WorldKnowledge_1.GRID_HEIGHT * PositionTransformer_1.CELL_HEIGHT / 2 + 15;
 class SimpleGame extends Phaser.Game {
     constructor() {
-        super(exports.CAMERA_WIDTH_PIXELS, exports.CAMERA_HEIGHT_PIXELS, Phaser.CANVAS, // Open GL for effect / shader ?
-        'content', null, false, false, false);
+        super({
+            width: exports.CAMERA_WIDTH_PIXELS,
+            height: exports.CAMERA_HEIGHT_PIXELS,
+            renderer: Phaser.CANVAS,
+            parent: null,
+            state: 'content',
+            transparent: false,
+            antialias: false,
+            physicsConfig: false,
+        });
         this.antialias = false;
         this.state.add('Boot', Boot_1.default);
         this.state.add('Preload', Preload_1.default);
@@ -492,15 +518,173 @@ exports.PositionTransformer = PositionTransformer;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+const TOP_ORIENTED_ANIMATION = '_reverse';
+exports.FRAME_RATE = 12;
+var ANIMATION;
+(function (ANIMATION) {
+    ANIMATION[ANIMATION["FREEZE"] = 0] = "FREEZE";
+    ANIMATION[ANIMATION["WALK"] = 1] = "WALK";
+    ANIMATION[ANIMATION["SMOKE"] = 2] = "SMOKE";
+    ANIMATION[ANIMATION["SIT_DOWN"] = 3] = "SIT_DOWN";
+    ANIMATION[ANIMATION["STAND_UP"] = 4] = "STAND_UP";
+    ANIMATION[ANIMATION["TYPE"] = 5] = "TYPE";
+    ANIMATION[ANIMATION["TALK"] = 6] = "TALK";
+    ANIMATION[ANIMATION["DRINK"] = 7] = "DRINK";
+    ANIMATION[ANIMATION["RAGE"] = 8] = "RAGE";
+    ANIMATION[ANIMATION["SIT_FREEZE"] = 9] = "SIT_FREEZE";
+    ANIMATION[ANIMATION["SIT_TALK"] = 10] = "SIT_TALK";
+})(ANIMATION = exports.ANIMATION || (exports.ANIMATION = {}));
+class HumanAnimationManager {
+    create(humanTile) {
+        this.humanTile = humanTile;
+        HumanAnimationManager.getAnimations().forEach((animation) => {
+            if (HumanAnimationManager.hasTopOrientedVariation(animation)) {
+                this.humanTile.animations.add(animation + '', HumanAnimationManager.getAnimationFrames(animation, false));
+                this.humanTile.animations.add(animation + TOP_ORIENTED_ANIMATION, HumanAnimationManager.getAnimationFrames(animation, true));
+            }
+            else {
+                this.humanTile.animations.add(animation + '', HumanAnimationManager.getAnimationFrames(animation));
+            }
+        });
+    }
+    getAnimationName(animation, isTop = null) {
+        if (isTop === null) {
+            return this.getAnimationName(animation, this.humanTile.animations.name.endsWith(TOP_ORIENTED_ANIMATION));
+        }
+        return animation + (isTop ? TOP_ORIENTED_ANIMATION : '');
+    }
+    loadAnimation(animation, isLeftLooking = null, isTopLooking = null) {
+        let animationName = animation + '';
+        if (HumanAnimationManager.hasTopOrientedVariation(animation)) {
+            animationName = this.getAnimationName(animation, isTopLooking);
+        }
+        if (this.humanTile.animations.name !== animationName || !HumanAnimationManager.isLooped(animation)) {
+            this.humanTile.animations.play(animationName, exports.FRAME_RATE, HumanAnimationManager.isLooped(animation));
+        }
+        if (isLeftLooking != null) {
+            this.humanTile.scale.set(isLeftLooking ? 1 : -1, 1);
+        }
+    }
+    static getAnimationTime(animation) {
+        return this.getAnimationFrames(animation).length * Phaser.Timer.SECOND / exports.FRAME_RATE;
+    }
+    static getAnimationFrames(animation, topOriented = null) {
+        switch (animation) {
+            case ANIMATION.FREEZE: return topOriented ? [18, 19, 20] : [12, 13, 14];
+            case ANIMATION.SIT_FREEZE: return topOriented ? [21, 22, 23] : [15, 16, 17];
+            case ANIMATION.WALK: return topOriented ? [6, 7, 8, 9, 10, 11] : [0, 1, 2, 3, 4, 5];
+            case ANIMATION.SIT_DOWN: return topOriented ? [18, 68, 69, 70, 71] : [12, 32, 33, 34, 35];
+            case ANIMATION.STAND_UP: return topOriented ? [71, 70, 69, 68, 18] : [35, 34, 33, 32, 12];
+            case ANIMATION.TYPE: return topOriented ? [84, 85, 86, 87] : [36, 37, 38, 39];
+            case ANIMATION.TALK: return topOriented ? [46, 47, 48, 49, 50, 51] : [40, 41, 42, 43, 44, 45];
+            case ANIMATION.SIT_TALK: return topOriented ? [78, 79, 80, 81, 82, 83] : [72, 73, 74, 75, 76, 77];
+            case ANIMATION.RAGE:
+                let rage_frames = [57, 58, 59, 60];
+                for (let i = 0; i < 4; i++) {
+                    rage_frames = rage_frames.concat([61, 62, 63, 64, 65, 64]);
+                }
+                return rage_frames.concat([65, 66, 67]);
+            case ANIMATION.DRINK:
+                return [52, 53, 52, 52, 52, 54, 55, 55, 56, 55, 55, 56, 55, 54, 52, 52, 52, 52, 52, 52, 52];
+            case ANIMATION.SMOKE:
+                let smoke_frames = [24, 25, 26, 27, 28, 29, 30, 31];
+                for (let i = 0; i < 6; i++) {
+                    // Take smoke length
+                    smoke_frames.push(31);
+                }
+                smoke_frames = smoke_frames.concat([30, 29, 28, 27, 26, 25, 24]);
+                for (let i = 0; i < 20; i++) {
+                    // Do nothing length
+                    smoke_frames.push(24);
+                }
+                return smoke_frames;
+            default:
+                throw 'UNKNOWN ANIMATION ' + animation;
+        }
+    }
+    static getAnimations() {
+        return [
+            ANIMATION.SIT_FREEZE,
+            ANIMATION.FREEZE,
+            ANIMATION.WALK,
+            ANIMATION.SMOKE,
+            ANIMATION.SIT_DOWN,
+            ANIMATION.STAND_UP,
+            ANIMATION.TYPE,
+            ANIMATION.TALK,
+            ANIMATION.DRINK,
+            ANIMATION.RAGE,
+            ANIMATION.SIT_TALK,
+        ];
+    }
+    static hasTopOrientedVariation(animation) {
+        return [
+            ANIMATION.WALK,
+            ANIMATION.FREEZE,
+            ANIMATION.TALK,
+            ANIMATION.SIT_DOWN,
+            ANIMATION.STAND_UP,
+            ANIMATION.SIT_FREEZE,
+            ANIMATION.SIT_TALK,
+            ANIMATION.TYPE,
+        ].indexOf(animation) > -1;
+    }
+    static isLooped(animation) {
+        return [
+            ANIMATION.FREEZE,
+            ANIMATION.WALK,
+            ANIMATION.TALK,
+            ANIMATION.SMOKE,
+            ANIMATION.TYPE,
+            ANIMATION.DRINK,
+            ANIMATION.SIT_FREEZE,
+            ANIMATION.SIT_TALK,
+        ].indexOf(animation) > -1;
+    }
+    static getAnimationStr(animation) {
+        switch (animation) {
+            case ANIMATION.FREEZE: return 'FZ';
+            case ANIMATION.SIT_FREEZE: return 'FS';
+            case ANIMATION.WALK: return 'WK';
+            case ANIMATION.SIT_DOWN: return 'SD';
+            case ANIMATION.STAND_UP: return 'SU';
+            case ANIMATION.TYPE: return 'TP';
+            case ANIMATION.TALK: return 'TK';
+            case ANIMATION.RAGE: return 'RG';
+            case ANIMATION.DRINK: return 'DK';
+            case ANIMATION.SMOKE: return 'SK';
+            case ANIMATION.SIT_TALK: return 'ST';
+            default:
+                throw 'UNKNOWN ANIMATION ' + animation;
+        }
+    }
+    pause() {
+        this.humanTile.animations.currentAnim.paused = true;
+    }
+    resume() {
+        this.humanTile.animations.currentAnim.paused = false;
+    }
+}
+exports.HumanAnimationManager = HumanAnimationManager;
+
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = __webpack_require__(0);
 const app_1 = __webpack_require__(3);
-const ObjectSeller_1 = __webpack_require__(29);
-const TextStyle_1 = __webpack_require__(11);
-const HumanEmployer_1 = __webpack_require__(63);
-const InfoPanel_1 = __webpack_require__(64);
-const LevelDisplayer_1 = __webpack_require__(65);
-const UserInfoPanel_1 = __webpack_require__(30);
+const ObjectSeller_1 = __webpack_require__(30);
+const TextStyle_1 = __webpack_require__(13);
+const HumanEmployer_1 = __webpack_require__(65);
+const InfoPanel_1 = __webpack_require__(66);
+const LevelDisplayer_1 = __webpack_require__(67);
+const UserInfoPanel_1 = __webpack_require__(31);
 const Pico8Colors_1 = __webpack_require__(2);
+const HumanProperties_1 = __webpack_require__(23);
 exports.INTERFACE_WIDTH = 150.5;
 exports.TOP_GAP_2 = 15.5 + 12;
 exports.TOP_GAP = exports.TOP_GAP_2 + 15;
@@ -526,6 +710,7 @@ class UserInterface {
             i++;
         });
         this.selectedPanel = PANEL.OBJ;
+        this.day = 1;
     }
     create(game, groups) {
         const interfaceGroup = groups[Play_1.GROUP_INTERFACE];
@@ -540,6 +725,11 @@ class UserInterface {
         this.infoPanel.create(game, groups);
         this.userInfoPanel.create(game, groups);
         this.levelDisplayer.create(game, groups);
+        this.dayText = game.add.text(app_1.CAMERA_WIDTH_PIXELS - 50, 0, 'Day 1', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        game.time.events.loop(HumanProperties_1.DAY_DURATION, () => {
+            this.day += 1;
+            this.updateDayText();
+        }, this);
         this.levelText = game.add.text(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH + 2, 0, 'Lvl 1', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
         this.moneyCounter = game.add.text(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH + 2 + 50, 0, this.worldKnowledge.getMoneyInWallet().getStringValue(), TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
         const backgroundTabs = game.add.sprite(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH, exports.TOP_GAP_2, 'interfacetabs', 2, groups[Play_1.GROUP_INTERFACE]);
@@ -604,6 +794,9 @@ class UserInterface {
             button.highlight(button.getPanel() === panel);
         });
     }
+    updateDayText() {
+        this.dayText.text = 'Day ' + this.day;
+    }
 }
 exports.UserInterface = UserInterface;
 class InterfaceTab {
@@ -632,7 +825,7 @@ class InterfaceTab {
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -710,164 +903,44 @@ exports.Direction = Direction;
 
 
 /***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const TOP_ORIENTED_ANIMATION = '_reverse';
-const FRAME_RATE = 12;
-var ANIMATION;
-(function (ANIMATION) {
-    ANIMATION[ANIMATION["FREEZE"] = 0] = "FREEZE";
-    ANIMATION[ANIMATION["WALK"] = 1] = "WALK";
-    ANIMATION[ANIMATION["SMOKE"] = 2] = "SMOKE";
-    ANIMATION[ANIMATION["SIT_DOWN"] = 3] = "SIT_DOWN";
-    ANIMATION[ANIMATION["STAND_UP"] = 4] = "STAND_UP";
-    ANIMATION[ANIMATION["TYPE"] = 5] = "TYPE";
-    ANIMATION[ANIMATION["TALK"] = 6] = "TALK";
-    ANIMATION[ANIMATION["DRINK"] = 7] = "DRINK";
-    ANIMATION[ANIMATION["RAGE"] = 8] = "RAGE";
-    ANIMATION[ANIMATION["FREEZE_SIT"] = 9] = "FREEZE_SIT";
-    ANIMATION[ANIMATION["SIT_TALK"] = 10] = "SIT_TALK";
-})(ANIMATION = exports.ANIMATION || (exports.ANIMATION = {}));
-class HumanAnimationManager {
-    create(humanTile) {
-        this.humanTile = humanTile;
-        HumanAnimationManager.getAnimations().forEach((animation) => {
-            if (HumanAnimationManager.hasTopOrientedVariation(animation)) {
-                this.humanTile.animations.add(animation + '', HumanAnimationManager.getAnimationFrames(animation, false));
-                this.humanTile.animations.add(animation + TOP_ORIENTED_ANIMATION, HumanAnimationManager.getAnimationFrames(animation, true));
-            }
-            else {
-                this.humanTile.animations.add(animation + '', HumanAnimationManager.getAnimationFrames(animation));
-            }
-        });
-    }
-    getAnimationName(animation, isTop = null) {
-        if (isTop === null) {
-            return this.getAnimationName(animation, this.humanTile.animations.name.endsWith(TOP_ORIENTED_ANIMATION));
-        }
-        return animation + (isTop ? TOP_ORIENTED_ANIMATION : '');
-    }
-    loadAnimation(animation, isLeftLooking = null, isTopLooking = null) {
-        let animationName = animation + '';
-        if (HumanAnimationManager.hasTopOrientedVariation(animation)) {
-            animationName = this.getAnimationName(animation, isTopLooking);
-        }
-        if (this.humanTile.animations.name !== animationName) {
-            this.humanTile.animations.play(animationName, FRAME_RATE, HumanAnimationManager.isLooped(animation));
-        }
-        if (isLeftLooking != null) {
-            this.humanTile.scale.set(isLeftLooking ? 1 : -1, 1);
-        }
-    }
-    static getAnimationTime(animation) {
-        return this.getAnimationFrames(animation).length * Phaser.Timer.SECOND / FRAME_RATE;
-    }
-    static getAnimationFrames(animation, topOriented = null) {
-        switch (animation) {
-            case ANIMATION.FREEZE: return topOriented ? [18, 19, 20] : [12, 13, 14];
-            case ANIMATION.FREEZE_SIT: return topOriented ? [21, 22, 23] : [15, 16, 17];
-            case ANIMATION.WALK: return topOriented ? [6, 7, 8, 9, 10, 11] : [0, 1, 2, 3, 4, 5];
-            case ANIMATION.SIT_DOWN: return topOriented ? [18, 68, 69, 70, 71] : [12, 32, 33, 34, 35];
-            case ANIMATION.STAND_UP: return topOriented ? [71, 70, 69, 68, 18] : [35, 34, 33, 32, 12];
-            case ANIMATION.TYPE: return topOriented ? [84, 85, 86, 87] : [36, 37, 38, 39];
-            case ANIMATION.TALK: return topOriented ? [46, 47, 48, 49, 50, 51] : [40, 41, 42, 43, 44, 45];
-            case ANIMATION.SIT_TALK: return topOriented ? [78, 79, 80, 81, 82, 83] : [72, 73, 74, 75, 76, 77];
-            case ANIMATION.RAGE:
-                let rage_frames = [57, 58, 59, 60];
-                for (let i = 0; i < 4; i++) {
-                    rage_frames = rage_frames.concat([61, 62, 63, 64, 65, 64]);
-                }
-                return rage_frames.concat([65, 66, 67]);
-            case ANIMATION.DRINK:
-                return [52, 53, 52, 52, 52, 54, 55, 55, 56, 55, 55, 56, 55, 54, 52, 52, 52, 52, 52, 52, 52];
-            case ANIMATION.SMOKE:
-                let smoke_frames = [24, 25, 26, 27, 28, 29, 30, 31];
-                for (let i = 0; i < 6; i++) {
-                    // Take smoke length
-                    smoke_frames.push(31);
-                }
-                smoke_frames = smoke_frames.concat([30, 29, 28, 27, 26, 25, 24]);
-                for (let i = 0; i < 20; i++) {
-                    // Do nothing length
-                    smoke_frames.push(24);
-                }
-                return smoke_frames;
-            default:
-                throw 'UNKNOWN ANIMATION ' + animation;
-        }
-    }
-    static getAnimations() {
-        return [
-            ANIMATION.FREEZE_SIT,
-            ANIMATION.FREEZE,
-            ANIMATION.WALK,
-            ANIMATION.SMOKE,
-            ANIMATION.SIT_DOWN,
-            ANIMATION.STAND_UP,
-            ANIMATION.TYPE,
-            ANIMATION.TALK,
-            ANIMATION.DRINK,
-            ANIMATION.RAGE,
-            ANIMATION.SIT_TALK,
-        ];
-    }
-    static hasTopOrientedVariation(animation) {
-        return [
-            ANIMATION.WALK,
-            ANIMATION.FREEZE,
-            ANIMATION.TALK,
-            ANIMATION.SIT_DOWN,
-            ANIMATION.STAND_UP,
-            ANIMATION.FREEZE_SIT,
-            ANIMATION.SIT_TALK,
-            ANIMATION.TYPE,
-        ].indexOf(animation) > -1;
-    }
-    static isLooped(animation) {
-        return [
-            ANIMATION.FREEZE,
-            ANIMATION.WALK,
-            ANIMATION.TALK,
-            ANIMATION.SMOKE,
-            ANIMATION.TYPE,
-            ANIMATION.DRINK,
-            ANIMATION.FREEZE_SIT,
-            ANIMATION.SIT_TALK,
-        ].indexOf(animation) > -1;
-    }
-    static getAnimationStr(animation) {
-        switch (animation) {
-            case ANIMATION.FREEZE: return 'FZ';
-            case ANIMATION.FREEZE_SIT: return 'FS';
-            case ANIMATION.WALK: return 'WK';
-            case ANIMATION.SIT_DOWN: return 'SD';
-            case ANIMATION.STAND_UP: return 'SU';
-            case ANIMATION.TYPE: return 'TP';
-            case ANIMATION.TALK: return 'TK';
-            case ANIMATION.RAGE: return 'RG';
-            case ANIMATION.DRINK: return 'DK';
-            case ANIMATION.SMOKE: return 'SK';
-            case ANIMATION.SIT_TALK: return 'ST';
-            default:
-                throw 'UNKNOWN ANIMATION ' + animation;
-        }
-    }
-}
-exports.HumanAnimationManager = HumanAnimationManager;
-
-
-/***/ }),
 /* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanProperties_1 = __webpack_require__(46);
+const Bubble_1 = __webpack_require__(26);
+var RAGE_IMAGE;
+(function (RAGE_IMAGE) {
+    RAGE_IMAGE[RAGE_IMAGE["COFFEE"] = 0] = "COFFEE";
+    RAGE_IMAGE[RAGE_IMAGE["LAPTOP"] = 1] = "LAPTOP";
+    RAGE_IMAGE[RAGE_IMAGE["SLEEP"] = 2] = "SLEEP";
+    RAGE_IMAGE[RAGE_IMAGE["TABLE"] = 3] = "TABLE";
+    RAGE_IMAGE[RAGE_IMAGE["PATH"] = 4] = "PATH";
+})(RAGE_IMAGE = exports.RAGE_IMAGE || (exports.RAGE_IMAGE = {}));
+class ThoughtBubble extends Bubble_1.Bubble {
+    getSpriteFrame() {
+        return 1;
+    }
+    getImageSpriteKey() {
+        return 'bubble_images_angry';
+    }
+    showRage(rageImage) {
+        this.imageSprite.loadTexture(this.getImageSpriteKey(), rageImage);
+        super.show();
+    }
+}
+exports.ThoughtBubble = ThoughtBubble;
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const HumanProperties_1 = __webpack_require__(23);
 const Employee_1 = __webpack_require__(17);
 const HumanStateManager_1 = __webpack_require__(1);
 const MEN = [
@@ -916,13 +989,13 @@ exports.HumanPropertiesFactory = HumanPropertiesFactory;
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Direction_1 = __webpack_require__(6);
+const Direction_1 = __webpack_require__(7);
 exports.DIRECTION_LOOP = [Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.TOP];
 class ObjectOrientation {
     static isHorizontalMirror(direction) {
@@ -940,7 +1013,7 @@ exports.ObjectOrientation = ObjectOrientation;
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -951,6 +1024,7 @@ class AbstractState {
         this.events = [];
         this.active = false;
         this.human = human;
+        this.remainingTime = null;
     }
     getNextState() {
         return this.active ? this : null;
@@ -966,22 +1040,17 @@ class AbstractState {
         });
         this.active = false;
     }
+    startTimer(value) {
+        this.remainingTime = value;
+        this.game.time.events.loop(Phaser.Timer.SECOND, () => {
+            this.remainingTime = Math.max(this.remainingTime - Phaser.Timer.SECOND, 0);
+        }, this);
+    }
+    getRemainingSeconds() {
+        return Math.round(this.remainingTime / Phaser.Timer.SECOND);
+    }
 }
 exports.AbstractState = AbstractState;
-
-
-/***/ }),
-/* 11 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.TEXT_STYLE = {
-    align: 'center',
-    fill: "#ffffff",
-    font: '16px 000webfont'
-};
 
 
 /***/ }),
@@ -991,40 +1060,10 @@ exports.TEXT_STYLE = {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Bubble_1 = __webpack_require__(25);
-var RAGE_IMAGE;
-(function (RAGE_IMAGE) {
-    RAGE_IMAGE[RAGE_IMAGE["COFFEE"] = 0] = "COFFEE";
-    RAGE_IMAGE[RAGE_IMAGE["LAPTOP"] = 1] = "LAPTOP";
-    RAGE_IMAGE[RAGE_IMAGE["SLEEP"] = 2] = "SLEEP";
-    RAGE_IMAGE[RAGE_IMAGE["TABLE"] = 3] = "TABLE";
-})(RAGE_IMAGE = exports.RAGE_IMAGE || (exports.RAGE_IMAGE = {}));
-class ThoughtBubble extends Bubble_1.Bubble {
-    getSpriteFrame() {
-        return 1;
-    }
-    getImageSpriteKey() {
-        return 'bubble_images_angry';
-    }
-    showRage(rageImage) {
-        this.imageSprite.loadTexture(this.getImageSpriteKey(), rageImage);
-        super.show();
-    }
-}
-exports.ThoughtBubble = ThoughtBubble;
-
-
-/***/ }),
-/* 13 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = __webpack_require__(0);
 const ObjectDescriptionRegistry_1 = __webpack_require__(18);
-const ObjectReferer_1 = __webpack_require__(56);
-const ObjectOrientation_1 = __webpack_require__(9);
+const ObjectReferer_1 = __webpack_require__(58);
+const ObjectOrientation_1 = __webpack_require__(10);
 const Pico8Colors_1 = __webpack_require__(2);
 exports.SPRITE_DEBUG = false;
 class AbstractObject {
@@ -1077,6 +1116,7 @@ class AbstractObject {
     }
     remove() {
         this.worldKnowledge.moveToDepot(this);
+        this.worldKnowledge.resetAStar();
         this.getSprites().forEach((sprite) => {
             sprite.destroy(true);
         });
@@ -1130,6 +1170,20 @@ class AbstractObject {
     }
 }
 exports.AbstractObject = AbstractObject;
+
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TEXT_STYLE = {
+    align: 'center',
+    fill: "#ffffff",
+    font: '16px 000webfont'
+};
 
 
 /***/ }),
@@ -1235,45 +1289,6 @@ class PartialCircle extends Phaser.Graphics {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanStateManager_1 = __webpack_require__(1);
-const HumanAnimationManager_1 = __webpack_require__(7);
-const AbstractState_1 = __webpack_require__(10);
-class RageState extends AbstractState_1.AbstractState {
-    constructor(human, rageImage) {
-        super(human);
-        this.rageImage = rageImage;
-        this.isRaging = false;
-    }
-    getNextState() {
-        if (!this.isRaging && !this.human.isMoving()) {
-            this.isRaging = true;
-            this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.RAGE);
-            this.human.updateMoodFromState();
-            this.human.showThoughtBubble(this.rageImage);
-            this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.RAGE), () => {
-                this.active = false;
-                this.human.hideThoughtBubble();
-            }, this));
-        }
-        return super.getNextState();
-    }
-    getState() {
-        return HumanStateManager_1.STATE.RAGE;
-    }
-    getRageImage() {
-        return this.rageImage;
-    }
-}
-exports.RageState = RageState;
-
-
-/***/ }),
-/* 16 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
 const TIME_GAP = Phaser.Timer.SECOND / 10;
 class SmoothValue {
     constructor(value) {
@@ -1281,20 +1296,26 @@ class SmoothValue {
         this.minValue = null;
         this.value = value;
     }
+    create(game) {
+        this.game = game;
+    }
     getValue() {
         return this.value;
     }
     add(value, milliseconds = Phaser.Timer.SECOND) {
+        if (isNaN(value)) {
+            debugger;
+        }
         if (milliseconds < TIME_GAP) {
             this.value += value;
         }
         else {
-            setTimeout(() => {
+            this.game.time.events.add(TIME_GAP, () => {
                 const numberOfSteps = milliseconds / TIME_GAP;
                 const valuePerStep = value / numberOfSteps;
                 this.value += valuePerStep;
                 this.add(value - valuePerStep, milliseconds - TIME_GAP);
-            }, TIME_GAP);
+            }, this);
         }
         if (this.maxValue !== null) {
             this.value = Math.min(this.value, this.maxValue);
@@ -1320,6 +1341,85 @@ exports.SmoothValue = SmoothValue;
 
 
 /***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const AbstractState_1 = __webpack_require__(11);
+const PositionTransformer_1 = __webpack_require__(4);
+const ThoughtBubble_1 = __webpack_require__(8);
+const RageState_1 = __webpack_require__(21);
+class MoveThenActAbstractState extends AbstractState_1.AbstractState {
+    constructor(human, worldKnowledge, tries = 0) {
+        super(human);
+        this.isHumanOnTheRightCell = false;
+        this.worldKnowledge = worldKnowledge;
+        this.tries = tries;
+        this.noPathFound = false;
+    }
+    start(game) {
+        if (!super.start(game)) {
+            return false;
+        }
+        if (!this.human.moveToClosest(this.objectReferer.getPosition(), this.objectReferer.getEntries())) {
+            this.noPathFound = true;
+            this.active = false;
+            this.stop();
+            return false;
+        }
+        this.startTimer(this.human.getMoveTime() + this.getActTime());
+        return true;
+    }
+    getNextState() {
+        if (!this.isHumanOnTheRightCell) {
+            if (!this.worldKnowledge.hasObject(this.objectReferer.getObject()) || this.objectReferer.isUsed()) {
+                return this.retry();
+            }
+        }
+        if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
+            this.isHumanOnTheRightCell = true;
+            this.human.interactWith(this.objectReferer, this.objectReferer.getObject().forceLeftOrientation(this.objectReferer.getIdentifier()));
+            this.events.push(this.game.time.events.add(this.human.getWalkDuration(), () => {
+                this.act();
+            }));
+        }
+        return super.getNextState();
+    }
+    isNeighborPosition() {
+        return !this.human.isMoving() &&
+            PositionTransformer_1.PositionTransformer.isNeighbor(this.human.getPosition(), this.objectReferer.getPosition());
+    }
+    getRageImage() {
+        if (this.noPathFound) {
+            return ThoughtBubble_1.RAGE_IMAGE.PATH;
+        }
+        else {
+            return this.subGetRageImage();
+        }
+    }
+    retry() {
+        if (this.tries > this.human.getMaxRetries()) {
+            this.active = false;
+            this.human.stopWalk();
+            return new RageState_1.RageState(this.human, this);
+        }
+        else {
+            return this.getRetryState();
+        }
+    }
+    finish() {
+        this.human.goToFreeCell(this.objectReferer);
+        this.events.push(this.game.time.events.add(this.human.getWalkDuration() + 100, () => {
+            this.active = false;
+        }, this));
+    }
+}
+exports.MoveThenActAbstractState = MoveThenActAbstractState;
+
+
+/***/ }),
 /* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -1327,22 +1427,22 @@ exports.SmoothValue = SmoothValue;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const PositionTransformer_1 = __webpack_require__(4);
-const ClosestPathFinder_1 = __webpack_require__(44);
-const Direction_1 = __webpack_require__(6);
-const HumanAnimationManager_1 = __webpack_require__(7);
+const ClosestPathFinder_1 = __webpack_require__(46);
+const Direction_1 = __webpack_require__(7);
+const HumanAnimationManager_1 = __webpack_require__(5);
 const HumanStateManager_1 = __webpack_require__(1);
-const ObjectSelector_1 = __webpack_require__(26);
-const TalkBubble_1 = __webpack_require__(48);
+const ObjectSelector_1 = __webpack_require__(27);
+const TalkBubble_1 = __webpack_require__(49);
 const HumanMoodManager_1 = __webpack_require__(22);
-const MoodSprite_1 = __webpack_require__(23);
+const MoodSprite_1 = __webpack_require__(24);
 const Play_1 = __webpack_require__(0);
-const ThoughtBubble_1 = __webpack_require__(12);
+const HumanProperties_1 = __webpack_require__(23);
+const ThoughtBubble_1 = __webpack_require__(8);
 const Pico8Colors_1 = __webpack_require__(2);
-const AbstractObject_1 = __webpack_require__(13);
-const ObjectOrientation_1 = __webpack_require__(9);
+const AbstractObject_1 = __webpack_require__(12);
+const ObjectOrientation_1 = __webpack_require__(10);
 const MAX_WALK_CELL_DURATION = 1500;
 const MIN_WALK_CELL_DURATION = 800;
-const DAY_LENGTH = 60 * Phaser.Timer.SECOND;
 const MAX_RETRIES = 3;
 const MIN_RETRIES = 0;
 const GAP_FROM_BOTTOM = -8;
@@ -1386,7 +1486,7 @@ class Employee {
             this.debugGraphics = game.add.graphics(0, 0, groups[Play_1.GROUP_INTERFACE]);
         }
         this.worldKnowledge.addMoneyInWallet(this.humanProperties.getRealWage(), 3 * Phaser.Timer.SECOND);
-        this.game.time.events.loop(DAY_LENGTH, () => {
+        this.game.time.events.loop(HumanProperties_1.DAY_DURATION, () => {
             this.worldKnowledge.addMoneyInWallet(this.humanProperties.getRealWage(), 3 * Phaser.Timer.SECOND);
         });
     }
@@ -1429,6 +1529,7 @@ class Employee {
     moveTo(cell) {
         const path = this.closestPathFinder.getPath(this.cell, cell);
         if (path === null) {
+            this.path = [];
             this.stateManager.reset(this.game);
             return false;
         }
@@ -1441,7 +1542,7 @@ class Employee {
     moveToClosest(cell, entries = [Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT]) {
         const path = this.closestPathFinder.getNeighborPath(this.cell, cell, entries);
         if (path === null) {
-            this.stateManager.reset(this.game);
+            this.path = [];
             return false;
         }
         this.path = path;
@@ -1467,7 +1568,6 @@ class Employee {
     }
     popPath() {
         this.moving = false;
-        let humanPositions = [this.cell];
         if (this.path !== null && this.path.length > 0) {
             const next = this.path.shift();
             const direction = Direction_1.Direction.getNeighborDirection(this.cell, next);
@@ -1477,9 +1577,8 @@ class Employee {
                 this.anchorPixels.y = GAP_FROM_BOTTOM;
                 this.animateMove(direction);
             }
-            humanPositions.push(this.cell);
         }
-        this.worldKnowledge.humanMoved(humanPositions);
+        this.worldKnowledge.humanMoved();
     }
     getPosition() {
         return this.cell;
@@ -1527,12 +1626,9 @@ class Employee {
     isSelected() {
         return ObjectSelector_1.ObjectSelector.isSelected(this.sprite);
     }
-    getSprite() {
-        return this.sprite;
-    }
-    resetAStar(newNonEmptyCell) {
+    resetAStar(newNonEmptyCell = null) {
         this.closestPathFinder.reset();
-        if (this.path !== null) {
+        if (newNonEmptyCell && this.path !== null) {
             // If human wants to go to a non-empty cell
             const matchingPath = this.path.filter((cell) => {
                 return cell.x === newNonEmptyCell.x && cell.y === newNonEmptyCell.y;
@@ -1550,7 +1646,10 @@ class Employee {
         }
     }
     isFree() {
-        return [HumanStateManager_1.STATE.MOVE_RANDOM, HumanStateManager_1.STATE.FREEZE, HumanStateManager_1.STATE.SMOKE].indexOf(this.getState()) > -1;
+        return [HumanStateManager_1.STATE.MOVE_RANDOM, HumanStateManager_1.STATE.FREEZE, HumanStateManager_1.STATE.SMOKE].indexOf(this.getStateType()) > -1;
+    }
+    getStateType() {
+        return this.stateManager.getStateType();
     }
     getState() {
         return this.stateManager.getState();
@@ -1562,7 +1661,7 @@ class Employee {
         this.talkBubble.hide();
     }
     updateMoodFromState() {
-        this.moodManager.updateFromState(this.getState());
+        this.moodManager.updateFromState(this.getStateType());
     }
     getMood(mood = null) {
         if (mood === null) {
@@ -1596,6 +1695,18 @@ class Employee {
             ObjectSelector_1.ObjectSelector.click(this.sprite, null, [this.sprite]);
         }
     }
+    getRealWage() {
+        return this.humanProperties.getRealWage();
+    }
+    getMoveTime() {
+        return this.path.length * this.getWalkDuration();
+    }
+    pause() {
+        this.animationManager.pause();
+    }
+    resume() {
+        this.animationManager.resume();
+    }
 }
 exports.Employee = Employee;
 
@@ -1607,10 +1718,10 @@ exports.Employee = Employee;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const ObjectDescription_1 = __webpack_require__(54);
-const InteractivePoint_1 = __webpack_require__(53);
-const Direction_1 = __webpack_require__(6);
-const SpriteInfo_1 = __webpack_require__(58);
+const ObjectDescription_1 = __webpack_require__(56);
+const InteractivePoint_1 = __webpack_require__(55);
+const Direction_1 = __webpack_require__(7);
+const SpriteInfo_1 = __webpack_require__(60);
 const Price_1 = __webpack_require__(19);
 const PositionTransformer_1 = __webpack_require__(4);
 class ObjectDescriptionRegistry {
@@ -1627,7 +1738,7 @@ class ObjectDescriptionRegistry {
     }
     static generateObjectDescriptions() {
         this.objectDescriptions = [];
-        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Dispenser', [
+        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Dispenser', [new PIXI.Point(0, 0)], [
             new SpriteInfo_1.SpriteInfo('dispenser', new PIXI.Point(-4, -4), 3)
         ], [
             new SpriteInfo_1.SpriteInfo('dispenser_reverse', new PIXI.Point(-4, -4), 0)
@@ -1636,12 +1747,12 @@ class ObjectDescriptionRegistry {
         ], [
             new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP], new PIXI.Point(5, -PositionTransformer_1.CELL_HEIGHT + 3))
         ], new Price_1.Price(70)));
-        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Sofa', [
+        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Sofa', [new PIXI.Point(0, 0)], [
             new SpriteInfo_1.SpriteInfo('sofa', new PIXI.Point(0, -8), 3, new PIXI.Point(0, 0))
         ], [], [
             new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.BOTTOM], new PIXI.Point(0, -7), new PIXI.Point(0, 0), null, false)
         ], [], new Price_1.Price(10)));
-        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Desk', [
+        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Desk', [new PIXI.Point(0, 0)], [
             new SpriteInfo_1.SpriteInfo('chair', new PIXI.Point(-10, -8), 5),
             new SpriteInfo_1.SpriteInfo('desk', new PIXI.Point(0, 0), 4)
         ], [
@@ -1653,6 +1764,11 @@ class ObjectDescriptionRegistry {
             new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.RIGHT], new PIXI.Point(-3, -8), new PIXI.Point(0, 0), false, true),
         ], new Price_1.Price(20)));
         this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Table', [
+            new PIXI.Point(0, 0),
+            new PIXI.Point(1, 1),
+            new PIXI.Point(1, 0),
+            new PIXI.Point(0, 1)
+        ], [
             new SpriteInfo_1.SpriteInfo('chair2', new PIXI.Point(-8, -9), 5, new PIXI.Point(1, 1)),
             new SpriteInfo_1.SpriteInfo('table', new PIXI.Point(0, 0), 4, new PIXI.Point(1, 1)),
             new SpriteInfo_1.SpriteInfo('chair2', new PIXI.Point(-8, -9), 5, new PIXI.Point(1, 0)),
@@ -1668,11 +1784,14 @@ class ObjectDescriptionRegistry {
             new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.RIGHT], new PIXI.Point(4, -7), new PIXI.Point(0, 0), true, true),
         ], [], new Price_1.Price(12)));
         this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Couch', [
+            new PIXI.Point(0, 0),
+            new PIXI.Point(0, 1),
+        ], [
             new SpriteInfo_1.SpriteInfo('couch_part1', new PIXI.Point(10, 0), 12),
-            new SpriteInfo_1.SpriteInfo('couch_part2', new PIXI.Point(10 - 20, 10), 22, new PIXI.Point(0, 1))
+            new SpriteInfo_1.SpriteInfo('couch_part2', new PIXI.Point(10 - PositionTransformer_1.CELL_WIDTH / 2, 10), 22, new PIXI.Point(0, 1))
         ], [
             new SpriteInfo_1.SpriteInfo('couch_reverse_part1', new PIXI.Point(-13, 0), 12),
-            new SpriteInfo_1.SpriteInfo('couch_reverse_part2', new PIXI.Point(-(13 - 20), 10), 22, new PIXI.Point(1, 0)),
+            new SpriteInfo_1.SpriteInfo('couch_reverse_part2', new PIXI.Point(-(13 - PositionTransformer_1.CELL_WIDTH / 2), 9), 22, new PIXI.Point(1, 0)),
             new SpriteInfo_1.SpriteInfo('couch_reverse_cache', new PIXI.Point(-13, 0), 0),
         ], [
             new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT], new PIXI.Point(0, -8), new PIXI.Point(0, 0)),
@@ -1680,7 +1799,28 @@ class ObjectDescriptionRegistry {
         ], [
             new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP], new PIXI.Point(-1, -8), new PIXI.Point(0, 0), false, true),
             new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP], new PIXI.Point(-1, -8), new PIXI.Point(1, 0), false, true),
-        ], new Price_1.Price(1)));
+        ], new Price_1.Price(10)));
+        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Console', [
+            new PIXI.Point(0, 0),
+            new PIXI.Point(1, 1),
+            new PIXI.Point(1, 0),
+            new PIXI.Point(0, 1)
+        ], [
+            new SpriteInfo_1.SpriteInfo('couch_part1', new PIXI.Point(10 - PositionTransformer_1.CELL_WIDTH / 2, 0 - PositionTransformer_1.CELL_HEIGHT / 2), 12, new PIXI.Point(0, 0)),
+            new SpriteInfo_1.SpriteInfo('couch_part2', new PIXI.Point(10 - PositionTransformer_1.CELL_WIDTH / 2 - PositionTransformer_1.CELL_WIDTH / 2, 10 - PositionTransformer_1.CELL_HEIGHT / 2), 22, new PIXI.Point(0, 1)),
+            new SpriteInfo_1.SpriteInfo('tv', new PIXI.Point(16, -6), 0, new PIXI.Point(0, 0))
+        ], [
+            new SpriteInfo_1.SpriteInfo('tv_reverse', new PIXI.Point(-1, -13), 0, new PIXI.Point(0, 1)),
+            new SpriteInfo_1.SpriteInfo('couch_reverse_part1', new PIXI.Point(-13 - PositionTransformer_1.CELL_WIDTH / 2, PositionTransformer_1.CELL_HEIGHT / 2), 12, new PIXI.Point(0, 1)),
+            new SpriteInfo_1.SpriteInfo('couch_reverse_part2', new PIXI.Point(-(13 - PositionTransformer_1.CELL_WIDTH / 2) - PositionTransformer_1.CELL_WIDTH / 2, 9 + PositionTransformer_1.CELL_HEIGHT / 2), 22, new PIXI.Point(1, 1)),
+            new SpriteInfo_1.SpriteInfo('couch_reverse_cache', new PIXI.Point(-13, 0), 0, new PIXI.Point(0, 0)),
+        ], [
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.BOTTOM], new PIXI.Point(0 - PositionTransformer_1.CELL_WIDTH / 2, -8 - PositionTransformer_1.CELL_HEIGHT / 2), new PIXI.Point(0, 0)),
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.TOP], new PIXI.Point(0 - PositionTransformer_1.CELL_WIDTH / 2, -8 - PositionTransformer_1.CELL_HEIGHT / 2), new PIXI.Point(0, 1)),
+        ], [
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.RIGHT], new PIXI.Point(-1 - PositionTransformer_1.CELL_WIDTH / 2, -8 + PositionTransformer_1.CELL_HEIGHT / 2), new PIXI.Point(0, 1), false, true),
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT], new PIXI.Point(-1 - PositionTransformer_1.CELL_WIDTH / 2, -8 + PositionTransformer_1.CELL_HEIGHT / 2), new PIXI.Point(1, 1), false, true),
+        ], new Price_1.Price(10)));
     }
     static getSalableObjects() {
         if (this.objectDescriptions === null) {
@@ -1733,28 +1873,29 @@ exports.Price = Price;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanRepository_1 = __webpack_require__(61);
-const Sofa_1 = __webpack_require__(57);
+const HumanRepository_1 = __webpack_require__(63);
+const Sofa_1 = __webpack_require__(59);
 const Employee_1 = __webpack_require__(17);
-const Desk_1 = __webpack_require__(51);
-const Dispenser_1 = __webpack_require__(52);
-const WallRepository_1 = __webpack_require__(62);
-const Cell_1 = __webpack_require__(31);
+const Desk_1 = __webpack_require__(53);
+const Dispenser_1 = __webpack_require__(54);
+const WallRepository_1 = __webpack_require__(64);
+const Cell_1 = __webpack_require__(32);
 const PositionTransformer_1 = __webpack_require__(4);
 const Play_1 = __webpack_require__(0);
-const Depot_1 = __webpack_require__(50);
-const Direction_1 = __webpack_require__(6);
-const MoodRegister_1 = __webpack_require__(47);
-const Table_1 = __webpack_require__(59);
-const LevelManager_1 = __webpack_require__(66);
-const HumanPropertiesFactory_1 = __webpack_require__(8);
+const Depot_1 = __webpack_require__(52);
+const Direction_1 = __webpack_require__(7);
+const MoodRegister_1 = __webpack_require__(48);
+const Table_1 = __webpack_require__(61);
+const LevelManager_1 = __webpack_require__(68);
+const HumanPropertiesFactory_1 = __webpack_require__(9);
 const Price_1 = __webpack_require__(19);
 const ObjectDescriptionRegistry_1 = __webpack_require__(18);
-const SmoothValue_1 = __webpack_require__(16);
-const UserInterface_1 = __webpack_require__(5);
-const ObjectOrientation_1 = __webpack_require__(9);
-const Couch_1 = __webpack_require__(49);
-const EmployeeCountRegister_1 = __webpack_require__(45);
+const SmoothValue_1 = __webpack_require__(15);
+const UserInterface_1 = __webpack_require__(6);
+const ObjectOrientation_1 = __webpack_require__(10);
+const Couch_1 = __webpack_require__(51);
+const EmployeeCountRegister_1 = __webpack_require__(47);
+const Console_1 = __webpack_require__(50);
 exports.GRID_WIDTH = 16;
 exports.GRID_HEIGHT = 16;
 exports.DEBUG_WORLD = false;
@@ -1809,6 +1950,8 @@ class WorldKnowledge {
     create(game, groups) {
         this.game = game;
         this.groups = groups;
+        this.wallet.create(game);
+        this.levelManager.create(game);
         const floor = groups[Play_1.GROUP_FLOOR];
         const noname = groups[Play_1.GROUP_OBJECTS_AND_HUMANS];
         this.cells.forEach((cell) => {
@@ -1828,16 +1971,10 @@ class WorldKnowledge {
             this.addMoneyInWallet(this.levelManager.getEarnedMoney());
         }
     }
-    humanMoved(positions) {
+    humanMoved() {
         const walls = this.wallRepository.getWalls();
         walls.forEach((wall) => {
-            let visible = true;
-            positions.forEach((position) => {
-                if (this.anyHumanIsAboveWall(wall)) {
-                    visible = false;
-                }
-            });
-            wall.setVisibility(visible);
+            wall.setVisibility(!this.anyHumanIsAboveWall(wall));
         });
     }
     anyHumanIsAboveWall(wall) {
@@ -1858,7 +1995,7 @@ class WorldKnowledge {
     getMoneyInWallet() {
         return new Price_1.Price(this.wallet.getValue());
     }
-    resetAStar(position) {
+    resetAStar(position = null) {
         this.humanRepository.humans.forEach((human) => {
             human.resetAStar(position);
         });
@@ -2089,6 +2226,9 @@ class WorldKnowledge {
             case 'Couch':
                 object = new Couch_1.Couch(position, this, orientation);
                 break;
+            case 'Console':
+                object = new Console_1.Console(position, this, orientation);
+                break;
             default: throw 'Unknown object ' + name;
         }
         this.objects.push(object);
@@ -2155,6 +2295,16 @@ class WorldKnowledge {
     getLastEmployeesCount() {
         return this.employeeCountRegister.getLastCounts();
     }
+    pause() {
+        this.humanRepository.humans.forEach((human) => {
+            human.pause();
+        });
+    }
+    resume() {
+        this.humanRepository.humans.forEach((human) => {
+            human.resume();
+        });
+    }
 }
 exports.WorldKnowledge = WorldKnowledge;
 
@@ -2166,46 +2316,49 @@ exports.WorldKnowledge = WorldKnowledge;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const AbstractState_1 = __webpack_require__(10);
-const PositionTransformer_1 = __webpack_require__(4);
-class MoveThenActAbstractState extends AbstractState_1.AbstractState {
-    constructor(human, objectReferer, worldKnowledge, tries = 0) {
+const HumanStateManager_1 = __webpack_require__(1);
+const HumanAnimationManager_1 = __webpack_require__(5);
+const AbstractState_1 = __webpack_require__(11);
+class RageState extends AbstractState_1.AbstractState {
+    constructor(human, sourceState) {
         super(human);
-        this.objectReferer = objectReferer;
-        this.isHumanOnTheRightCell = false;
-        this.worldKnowledge = worldKnowledge;
-        this.tries = tries;
-    }
-    start(game) {
-        super.start(game);
-        if (!this.human.moveToClosest(this.objectReferer.getPosition(), this.objectReferer.getEntries())) {
-            this.active = false;
-            this.stop();
-            return false;
-        }
-        return true;
+        this.sourceState = sourceState;
+        this.isRaging = false;
     }
     getNextState() {
-        if (!this.isHumanOnTheRightCell) {
-            if (!this.worldKnowledge.hasObject(this.objectReferer.getObject()) || this.objectReferer.isUsed()) {
-                return this.retry();
+        if (!this.isRaging && !this.human.isMoving()) {
+            this.isRaging = true;
+            if (this.human.getMood() < 0.5) {
+                this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.RAGE);
             }
-        }
-        if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
-            this.isHumanOnTheRightCell = true;
-            this.human.interactWith(this.objectReferer, this.objectReferer.getObject().forceLeftOrientation(this.objectReferer.getIdentifier()));
-            this.events.push(this.game.time.events.add(this.human.getWalkDuration() + 100, () => {
-                this.act();
-            }));
+            else {
+                this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE);
+            }
+            this.human.updateMoodFromState();
+            const time = HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.RAGE) + 3 * Phaser.Timer.SECOND;
+            this.startTimer(time);
+            this.human.showThoughtBubble(this.sourceState.getRageImage());
+            this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.RAGE), () => {
+                this.human.hideThoughtBubble();
+                this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE);
+                this.events.push(this.game.time.events.add(3 * Phaser.Timer.SECOND, () => {
+                    this.active = false;
+                }, this));
+            }, this));
         }
         return super.getNextState();
     }
-    isNeighborPosition() {
-        return !this.human.isMoving() &&
-            PositionTransformer_1.PositionTransformer.isNeighbor(this.human.getPosition(), this.objectReferer.getPosition());
+    getState() {
+        return HumanStateManager_1.STATE.RAGE;
+    }
+    getRageImage() {
+        return this.sourceState.getRageImage();
+    }
+    getSourceState() {
+        return this.sourceState;
     }
 }
-exports.MoveThenActAbstractState = MoveThenActAbstractState;
+exports.RageState = RageState;
 
 
 /***/ }),
@@ -2216,7 +2369,7 @@ exports.MoveThenActAbstractState = MoveThenActAbstractState;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanStateManager_1 = __webpack_require__(1);
-const SmoothValue_1 = __webpack_require__(16);
+const SmoothValue_1 = __webpack_require__(15);
 const LOSS = -0.05;
 const DEFAULT = 0.8;
 const TIME_BETWEEN_LOSS = 10000;
@@ -2242,6 +2395,9 @@ class HumanMoodManager {
     }
     create(game) {
         this.game = game;
+        this.moods[MOOD.RELAXATION].create(game);
+        this.moods[MOOD.HUNGER].create(game);
+        this.moods[MOOD.SOCIAL].create(game);
     }
     update() {
         if (this.hasToBeUpdated) {
@@ -2261,7 +2417,7 @@ class HumanMoodManager {
     }
     updateFromStateInner(moods, time = Phaser.Timer.SECOND) {
         Object.keys(moods).forEach((mood) => {
-            this.moods[mood].add(moods[mood], time);
+            this.moods[parseInt(mood)].add(moods[parseInt(mood)], time);
         });
     }
     static getMoods() {
@@ -2288,13 +2444,75 @@ exports.HumanMoodManager = HumanMoodManager;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+const HumanPropertiesFactory_1 = __webpack_require__(9);
+const Price_1 = __webpack_require__(19);
+const MAX_WAGE = 50;
+const MIN_WAGE = 10;
+exports.DAY_DURATION = 60 * Phaser.Timer.SECOND;
+class HumanProperties {
+    constructor(spriteVariation, type, name, speed, quality, perseverance) {
+        this.spriteVariation = spriteVariation;
+        this.type = type;
+        this.name = name;
+        this.speed = speed;
+        this.quality = quality;
+        this.perseverance = perseverance;
+        this.wage = this.computeWage();
+    }
+    getSpriteKey() {
+        switch (this.type) {
+            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER: return this.spriteVariation + '_green';
+            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING: return this.spriteVariation + '_pink';
+            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE: return this.spriteVariation + '_red';
+        }
+    }
+    getName() {
+        return this.name;
+    }
+    getSpeed() {
+        return this.speed;
+    }
+    getStrType() {
+        switch (this.type) {
+            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER: return 'Developer';
+            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING: return 'Marketing';
+            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE: return 'Sale';
+        }
+    }
+    getPerseverance() {
+        return this.perseverance;
+    }
+    getType() {
+        return this.type;
+    }
+    getWage() {
+        return this.wage;
+    }
+    getQuality() {
+        return this.quality;
+    }
+    computeWage() {
+        return (this.speed + this.perseverance + 2 * this.quality) / 4;
+    }
+    getRealWage() {
+        return new Price_1.Price(-(MIN_WAGE + this.wage * (MAX_WAGE - MIN_WAGE)));
+    }
+}
+exports.HumanProperties = HumanProperties;
+
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 const Pico8Colors_1 = __webpack_require__(2);
 const GAP_X = -7;
 const GAP_Y = 1;
 const DEBUG = false;
 class MoodSprite {
-    constructor() {
-    }
     create(humanSprite, game, group) {
         this.parent = humanSprite;
         this.sprite = game.add.graphics(this.parent.position.x, this.parent.position.y, group);
@@ -2310,7 +2528,7 @@ class MoodSprite {
         for (let i = 0; i < moods.length; i++) {
             this.sprite.moveTo(0, i * 2);
             this.sprite.lineStyle(2, MoodSprite.getColor(moods[i]));
-            this.sprite.lineTo(moods[i] * 15 + 1, i * 2);
+            this.sprite.lineTo(Math.floor(moods[i] * 15 + 1), i * 2);
         }
     }
     static getColor(mood) {
@@ -2329,13 +2547,13 @@ exports.MoodSprite = MoodSprite;
 
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const TextStyle_1 = __webpack_require__(11);
+const TextStyle_1 = __webpack_require__(13);
 const Play_1 = __webpack_require__(0);
 const Pico8Colors_1 = __webpack_require__(2);
 const app_1 = __webpack_require__(3);
@@ -2398,7 +2616,7 @@ exports.Tooltip = Tooltip;
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2435,7 +2653,7 @@ exports.Bubble = Bubble;
 
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2486,15 +2704,15 @@ exports.ObjectSelector = ObjectSelector;
 
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Gauge_1 = __webpack_require__(28);
+const Gauge_1 = __webpack_require__(29);
 const Pico8Colors_1 = __webpack_require__(2);
-const MoodSprite_1 = __webpack_require__(23);
+const MoodSprite_1 = __webpack_require__(24);
 class ColoredGauge extends Gauge_1.Gauge {
     constructor(width, height = null) {
         super(width, Pico8Colors_1.COLOR.WHITE, height);
@@ -2507,7 +2725,7 @@ exports.ColoredGauge = ColoredGauge;
 
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2535,14 +2753,21 @@ class Gauge {
     update() {
         this.graphics.clear();
         if (this.visible) {
-            this.graphics.lineStyle(0);
-            this.graphics.beginFill(Pico8Colors_1.COLOR.BLACK);
-            this.graphics.drawRect(0, 0.5, this.width, this.height);
-            this.graphics.beginFill(this.getColor());
-            this.graphics.drawRect(0, 0.5, Math.floor(this.width * this.value) + 0.5, this.height);
-            this.graphics.endFill();
             this.graphics.lineStyle(1, Pico8Colors_1.COLOR.WHITE);
             this.graphics.drawRect(0, 0.5, this.width, this.height);
+            this.graphics.lineStyle(0);
+            this.graphics.beginFill(Pico8Colors_1.COLOR.BLACK);
+            this.graphics.drawRect(0.5, 1, this.width - 1, this.height - 1);
+            if (this.value > 0) {
+                this.graphics.beginFill(this.getColor());
+                if (this.value >= 1) {
+                    this.graphics.drawRect(0.5, 1, Math.floor(this.width - 2) + 1, this.height - 1);
+                }
+                else {
+                    this.graphics.drawRect(0.5, 1, Math.floor((this.width - 2) * this.value) + 1, this.height - 1);
+                }
+            }
+            this.graphics.endFill();
         }
     }
     show() {
@@ -2567,21 +2792,21 @@ exports.Gauge = Gauge;
 
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const UserInterface_1 = __webpack_require__(5);
+const UserInterface_1 = __webpack_require__(6);
 const app_1 = __webpack_require__(3);
 const ObjectDescriptionRegistry_1 = __webpack_require__(18);
-const ObjectPhantom_1 = __webpack_require__(55);
+const ObjectPhantom_1 = __webpack_require__(57);
 const Play_1 = __webpack_require__(0);
-const TextStyle_1 = __webpack_require__(11);
+const TextStyle_1 = __webpack_require__(13);
 const PositionTransformer_1 = __webpack_require__(4);
 const Pico8Colors_1 = __webpack_require__(2);
-const ObjectOrientation_1 = __webpack_require__(9);
+const ObjectOrientation_1 = __webpack_require__(10);
 exports.OBJECT_SELLER_CELL_SIZE = 41;
 const CIRCLE_GAP = 7;
 class ObjectSeller {
@@ -2810,20 +3035,20 @@ class ObjectProvisionnerButton {
 
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const UserInterface_1 = __webpack_require__(5);
+const UserInterface_1 = __webpack_require__(6);
 const app_1 = __webpack_require__(3);
 const Play_1 = __webpack_require__(0);
-const TextStyle_1 = __webpack_require__(11);
+const TextStyle_1 = __webpack_require__(13);
 const HumanMoodManager_1 = __webpack_require__(22);
-const PieChart_1 = __webpack_require__(67);
+const PieChart_1 = __webpack_require__(69);
 const HumanStateManager_1 = __webpack_require__(1);
-const ColoredGauge_1 = __webpack_require__(27);
+const ColoredGauge_1 = __webpack_require__(28);
 const GRAPH_GAP = 2;
 exports.GAP_BETWEEN_LINES = 10;
 const GAUGE_GAP = 100;
@@ -2844,21 +3069,27 @@ class UserInfoPanel {
         this.moodHungerText = game.add.text(left, UserInterface_1.TOP_GAP + 2 * exports.GAP_BETWEEN_LINES, 'Hunger', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
         this.moodSocialText = game.add.text(left, UserInterface_1.TOP_GAP + 3 * exports.GAP_BETWEEN_LINES, 'Social', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
         this.currentState = game.add.text(left, UserInterface_1.TOP_GAP + 4 * exports.GAP_BETWEEN_LINES, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.wage = game.add.text(left, UserInterface_1.TOP_GAP + 5 * exports.GAP_BETWEEN_LINES, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
         this.pieChart.create(game, groups);
-        this.moodRelaxationGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + exports.GAP_BETWEEN_LINES - 3.5));
-        this.moodHungerGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + 2 * exports.GAP_BETWEEN_LINES - 3.5));
-        this.moodSocialGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + 3 * exports.GAP_BETWEEN_LINES - 3.5));
+        this.moodRelaxationGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + exports.GAP_BETWEEN_LINES + 3.5));
+        this.moodHungerGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + 2 * exports.GAP_BETWEEN_LINES + 3.5));
+        this.moodSocialGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + 3 * exports.GAP_BETWEEN_LINES + 3.5));
     }
     update() {
         if (this.human) {
             this.moodRelaxationGauge.setValue(this.human.getMood(HumanMoodManager_1.MOOD.RELAXATION));
             this.moodHungerGauge.setValue(this.human.getMood(HumanMoodManager_1.MOOD.HUNGER));
             this.moodSocialGauge.setValue(this.human.getMood(HumanMoodManager_1.MOOD.SOCIAL));
+            this.wage.setText('Wage: ' + this.human.getRealWage().getStringValue() + '/day');
             this.moodRelaxationGauge.update();
             this.moodHungerGauge.update();
             this.moodSocialGauge.update();
             this.pieChart.update();
-            this.currentState.setText('State: ' + HumanStateManager_1.HumanStateManager.getStr(this.human.getState()));
+            let stateStr = 'State: ' + HumanStateManager_1.HumanStateManager.getStr(this.human.getStateType());
+            if (this.human.getState().getRemainingSeconds()) {
+                stateStr = stateStr + ' (' + this.human.getState().getRemainingSeconds() + 's left)';
+            }
+            this.currentState.setText(stateStr);
         }
     }
     show() {
@@ -2869,6 +3100,7 @@ class UserInfoPanel {
             this.moodHungerText.position.x -= UserInterface_1.INTERFACE_WIDTH;
             this.moodSocialText.position.x -= UserInterface_1.INTERFACE_WIDTH;
             this.currentState.position.x -= UserInterface_1.INTERFACE_WIDTH;
+            this.wage.position.x -= UserInterface_1.INTERFACE_WIDTH;
             this.moodRelaxationGauge.show();
             this.moodHungerGauge.show();
             this.moodSocialGauge.show();
@@ -2883,6 +3115,7 @@ class UserInfoPanel {
             this.moodHungerText.position.x += UserInterface_1.INTERFACE_WIDTH;
             this.moodSocialText.position.x += UserInterface_1.INTERFACE_WIDTH;
             this.currentState.position.x += UserInterface_1.INTERFACE_WIDTH;
+            this.wage.position.x += UserInterface_1.INTERFACE_WIDTH;
             this.moodRelaxationGauge.hide();
             this.moodHungerGauge.hide();
             this.moodSocialGauge.hide();
@@ -2899,7 +3132,7 @@ exports.UserInfoPanel = UserInfoPanel;
 
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2924,7 +3157,7 @@ exports.Cell = Cell;
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2945,14 +3178,14 @@ exports.default = Boot;
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Employee_1 = __webpack_require__(17);
-const ObjectSelector_1 = __webpack_require__(26);
+const ObjectSelector_1 = __webpack_require__(27);
 class Preload extends Phaser.State {
     preload() {
         this.loadAudio();
@@ -3010,6 +3243,8 @@ class Preload extends Phaser.State {
         this.game.load.spritesheet('couch_reverse_cache', 'assets/couch_reverse_cache.png', 60, 39);
         this.game.load.spritesheet('coin', 'assets/coin.png', 7, 9);
         this.game.load.spritesheet('star', 'assets/star.png', 9, 9);
+        this.game.load.spritesheet('tv_reverse', 'assets/tv_reverse.png', 24, 35);
+        this.game.load.spritesheet('tv', 'assets/tv.png', 24, 35);
     }
     loadFonts() {
         this.game.load.bitmapFont('retro_computer', 'assets/font/font.png', 'assets/font/font.ftn');
@@ -3019,61 +3254,65 @@ exports.default = Preload;
 
 
 /***/ }),
-/* 34 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const HumanStateManager_1 = __webpack_require__(1);
-const HumanAnimationManager_1 = __webpack_require__(7);
-const RageState_1 = __webpack_require__(15);
-const MoveThenActAbstractState_1 = __webpack_require__(21);
-const ThoughtBubble_1 = __webpack_require__(12);
-class CoffeeState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
-    retry() {
-        const nextDispenserReferer = this.worldKnowledge.getClosestReferer(['Dispenser'], 1, this.human.getPosition());
-        if (this.tries > this.human.getMaxRetries() || nextDispenserReferer === null) {
-            this.active = false;
-            this.human.stopWalk();
-            return new RageState_1.RageState(this.human, ThoughtBubble_1.RAGE_IMAGE.COFFEE);
-        }
-        else {
-            return new CoffeeState(this.human, nextDispenserReferer, this.worldKnowledge, this.tries + 1);
-        }
-    }
-    act() {
-        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.DRINK);
-        this.human.updateMoodFromState();
-        this.events.push(this.game.time.events.add(Math.floor(Phaser.Math.random(2, 4)) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.DRINK), () => {
-            this.human.goToFreeCell(this.objectReferer);
-            this.events.push(this.game.time.events.add(this.human.getWalkDuration() + 100, () => {
-                this.active = false;
-            }, this));
-        }, this));
-    }
-    getState() {
-        return HumanStateManager_1.STATE.COFFEE;
-    }
-}
-exports.CoffeeState = CoffeeState;
-
-
-/***/ }),
 /* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(7);
 const HumanStateManager_1 = __webpack_require__(1);
-const AbstractState_1 = __webpack_require__(10);
+const HumanAnimationManager_1 = __webpack_require__(5);
+const MoveThenActAbstractState_1 = __webpack_require__(16);
+const ThoughtBubble_1 = __webpack_require__(8);
+class CoffeeState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
+    start(game) {
+        this.objectReferer = this.worldKnowledge.getClosestReferer(['Dispenser'], 1, this.human.getPosition());
+        if (this.objectReferer === null) {
+            return false;
+        }
+        this.drinkTime = Math.floor(Phaser.Math.random(2, 4)) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.DRINK);
+        return super.start(game);
+    }
+    act() {
+        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.DRINK);
+        this.human.updateMoodFromState();
+        this.events.push(this.game.time.events.add(this.drinkTime, () => {
+            this.finish();
+        }, this));
+    }
+    getActTime() {
+        return this.drinkTime + this.human.getWalkDuration();
+    }
+    getState() {
+        return HumanStateManager_1.STATE.COFFEE;
+    }
+    subGetRageImage() {
+        return ThoughtBubble_1.RAGE_IMAGE.COFFEE;
+    }
+    getRetryState() {
+        return new CoffeeState(this.human, this.worldKnowledge, this.tries + 1);
+    }
+}
+exports.CoffeeState = CoffeeState;
+
+
+/***/ }),
+/* 36 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const HumanAnimationManager_1 = __webpack_require__(5);
+const HumanStateManager_1 = __webpack_require__(1);
+const AbstractState_1 = __webpack_require__(11);
 class FreezeState extends AbstractState_1.AbstractState {
     start(game) {
         super.start(game);
         this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE);
-        this.event = game.time.events.add(Phaser.Math.random(1, 2) * Phaser.Timer.SECOND, () => {
+        const time = Phaser.Math.random(1, 2) * Phaser.Timer.SECOND;
+        this.startTimer(time);
+        this.event = game.time.events.add(time, () => {
             this.active = false;
         }, this);
         return true;
@@ -3081,12 +3320,16 @@ class FreezeState extends AbstractState_1.AbstractState {
     getState() {
         return HumanStateManager_1.STATE.FREEZE;
     }
+    getRageImage() {
+        debugger;
+        return null;
+    }
 }
 exports.FreezeState = FreezeState;
 
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3143,7 +3386,7 @@ class Meeting {
     areAllHumanStillInMeeting() {
         for (let i = 0; i < this.places.length; i++) {
             const human = this.places[i].human;
-            if (human.getState() !== HumanStateManager_1.STATE.TALK) {
+            if (human.getStateType() !== HumanStateManager_1.STATE.TALK) {
                 return false;
             }
         }
@@ -3154,14 +3397,15 @@ exports.Meeting = Meeting;
 
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanStateManager_1 = __webpack_require__(1);
-const AbstractState_1 = __webpack_require__(10);
+const AbstractState_1 = __webpack_require__(11);
+const ThoughtBubble_1 = __webpack_require__(8);
 class MoveRandomState extends AbstractState_1.AbstractState {
     constructor(human, worldKnowledge) {
         super(human);
@@ -3178,6 +3422,7 @@ class MoveRandomState extends AbstractState_1.AbstractState {
     start(game) {
         super.start(game);
         if (!this.human.moveTo(this.goal)) {
+            this.startTimer(this.human.getMoveTime());
             this.stop();
             return false;
         }
@@ -3186,52 +3431,11 @@ class MoveRandomState extends AbstractState_1.AbstractState {
     getState() {
         return HumanStateManager_1.STATE.MOVE_RANDOM;
     }
+    getRageImage() {
+        return ThoughtBubble_1.RAGE_IMAGE.PATH;
+    }
 }
 exports.MoveRandomState = MoveRandomState;
-
-
-/***/ }),
-/* 38 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(7);
-const HumanStateManager_1 = __webpack_require__(1);
-const RageState_1 = __webpack_require__(15);
-const MoveThenActAbstractState_1 = __webpack_require__(21);
-const ThoughtBubble_1 = __webpack_require__(12);
-class SitState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
-    retry() {
-        const nextSofaReferer = this.worldKnowledge.getClosestReferer(['Sofa'], 1, this.human.getPosition());
-        if (this.tries > this.human.getMaxRetries() || nextSofaReferer === null) {
-            this.active = false;
-            this.human.stopWalk();
-            return new RageState_1.RageState(this.human, ThoughtBubble_1.RAGE_IMAGE.SLEEP);
-        }
-        else {
-            return new SitState(this.human, nextSofaReferer, this.worldKnowledge, this.tries + 1);
-        }
-    }
-    act() {
-        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN, this.objectReferer.getObject().forceLeftOrientation(this.objectReferer.getIdentifier()), this.objectReferer.getObject().forceTopOrientation(this.objectReferer.getIdentifier()));
-        this.human.updateMoodFromState();
-        this.events.push(this.game.time.events.add(Phaser.Math.random(3, 10) * Phaser.Timer.SECOND + HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SIT_DOWN), () => {
-            this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.STAND_UP);
-            this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.STAND_UP) + 100, () => {
-                this.human.goToFreeCell(this.objectReferer);
-                this.events.push(this.game.time.events.add(this.human.getWalkDuration() + 100, () => {
-                    this.active = false;
-                }, this));
-            }, this));
-        }, this));
-    }
-    getState() {
-        return HumanStateManager_1.STATE.SIT;
-    }
-}
-exports.SitState = SitState;
 
 
 /***/ }),
@@ -3241,13 +3445,118 @@ exports.SitState = SitState;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(7);
+const MoveThenActAbstractState_1 = __webpack_require__(16);
+const ThoughtBubble_1 = __webpack_require__(8);
 const HumanStateManager_1 = __webpack_require__(1);
-const AbstractState_1 = __webpack_require__(10);
-const TableMeeting_1 = __webpack_require__(41);
+const HumanAnimationManager_1 = __webpack_require__(5);
+class SitPlay extends MoveThenActAbstractState_1.MoveThenActAbstractState {
+    start(game) {
+        this.objectReferer = this.worldKnowledge.getClosestReferer(['Console'], 1, this.human.getPosition());
+        if (this.objectReferer === null) {
+            return false;
+        }
+        this.playTime = Phaser.Math.random(3, 10) * Phaser.Timer.SECOND;
+        return super.start(game);
+    }
+    getState() {
+        return HumanStateManager_1.STATE.SIT_PLAY;
+    }
+    subGetRageImage() {
+        // TODO Set another image!
+        return ThoughtBubble_1.RAGE_IMAGE.SLEEP;
+    }
+    act() {
+        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN, this.objectReferer.getObject().forceLeftOrientation(this.objectReferer.getIdentifier()), this.objectReferer.getObject().forceTopOrientation(this.objectReferer.getIdentifier()));
+        this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SIT_DOWN), () => {
+            this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_FREEZE);
+            this.human.updateMoodFromState();
+            const console = this.objectReferer.getObject();
+            console.addPlayer();
+            this.events.push(this.game.time.events.add(this.playTime, () => {
+                console.removePlayer();
+                this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.STAND_UP);
+                this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.STAND_UP) + 100, () => {
+                    this.finish();
+                }, this));
+            }, this));
+        }, this));
+    }
+    getRetryState() {
+        return new SitPlay(this.human, this.worldKnowledge, this.tries + 1);
+    }
+    getActTime() {
+        return HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SIT_FREEZE) +
+            this.playTime +
+            HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.STAND_UP) +
+            this.human.getWalkDuration();
+    }
+}
+exports.SitPlay = SitPlay;
+
+
+/***/ }),
+/* 40 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const HumanAnimationManager_1 = __webpack_require__(5);
+const HumanStateManager_1 = __webpack_require__(1);
+const MoveThenActAbstractState_1 = __webpack_require__(16);
+const ThoughtBubble_1 = __webpack_require__(8);
+class SitState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
+    start(game) {
+        this.objectReferer = this.worldKnowledge.getClosestReferer(['Sofa', 'Couch'], 1, this.human.getPosition());
+        if (this.objectReferer === null) {
+            return false;
+        }
+        this.sitTime = Phaser.Math.random(3, 10) * Phaser.Timer.SECOND;
+        return super.start(game);
+    }
+    act() {
+        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN, this.objectReferer.getObject().forceLeftOrientation(this.objectReferer.getIdentifier()), this.objectReferer.getObject().forceTopOrientation(this.objectReferer.getIdentifier()));
+        this.human.updateMoodFromState();
+        this.events.push(this.game.time.events.add(this.sitTime + HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SIT_DOWN), () => {
+            this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.STAND_UP);
+            this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.STAND_UP) + 100, () => {
+                this.finish();
+            }, this));
+        }, this));
+    }
+    getActTime() {
+        return HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SIT_DOWN) +
+            this.sitTime +
+            HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.STAND_UP) +
+            this.human.getWalkDuration();
+    }
+    getState() {
+        return HumanStateManager_1.STATE.SIT;
+    }
+    subGetRageImage() {
+        return ThoughtBubble_1.RAGE_IMAGE.SLEEP;
+    }
+    getRetryState() {
+        return new SitState(this.human, this.worldKnowledge, this.tries + 1);
+    }
+}
+exports.SitState = SitState;
+
+
+/***/ }),
+/* 41 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const HumanAnimationManager_1 = __webpack_require__(5);
+const HumanStateManager_1 = __webpack_require__(1);
+const AbstractState_1 = __webpack_require__(11);
+const TableMeeting_1 = __webpack_require__(43);
 const PositionTransformer_1 = __webpack_require__(4);
-const RageState_1 = __webpack_require__(15);
-const ThoughtBubble_1 = __webpack_require__(12);
+const RageState_1 = __webpack_require__(21);
+const ThoughtBubble_1 = __webpack_require__(8);
 class SitTalkState extends AbstractState_1.AbstractState {
     constructor(human, table, anotherHumans, worldKnowledge, meeting = null) {
         super(human);
@@ -3263,7 +3572,7 @@ class SitTalkState extends AbstractState_1.AbstractState {
         if (!this.worldKnowledge.hasObject(this.table)) {
             this.active = false;
             this.human.stopWalk();
-            return new RageState_1.RageState(this.human, ThoughtBubble_1.RAGE_IMAGE.TABLE);
+            return new RageState_1.RageState(this.human, this);
         }
         else {
             if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
@@ -3272,7 +3581,7 @@ class SitTalkState extends AbstractState_1.AbstractState {
                 this.events.push(this.game.time.events.add(this.human.getWalkDuration() + 100, () => {
                     this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN, this.meeting.getTable().forceLeftOrientation(this.meeting.getCell(this.human).getIdentifier()), this.table.forceTopOrientation(this.meeting.getCell(this.human).getIdentifier()));
                     this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SIT_DOWN) + 100, () => {
-                        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE_SIT);
+                        this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_FREEZE);
                     }, this));
                     this.isHumanSit = true;
                 }));
@@ -3280,7 +3589,7 @@ class SitTalkState extends AbstractState_1.AbstractState {
             if (!this.isHumanOnTheRightCell && !this.meetingStarted && this.meeting.aPlaceWasTakenBySomeoneElse()) {
                 this.active = false;
                 this.human.stopWalk();
-                return new RageState_1.RageState(this.human, ThoughtBubble_1.RAGE_IMAGE.TABLE);
+                return new RageState_1.RageState(this.human, this);
             }
             if (this.isHumanSit && !this.meetingStarted && this.meeting.isReady()) {
                 this.meetingStarted = true;
@@ -3348,26 +3657,35 @@ class SitTalkState extends AbstractState_1.AbstractState {
             PositionTransformer_1.PositionTransformer.isNeighbor(this.human.getPosition(), this.meeting.getCell(this.human).getPosition());
     }
     static otherAnimation(animation) {
-        return animation === HumanAnimationManager_1.ANIMATION.SIT_TALK ? HumanAnimationManager_1.ANIMATION.FREEZE_SIT : HumanAnimationManager_1.ANIMATION.SIT_TALK;
+        return animation === HumanAnimationManager_1.ANIMATION.SIT_TALK ? HumanAnimationManager_1.ANIMATION.SIT_FREEZE : HumanAnimationManager_1.ANIMATION.SIT_TALK;
+    }
+    getRageImage() {
+        return ThoughtBubble_1.RAGE_IMAGE.PATH;
     }
 }
 exports.SitTalkState = SitTalkState;
 
 
 /***/ }),
-/* 40 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(7);
+const HumanAnimationManager_1 = __webpack_require__(5);
 const HumanStateManager_1 = __webpack_require__(1);
-const AbstractState_1 = __webpack_require__(10);
+const AbstractState_1 = __webpack_require__(11);
 class SmokeState extends AbstractState_1.AbstractState {
+    getRageImage() {
+        debugger;
+        return null;
+    }
     start(game) {
         super.start(game);
-        game.time.events.add(Phaser.Math.random(1, 3) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SMOKE), () => {
+        const time = Phaser.Math.random(1, 3) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SMOKE);
+        this.startTimer(time);
+        game.time.events.add(time, () => {
             this.active = false;
         }, this);
         this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SMOKE);
@@ -3382,7 +3700,7 @@ exports.SmokeState = SmokeState;
 
 
 /***/ }),
-/* 41 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3453,17 +3771,18 @@ exports.TableMeeting = TableMeeting;
 
 
 /***/ }),
-/* 42 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(7);
-const Meeting_1 = __webpack_require__(36);
-const Direction_1 = __webpack_require__(6);
+const HumanAnimationManager_1 = __webpack_require__(5);
+const Meeting_1 = __webpack_require__(37);
+const Direction_1 = __webpack_require__(7);
 const HumanStateManager_1 = __webpack_require__(1);
-const AbstractState_1 = __webpack_require__(10);
+const AbstractState_1 = __webpack_require__(11);
+const ThoughtBubble_1 = __webpack_require__(8);
 class TalkState extends AbstractState_1.AbstractState {
     constructor(human, anotherHuman, worldKnowledge, meeting = null) {
         super(human);
@@ -3532,67 +3851,75 @@ class TalkState extends AbstractState_1.AbstractState {
     static otherAnimation(animation) {
         return animation === HumanAnimationManager_1.ANIMATION.TALK ? HumanAnimationManager_1.ANIMATION.FREEZE : HumanAnimationManager_1.ANIMATION.TALK;
     }
+    getRageImage() {
+        return ThoughtBubble_1.RAGE_IMAGE.PATH;
+    }
 }
 exports.TalkState = TalkState;
 
 
 /***/ }),
-/* 43 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanAnimationManager_1 = __webpack_require__(7);
+const HumanAnimationManager_1 = __webpack_require__(5);
 const HumanStateManager_1 = __webpack_require__(1);
-const RageState_1 = __webpack_require__(15);
-const MoveThenActAbstractState_1 = __webpack_require__(21);
-const ThoughtBubble_1 = __webpack_require__(12);
-const SECOND_MAX = 60 * Phaser.Timer.SECOND;
+const MoveThenActAbstractState_1 = __webpack_require__(16);
+const ThoughtBubble_1 = __webpack_require__(8);
+const SECOND_MIN = 15 * Phaser.Timer.SECOND;
+const SECOND_MAX = 45 * Phaser.Timer.SECOND;
 class TypeState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
-    retry() {
-        const nextDeskReferer = this.worldKnowledge.getClosestReferer(['Desk'], 1, this.human.getPosition());
-        if (this.tries > this.human.getMaxRetries() || nextDeskReferer === null) {
-            this.active = false;
-            this.human.stopWalk();
-            return new RageState_1.RageState(this.human, ThoughtBubble_1.RAGE_IMAGE.LAPTOP);
+    start(game) {
+        this.objectReferer = this.worldKnowledge.getClosestReferer(['Desk'], 1, this.human.getPosition());
+        if (this.objectReferer === null) {
+            return false;
         }
-        else {
-            return new TypeState(this.human, nextDeskReferer, this.worldKnowledge, this.tries + 1);
-        }
+        this.typeTime = Phaser.Math.random(SECOND_MIN, SECOND_MAX);
+        return super.start(game);
     }
     act() {
         this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN, this.objectReferer.getObject().forceLeftOrientation(this.objectReferer.getIdentifier()));
         this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SIT_DOWN), () => {
             this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.TYPE, this.objectReferer.forceLeftOrientation(), this.objectReferer.forceTopOrientation());
-            const time = Phaser.Math.random(15 * Phaser.Timer.SECOND, SECOND_MAX);
-            this.worldKnowledge.addProgress(this.human.getType(), time / SECOND_MAX, time);
-            this.events.push(this.game.time.events.add(time, () => {
+            this.worldKnowledge.addProgress(this.human.getType(), this.typeTime / SECOND_MAX, this.typeTime);
+            this.events.push(this.game.time.events.add(this.typeTime, () => {
                 this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.STAND_UP);
                 this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.STAND_UP) + 100, () => {
-                    this.human.goToFreeCell(this.objectReferer);
-                    this.events.push(this.game.time.events.add(this.human.getWalkDuration() + 100, () => {
-                        this.active = false;
-                    }, this));
+                    this.finish();
                 }, this));
             }, this));
         }));
     }
+    getActTime() {
+        return HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SIT_DOWN) +
+            this.typeTime +
+            HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.STAND_UP) +
+            this.human.getWalkDuration();
+    }
     getState() {
         return HumanStateManager_1.STATE.TYPE;
+    }
+    subGetRageImage() {
+        return ThoughtBubble_1.RAGE_IMAGE.LAPTOP;
+    }
+    getRetryState() {
+        return new TypeState(this.human, this.worldKnowledge, this.tries + 1);
     }
 }
 exports.TypeState = TypeState;
 
 
 /***/ }),
-/* 44 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Direction_1 = __webpack_require__(6);
+const Direction_1 = __webpack_require__(7);
 class ClosestPathFinder {
     constructor(game, worldKnowledge) {
         this.finders = {};
@@ -3693,14 +4020,14 @@ exports.ClosestPathFinder = ClosestPathFinder;
 
 
 /***/ }),
-/* 45 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanPropertiesFactory_1 = __webpack_require__(8);
-const UserInterface_1 = __webpack_require__(5);
+const HumanPropertiesFactory_1 = __webpack_require__(9);
+const UserInterface_1 = __webpack_require__(6);
 class EmployeeCountRegister {
     constructor(humanRepository) {
         this.humanRepository = humanRepository;
@@ -3731,76 +4058,13 @@ exports.EmployeeCountRegister = EmployeeCountRegister;
 
 
 /***/ }),
-/* 46 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanPropertiesFactory_1 = __webpack_require__(8);
-const Price_1 = __webpack_require__(19);
-const MAX_WAGE = 50;
-const MIN_WAGE = 10;
-class HumanProperties {
-    constructor(spriteVariation, type, name, speed, quality, perseverance) {
-        this.spriteVariation = spriteVariation;
-        this.type = type;
-        this.name = name;
-        this.speed = speed;
-        this.quality = quality;
-        this.perseverance = perseverance;
-        this.wage = this.computeWage();
-    }
-    getSpriteKey() {
-        switch (this.type) {
-            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER: return this.spriteVariation + '_green';
-            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING: return this.spriteVariation + '_pink';
-            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE: return this.spriteVariation + '_red';
-        }
-    }
-    getName() {
-        return this.name;
-    }
-    getSpeed() {
-        return this.speed;
-    }
-    getStrType() {
-        switch (this.type) {
-            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER: return 'Developer';
-            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING: return 'Marketing';
-            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE: return 'Sale';
-        }
-    }
-    getPerseverance() {
-        return this.perseverance;
-    }
-    getType() {
-        return this.type;
-    }
-    getWage() {
-        return this.wage;
-    }
-    getQuality() {
-        return this.quality;
-    }
-    computeWage() {
-        return (this.speed + this.perseverance + 2 * this.quality) / 4;
-    }
-    getRealWage() {
-        return new Price_1.Price(-(MIN_WAGE + this.wage * (MAX_WAGE - MIN_WAGE)));
-    }
-}
-exports.HumanProperties = HumanProperties;
-
-
-/***/ }),
-/* 47 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const UserInterface_1 = __webpack_require__(5);
+const UserInterface_1 = __webpack_require__(6);
 class MoodRegister {
     constructor(humanRepository) {
         this.humanRepository = humanRepository;
@@ -3828,13 +4092,13 @@ exports.MoodRegister = MoodRegister;
 
 
 /***/ }),
-/* 48 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Bubble_1 = __webpack_require__(25);
+const Bubble_1 = __webpack_require__(26);
 class TalkBubble extends Bubble_1.Bubble {
     getImageSpriteKey() {
         return 'bubble_images';
@@ -3855,9 +4119,7 @@ class TalkBubble extends Bubble_1.Bubble {
         this.event = this.game.time.events.add(Phaser.Math.random(2, 4) * Phaser.Timer.SECOND, this.switchImage, this);
     }
     hide() {
-        console.log(this.game.time.events.length);
-        console.log(this.game.time.events.remove(this.event));
-        console.log(this.game.time.events.length);
+        this.game.time.events.remove(this.event);
         super.hide();
     }
     show() {
@@ -3869,13 +4131,68 @@ exports.TalkBubble = TalkBubble;
 
 
 /***/ }),
-/* 49 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const AbstractObject_1 = __webpack_require__(13);
+const AbstractObject_1 = __webpack_require__(12);
+const Direction_1 = __webpack_require__(7);
+const HumanAnimationManager_1 = __webpack_require__(5);
+class Console extends AbstractObject_1.AbstractObject {
+    constructor(point, worldKnowledge, orientation) {
+        super(point, worldKnowledge, orientation);
+        this.playersCount = 0;
+    }
+    create(game, groups) {
+        super.create(game, groups);
+        this.tvSprite = this.sprites[Direction_1.Direction.isTop(this.orientation) ? 0 : 2];
+        if (Direction_1.Direction.isTop(this.orientation)) {
+            this.tvSprite.animations.add('play', [1, 2, 3]);
+        }
+    }
+    addPlayer() {
+        this.playersCount++;
+        if (this.playersCount === 1) {
+            this.runAnimation();
+        }
+    }
+    removePlayer() {
+        this.playersCount--;
+        if (this.playersCount === 0) {
+            this.stopAnimation();
+        }
+    }
+    runAnimation() {
+        if (Direction_1.Direction.isTop(this.orientation)) {
+            this.tvSprite.animations.play('play', HumanAnimationManager_1.FRAME_RATE, true);
+        }
+        else {
+            this.tvSprite.loadTexture('tv', 1);
+        }
+    }
+    stopAnimation() {
+        if (Direction_1.Direction.isTop(this.orientation)) {
+            this.tvSprite.animations.stop('play');
+            this.tvSprite.loadTexture('tv_reverse', 0);
+        }
+        else {
+            this.tvSprite.loadTexture('tv', 0);
+        }
+    }
+}
+exports.Console = Console;
+
+
+/***/ }),
+/* 51 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const AbstractObject_1 = __webpack_require__(12);
 const ObjectDeleter_1 = __webpack_require__(14);
 const Play_1 = __webpack_require__(0);
 class Couch extends AbstractObject_1.AbstractObject {
@@ -3888,7 +4205,7 @@ exports.Couch = Couch;
 
 
 /***/ }),
-/* 50 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3921,14 +4238,14 @@ exports.Depot = Depot;
 
 
 /***/ }),
-/* 51 */
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = __webpack_require__(0);
-const AbstractObject_1 = __webpack_require__(13);
+const AbstractObject_1 = __webpack_require__(12);
 const ObjectDeleter_1 = __webpack_require__(14);
 class Desk extends AbstractObject_1.AbstractObject {
     create(game, groups) {
@@ -3940,13 +4257,13 @@ exports.Desk = Desk;
 
 
 /***/ }),
-/* 52 */
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const AbstractObject_1 = __webpack_require__(13);
+const AbstractObject_1 = __webpack_require__(12);
 const ObjectDeleter_1 = __webpack_require__(14);
 const Play_1 = __webpack_require__(0);
 class Dispenser extends AbstractObject_1.AbstractObject {
@@ -3959,14 +4276,14 @@ exports.Dispenser = Dispenser;
 
 
 /***/ }),
-/* 53 */
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Direction_1 = __webpack_require__(6);
-const ObjectOrientation_1 = __webpack_require__(9);
+const Direction_1 = __webpack_require__(7);
+const ObjectOrientation_1 = __webpack_require__(10);
 class InteractivePoint {
     constructor(entryPoints, gap = new PIXI.Point(0, 0), cellOffset = new PIXI.Point(0, 0), leftLooking = false, topLooking = false) {
         this.entryPoints = entryPoints;
@@ -4028,17 +4345,17 @@ exports.InteractivePoint = InteractivePoint;
 
 
 /***/ }),
-/* 54 */
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Direction_1 = __webpack_require__(6);
-const ObjectOrientation_1 = __webpack_require__(9);
+const ObjectOrientation_1 = __webpack_require__(10);
 class ObjectDescription {
-    constructor(name, bottomOrientedSpriteInfos, topOrientedSpriteInfos, bottomInteractivePoints, topInteractivePoints, price) {
+    constructor(name, occupiedCells, bottomOrientedSpriteInfos, topOrientedSpriteInfos, bottomInteractivePoints, topInteractivePoints, price) {
         this.name = name;
+        this.occupiedCells = occupiedCells;
         this.bottomOrientedSpriteInfos = bottomOrientedSpriteInfos;
         this.topOrientedSpriteInfos = topOrientedSpriteInfos;
         this.bottomInteractivePoints = bottomInteractivePoints;
@@ -4080,35 +4397,26 @@ class ObjectDescription {
      * @returns {PIXI.Point[]}
      */
     getUniqueCellOffsets(orientation) {
-        let result = [];
-        this.getSpriteInfos(orientation).forEach((spriteInfo) => {
-            const newGap = spriteInfo.getCellOffset(orientation);
-            let found = false;
-            result.forEach((previousGap) => {
-                found = found || (previousGap.x === newGap.x && previousGap.y === newGap.y);
-            });
-            if (!found) {
-                result.push(newGap);
+        if (!ObjectOrientation_1.ObjectOrientation.isHorizontalMirror(orientation)) {
+            if (!ObjectOrientation_1.ObjectOrientation.isVerticalMirror(orientation)) {
+                return this.occupiedCells;
             }
-        });
-        return result;
-    }
-    /**
-     * Returns the list of all the entry cells of this object.
-     * @param {PIXI.Point} originCell
-     * @param {DIRECTION} orientation
-     * @returns {PIXI.Point[]}
-     */
-    getEntryCells(originCell, orientation) {
-        let result = [];
-        this.getInteractivePoints(orientation).forEach((interactivePoint) => {
-            interactivePoint.getEntryPoints(orientation).forEach((entryPoint) => {
-                const gap = interactivePoint.getCellOffset(orientation);
-                const spriteCell = new PIXI.Point(originCell.x + gap.x, originCell.y + gap.y);
-                result.push(Direction_1.Direction.getNeighbor(spriteCell, entryPoint));
-            });
-        });
-        return result;
+            else {
+                return this.occupiedCells.map((cell) => {
+                    return new PIXI.Point(cell.y, cell.x);
+                });
+            }
+        }
+        else {
+            if (!ObjectOrientation_1.ObjectOrientation.isVerticalMirror(orientation)) {
+                return this.occupiedCells.map((cell) => {
+                    return new PIXI.Point(cell.y, cell.x);
+                });
+            }
+            else {
+                return this.occupiedCells;
+            }
+        }
     }
     canBeTopOriented() {
         return this.topOrientedSpriteInfos.length > 0;
@@ -4118,7 +4426,7 @@ exports.ObjectDescription = ObjectDescription;
 
 
 /***/ }),
-/* 55 */
+/* 57 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4127,10 +4435,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ObjectDescriptionRegistry_1 = __webpack_require__(18);
 const PositionTransformer_1 = __webpack_require__(4);
 const ObjectDeleter_1 = __webpack_require__(14);
-const Direction_1 = __webpack_require__(6);
+const Direction_1 = __webpack_require__(7);
 const Play_1 = __webpack_require__(0);
 const Pico8Colors_1 = __webpack_require__(2);
-const ObjectOrientation_1 = __webpack_require__(9);
+const ObjectOrientation_1 = __webpack_require__(10);
 const ARROW_SIZE = 0.9;
 const GAP = 4;
 const SPRITE_OPACITY = 0.7;
@@ -4354,7 +4662,7 @@ class PhantomSprite {
 
 
 /***/ }),
-/* 56 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4400,13 +4708,13 @@ exports.ObjectReferer = ObjectReferer;
 
 
 /***/ }),
-/* 57 */
+/* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const AbstractObject_1 = __webpack_require__(13);
+const AbstractObject_1 = __webpack_require__(12);
 const ObjectDeleter_1 = __webpack_require__(14);
 const Play_1 = __webpack_require__(0);
 class Sofa extends AbstractObject_1.AbstractObject {
@@ -4422,14 +4730,14 @@ exports.Sofa = Sofa;
 
 
 /***/ }),
-/* 58 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const PositionTransformer_1 = __webpack_require__(4);
-const ObjectOrientation_1 = __webpack_require__(9);
+const ObjectOrientation_1 = __webpack_require__(10);
 class SpriteInfo {
     /**
      * Create a SpriteInfo
@@ -4481,14 +4789,14 @@ exports.SpriteInfo = SpriteInfo;
 
 
 /***/ }),
-/* 59 */
+/* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = __webpack_require__(0);
-const AbstractObject_1 = __webpack_require__(13);
+const AbstractObject_1 = __webpack_require__(12);
 const ObjectDeleter_1 = __webpack_require__(14);
 class Table extends AbstractObject_1.AbstractObject {
     create(game, groups) {
@@ -4500,7 +4808,7 @@ exports.Table = Table;
 
 
 /***/ }),
-/* 60 */
+/* 62 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4537,14 +4845,14 @@ exports.Wall = Wall;
 
 
 /***/ }),
-/* 61 */
+/* 63 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Employee_1 = __webpack_require__(17);
-const HumanPropertiesFactory_1 = __webpack_require__(8);
+const HumanPropertiesFactory_1 = __webpack_require__(9);
 class HumanRepository {
     constructor(worldKnowledge) {
         const probabilities = {};
@@ -4573,13 +4881,13 @@ exports.HumanRepository = HumanRepository;
 
 
 /***/ }),
-/* 62 */
+/* 64 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Wall_1 = __webpack_require__(60);
+const Wall_1 = __webpack_require__(62);
 class WallRepository {
     constructor() {
         this.walls = [];
@@ -4611,21 +4919,21 @@ exports.WallRepository = WallRepository;
 
 
 /***/ }),
-/* 63 */
+/* 65 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanPropertiesFactory_1 = __webpack_require__(8);
-const UserInterface_1 = __webpack_require__(5);
+const HumanPropertiesFactory_1 = __webpack_require__(9);
+const UserInterface_1 = __webpack_require__(6);
 const app_1 = __webpack_require__(3);
-const ObjectSeller_1 = __webpack_require__(29);
+const ObjectSeller_1 = __webpack_require__(30);
 const Play_1 = __webpack_require__(0);
-const TextStyle_1 = __webpack_require__(11);
+const TextStyle_1 = __webpack_require__(13);
 const Pico8Colors_1 = __webpack_require__(2);
-const ColoredGauge_1 = __webpack_require__(27);
-const Tooltip_1 = __webpack_require__(24);
+const ColoredGauge_1 = __webpack_require__(28);
+const Tooltip_1 = __webpack_require__(25);
 const STARS = 5;
 const MAX_APPLICANTS = 6;
 class HumanEmployer {
@@ -4649,9 +4957,12 @@ class HumanEmployer {
     update() {
         if (this.applicantButtons.length < this.getMaxApplicants()) {
             for (let i = this.applicantButtons.length; i < this.getMaxApplicants(); i++) {
-                const toto = new ApplicantButton(this, HumanPropertiesFactory_1.HumanPropertiesFactory.create(this.getEmployeeTypeProbabilities()), this.worldKnowledge);
-                toto.create(this.game, this.groups, i);
-                this.applicantButtons.push(toto);
+                const newApplicantButton = new ApplicantButton(this, HumanPropertiesFactory_1.HumanPropertiesFactory.create(this.getEmployeeTypeProbabilities()), this.worldKnowledge);
+                newApplicantButton.create(this.game, this.groups, i);
+                if (!this.visible) {
+                    newApplicantButton.hide();
+                }
+                this.applicantButtons.push(newApplicantButton);
             }
         }
         this.applicantButtons.forEach((applicantButton) => {
@@ -4829,20 +5140,20 @@ class ApplicantButton {
 
 
 /***/ }),
-/* 64 */
+/* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const UserInterface_1 = __webpack_require__(5);
+const UserInterface_1 = __webpack_require__(6);
 const app_1 = __webpack_require__(3);
 const Play_1 = __webpack_require__(0);
 const Pico8Colors_1 = __webpack_require__(2);
-const MoodSprite_1 = __webpack_require__(23);
-const TextStyle_1 = __webpack_require__(11);
-const UserInfoPanel_1 = __webpack_require__(30);
-const HumanPropertiesFactory_1 = __webpack_require__(8);
+const MoodSprite_1 = __webpack_require__(24);
+const TextStyle_1 = __webpack_require__(13);
+const UserInfoPanel_1 = __webpack_require__(31);
+const HumanPropertiesFactory_1 = __webpack_require__(9);
 const HEIGHT = 80;
 const GRAPH_GAP = 2;
 class InfoPanel {
@@ -4942,18 +5253,18 @@ exports.InfoPanel = InfoPanel;
 
 
 /***/ }),
-/* 65 */
+/* 67 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const UserInterface_1 = __webpack_require__(5);
+const UserInterface_1 = __webpack_require__(6);
 const app_1 = __webpack_require__(3);
-const HumanPropertiesFactory_1 = __webpack_require__(8);
+const HumanPropertiesFactory_1 = __webpack_require__(9);
 const Pico8Colors_1 = __webpack_require__(2);
-const Gauge_1 = __webpack_require__(28);
-const Tooltip_1 = __webpack_require__(24);
+const Gauge_1 = __webpack_require__(29);
+const Tooltip_1 = __webpack_require__(25);
 const GAP = 3;
 const TOP = 12;
 class LevelDisplayer {
@@ -5005,16 +5316,16 @@ exports.LevelDisplayer = LevelDisplayer;
 
 
 /***/ }),
-/* 66 */
+/* 68 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const HumanPropertiesFactory_1 = __webpack_require__(8);
-const SmoothValue_1 = __webpack_require__(16);
+const HumanPropertiesFactory_1 = __webpack_require__(9);
+const SmoothValue_1 = __webpack_require__(15);
 const Price_1 = __webpack_require__(19);
-const DEVELOPER_RATIO = 1000;
+const DEVELOPER_RATIO = 500;
 const MARKETING_RATIO = 5;
 const SALE_RATIO = 10;
 const STARTING_LEVEL = 1;
@@ -5030,6 +5341,11 @@ class LevelManager {
         this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER] = new SmoothValue_1.SmoothValue(0);
         this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING] = new SmoothValue_1.SmoothValue(0);
         this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE] = new SmoothValue_1.SmoothValue(0);
+    }
+    create(game) {
+        this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER].create(game);
+        this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING].create(game);
+        this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE].create(game);
     }
     getLevelProgress(type) {
         return Math.min((this.levels[type].getValue() - this.starts[type]) / (this.getGoal(type) - this.starts[type]), 1);
@@ -5091,7 +5407,7 @@ exports.LevelManager = LevelManager;
 
 
 /***/ }),
-/* 67 */
+/* 69 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5099,11 +5415,11 @@ exports.LevelManager = LevelManager;
 Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = __webpack_require__(0);
 const Pico8Colors_1 = __webpack_require__(2);
-const UserInterface_1 = __webpack_require__(5);
+const UserInterface_1 = __webpack_require__(6);
 const app_1 = __webpack_require__(3);
 const HumanStateManager_1 = __webpack_require__(1);
-const Tooltip_1 = __webpack_require__(24);
-const SmoothValue_1 = __webpack_require__(16);
+const Tooltip_1 = __webpack_require__(25);
+const SmoothValue_1 = __webpack_require__(15);
 const PARTS = 36;
 class PieChart {
     constructor() {
@@ -5179,7 +5495,9 @@ class PieChart {
                 }
             }
             if (!found) {
-                this.data.push(new PieChartPart(state, probabilities[state], PieChart.getColor(state), HumanStateManager_1.HumanStateManager.getStr(state)));
+                const pieChartPart = new PieChartPart(state, probabilities[state], PieChart.getColor(state), HumanStateManager_1.HumanStateManager.getStr(state));
+                pieChartPart.create(this.game);
+                this.data.push(pieChartPart);
             }
         });
         for (let i = 0; i < this.data.length; i++) {
@@ -5238,6 +5556,9 @@ class PieChartPart {
         this.color = color;
         this.text = text;
     }
+    create(game) {
+        this.value.create(game);
+    }
     getValue() {
         return this.value.getValue();
     }
@@ -5276,7 +5597,7 @@ class PieChartPart {
 
 
 /***/ }),
-/* 68 */
+/* 70 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(3);

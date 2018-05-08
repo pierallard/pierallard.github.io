@@ -9,6 +9,7 @@ const InfoPanel_1 = require("./InfoPanel");
 const LevelDisplayer_1 = require("./LevelDisplayer");
 const UserInfoPanel_1 = require("./UserInfoPanel");
 const Pico8Colors_1 = require("../Pico8Colors");
+const HumanProperties_1 = require("../human_stuff/HumanProperties");
 exports.INTERFACE_WIDTH = 150.5;
 exports.TOP_GAP_2 = 15.5 + 12;
 exports.TOP_GAP = exports.TOP_GAP_2 + 15;
@@ -34,6 +35,7 @@ class UserInterface {
             i++;
         });
         this.selectedPanel = PANEL.OBJ;
+        this.day = 1;
     }
     create(game, groups) {
         const interfaceGroup = groups[Play_1.GROUP_INTERFACE];
@@ -48,6 +50,11 @@ class UserInterface {
         this.infoPanel.create(game, groups);
         this.userInfoPanel.create(game, groups);
         this.levelDisplayer.create(game, groups);
+        this.dayText = game.add.text(app_1.CAMERA_WIDTH_PIXELS - 50, 0, 'Day 1', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        game.time.events.loop(HumanProperties_1.DAY_DURATION, () => {
+            this.day += 1;
+            this.updateDayText();
+        }, this);
         this.levelText = game.add.text(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH + 2, 0, 'Lvl 1', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
         this.moneyCounter = game.add.text(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH + 2 + 50, 0, this.worldKnowledge.getMoneyInWallet().getStringValue(), TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
         const backgroundTabs = game.add.sprite(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH, exports.TOP_GAP_2, 'interfacetabs', 2, groups[Play_1.GROUP_INTERFACE]);
@@ -111,6 +118,9 @@ class UserInterface {
         this.buttons.forEach((button) => {
             button.highlight(button.getPanel() === panel);
         });
+    }
+    updateDayText() {
+        this.dayText.text = 'Day ' + this.day;
     }
 }
 exports.UserInterface = UserInterface;

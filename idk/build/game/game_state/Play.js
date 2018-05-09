@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const WorldKnowledge_1 = require("../WorldKnowledge");
 const app_1 = require("../../app");
 const UserInterface_1 = require("../user_interface/UserInterface");
+const PositionTransformer_1 = require("../PositionTransformer");
 exports.GROUP_FLOOR = 'floor';
 exports.GROUP_OBJECTS_AND_HUMANS = 'objects_and_humans';
 exports.GROUP_INFOS = 'infos';
@@ -30,7 +31,8 @@ class Play extends Phaser.State {
         this.groups[exports.GROUP_TOOLTIP].fixedToCamera = true;
         this.worldKnowledge.create(this.game, this.groups);
         this.userInterface.create(this.game, this.groups);
-        this.game.world.setBounds(0, 0, app_1.WORLD_WIDTH + UserInterface_1.INTERFACE_WIDTH, app_1.WORLD_HEIGHT);
+        const gapLeft = -(WorldKnowledge_1.GRID_WIDTH - WorldKnowledge_1.GRID_HEIGHT) * PositionTransformer_1.CELL_HEIGHT / 2;
+        this.game.world.setBounds(gapLeft, 0, app_1.WORLD_WIDTH + UserInterface_1.INTERFACE_WIDTH, app_1.WORLD_HEIGHT);
         this.game.camera.setPosition((app_1.WORLD_WIDTH - app_1.CAMERA_WIDTH_PIXELS) / 2, (app_1.WORLD_HEIGHT - app_1.CAMERA_HEIGHT_PIXELS) / 2);
         this.upKey = this.game.input.keyboard.addKey(Phaser.Keyboard.UP);
         this.downKey = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);

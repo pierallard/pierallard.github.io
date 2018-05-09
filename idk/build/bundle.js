@@ -73,9 +73,10 @@
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const WorldKnowledge_1 = __webpack_require__(20);
+const WorldKnowledge_1 = __webpack_require__(16);
 const app_1 = __webpack_require__(3);
 const UserInterface_1 = __webpack_require__(6);
+const PositionTransformer_1 = __webpack_require__(4);
 exports.GROUP_FLOOR = 'floor';
 exports.GROUP_OBJECTS_AND_HUMANS = 'objects_and_humans';
 exports.GROUP_INFOS = 'infos';
@@ -103,7 +104,8 @@ class Play extends Phaser.State {
         this.groups[exports.GROUP_TOOLTIP].fixedToCamera = true;
         this.worldKnowledge.create(this.game, this.groups);
         this.userInterface.create(this.game, this.groups);
-        this.game.world.setBounds(0, 0, app_1.WORLD_WIDTH + UserInterface_1.INTERFACE_WIDTH, app_1.WORLD_HEIGHT);
+        const gapLeft = -(WorldKnowledge_1.GRID_WIDTH - WorldKnowledge_1.GRID_HEIGHT) * PositionTransformer_1.CELL_HEIGHT / 2;
+        this.game.world.setBounds(gapLeft, 0, app_1.WORLD_WIDTH + UserInterface_1.INTERFACE_WIDTH, app_1.WORLD_HEIGHT);
         this.game.camera.setPosition((app_1.WORLD_WIDTH - app_1.CAMERA_WIDTH_PIXELS) / 2, (app_1.WORLD_HEIGHT - app_1.CAMERA_HEIGHT_PIXELS) / 2);
         this.upKey = this.game.input.keyboard.addKey(Phaser.Keyboard.UP);
         this.downKey = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
@@ -443,7 +445,7 @@ const Boot_1 = __webpack_require__(33);
 const Preload_1 = __webpack_require__(34);
 const Play_1 = __webpack_require__(0);
 const PositionTransformer_1 = __webpack_require__(4);
-const WorldKnowledge_1 = __webpack_require__(20);
+const WorldKnowledge_1 = __webpack_require__(16);
 exports.SCALE = 2;
 const CANVAS_WIDTH = 1500;
 const CANVAS_HEIGHT = 650;
@@ -716,9 +718,9 @@ class UserInterface {
         const interfaceGroup = groups[Play_1.GROUP_INTERFACE];
         this.backgroundGraphics = game.add.graphics(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH, 0, interfaceGroup);
         this.backgroundGraphics.beginFill(Pico8Colors_1.COLOR.BLACK);
-        this.backgroundGraphics.drawRect(-0.5, 0, exports.INTERFACE_WIDTH, exports.TOP_GAP_2);
+        this.backgroundGraphics.drawRect(-0.5, 0, exports.INTERFACE_WIDTH + 0.5, exports.TOP_GAP_2);
         this.backgroundGraphics.beginFill(Pico8Colors_1.COLOR.DARK_BLUE);
-        this.backgroundGraphics.drawRect(-0.5, exports.TOP_GAP_2, exports.INTERFACE_WIDTH, app_1.CAMERA_HEIGHT_PIXELS - exports.TOP_GAP_2);
+        this.backgroundGraphics.drawRect(-0.5, exports.TOP_GAP_2, exports.INTERFACE_WIDTH + 0.5, app_1.CAMERA_HEIGHT_PIXELS - exports.TOP_GAP_2);
         interfaceGroup.add(this.backgroundGraphics);
         this.objectSeller.create(game, groups);
         this.humanEmployer.create(game, groups);
@@ -941,7 +943,7 @@ exports.ThoughtBubble = ThoughtBubble;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanProperties_1 = __webpack_require__(23);
-const Employee_1 = __webpack_require__(17);
+const Employee_1 = __webpack_require__(18);
 const HumanStateManager_1 = __webpack_require__(1);
 const MEN = [
     'Michel',
@@ -995,30 +997,6 @@ exports.HumanPropertiesFactory = HumanPropertiesFactory;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Direction_1 = __webpack_require__(7);
-exports.DIRECTION_LOOP = [Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.TOP];
-class ObjectOrientation {
-    static isHorizontalMirror(direction) {
-        return [Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.LEFT].indexOf(direction) > -1;
-    }
-    static isVerticalMirror(direction) {
-        return [Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.TOP].indexOf(direction) > -1;
-    }
-    static getNextOrientation(direction, canBeTopOriented) {
-        const index = exports.DIRECTION_LOOP.indexOf(direction);
-        return exports.DIRECTION_LOOP[(index + 1) % (canBeTopOriented ? 4 : 2)];
-    }
-}
-exports.ObjectOrientation = ObjectOrientation;
-
-
-/***/ }),
-/* 11 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
 class AbstractState {
     constructor(human) {
         this.events = [];
@@ -1054,16 +1032,16 @@ exports.AbstractState = AbstractState;
 
 
 /***/ }),
-/* 12 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = __webpack_require__(0);
-const ObjectDescriptionRegistry_1 = __webpack_require__(18);
+const ObjectDescriptionRegistry_1 = __webpack_require__(19);
 const ObjectReferer_1 = __webpack_require__(58);
-const ObjectOrientation_1 = __webpack_require__(10);
+const ObjectOrientation_1 = __webpack_require__(12);
 const Pico8Colors_1 = __webpack_require__(2);
 exports.SPRITE_DEBUG = false;
 class AbstractObject {
@@ -1170,6 +1148,30 @@ class AbstractObject {
     }
 }
 exports.AbstractObject = AbstractObject;
+
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const Direction_1 = __webpack_require__(7);
+exports.DIRECTION_LOOP = [Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.TOP];
+class ObjectOrientation {
+    static isHorizontalMirror(direction) {
+        return [Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.LEFT].indexOf(direction) > -1;
+    }
+    static isVerticalMirror(direction) {
+        return [Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.TOP].indexOf(direction) > -1;
+    }
+    static getNextOrientation(direction, canBeTopOriented) {
+        const index = exports.DIRECTION_LOOP.indexOf(direction);
+        return exports.DIRECTION_LOOP[(index + 1) % (canBeTopOriented ? 4 : 2)];
+    }
+}
+exports.ObjectOrientation = ObjectOrientation;
 
 
 /***/ }),
@@ -1347,535 +1349,9 @@ exports.SmoothValue = SmoothValue;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const AbstractState_1 = __webpack_require__(11);
-const PositionTransformer_1 = __webpack_require__(4);
-const ThoughtBubble_1 = __webpack_require__(8);
-const RageState_1 = __webpack_require__(21);
-class MoveThenActAbstractState extends AbstractState_1.AbstractState {
-    constructor(human, worldKnowledge, tries = 0) {
-        super(human);
-        this.isHumanOnTheRightCell = false;
-        this.worldKnowledge = worldKnowledge;
-        this.tries = tries;
-        this.noPathFound = false;
-    }
-    start(game) {
-        if (!super.start(game)) {
-            return false;
-        }
-        if (!this.human.moveToClosest(this.objectReferer.getPosition(), this.objectReferer.getEntries())) {
-            this.noPathFound = true;
-            this.active = false;
-            this.stop();
-            return false;
-        }
-        this.startTimer(this.human.getMoveTime() + this.getActTime());
-        return true;
-    }
-    getNextState() {
-        if (!this.isHumanOnTheRightCell) {
-            if (!this.worldKnowledge.hasObject(this.objectReferer.getObject()) || this.objectReferer.isUsed()) {
-                return this.retry();
-            }
-        }
-        if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
-            this.isHumanOnTheRightCell = true;
-            this.human.interactWith(this.objectReferer, this.objectReferer.getObject().forceLeftOrientation(this.objectReferer.getIdentifier()));
-            this.events.push(this.game.time.events.add(this.human.getWalkDuration(), () => {
-                this.act();
-            }));
-        }
-        return super.getNextState();
-    }
-    isNeighborPosition() {
-        return !this.human.isMoving() &&
-            PositionTransformer_1.PositionTransformer.isNeighbor(this.human.getPosition(), this.objectReferer.getPosition());
-    }
-    getRageImage() {
-        if (this.noPathFound) {
-            return ThoughtBubble_1.RAGE_IMAGE.PATH;
-        }
-        else {
-            return this.subGetRageImage();
-        }
-    }
-    retry() {
-        if (this.tries > this.human.getMaxRetries()) {
-            this.active = false;
-            this.human.stopWalk();
-            return new RageState_1.RageState(this.human, this);
-        }
-        else {
-            return this.getRetryState();
-        }
-    }
-    finish() {
-        this.human.goToFreeCell(this.objectReferer);
-        this.events.push(this.game.time.events.add(this.human.getWalkDuration() + 100, () => {
-            this.active = false;
-        }, this));
-    }
-}
-exports.MoveThenActAbstractState = MoveThenActAbstractState;
-
-
-/***/ }),
-/* 17 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const PositionTransformer_1 = __webpack_require__(4);
-const ClosestPathFinder_1 = __webpack_require__(46);
-const Direction_1 = __webpack_require__(7);
-const HumanAnimationManager_1 = __webpack_require__(5);
-const HumanStateManager_1 = __webpack_require__(1);
-const ObjectSelector_1 = __webpack_require__(27);
-const TalkBubble_1 = __webpack_require__(49);
-const HumanMoodManager_1 = __webpack_require__(22);
-const MoodSprite_1 = __webpack_require__(24);
-const Play_1 = __webpack_require__(0);
-const HumanProperties_1 = __webpack_require__(23);
-const ThoughtBubble_1 = __webpack_require__(8);
-const Pico8Colors_1 = __webpack_require__(2);
-const AbstractObject_1 = __webpack_require__(12);
-const ObjectOrientation_1 = __webpack_require__(10);
-const MAX_WALK_CELL_DURATION = 1500;
-const MIN_WALK_CELL_DURATION = 800;
-const MAX_RETRIES = 3;
-const MIN_RETRIES = 0;
-const GAP_FROM_BOTTOM = -8;
-const PATH_DEBUG = false;
-exports.HUMAN_SPRITE_VARIATIONS = ['human1', 'human2', 'human3'];
-exports.HUMAN_SPRITE_COLORS = ['green', 'pink', 'red'];
-class Employee {
-    constructor(cell, humanProperties) {
-        this.cell = cell;
-        this.moving = false;
-        this.path = [];
-        this.stateManager = new HumanStateManager_1.HumanStateManager(this);
-        this.anchorPixels = new PIXI.Point(0, GAP_FROM_BOTTOM);
-        this.animationManager = new HumanAnimationManager_1.HumanAnimationManager();
-        this.talkBubble = new TalkBubble_1.TalkBubble();
-        this.thoughtBubble = new ThoughtBubble_1.ThoughtBubble();
-        this.moodManager = new HumanMoodManager_1.HumanMoodManager();
-        this.moodSprite = new MoodSprite_1.MoodSprite();
-        this.humanProperties = humanProperties;
-    }
-    create(game, groups, worldKnowledge) {
-        this.game = game;
-        this.worldKnowledge = worldKnowledge;
-        this.moodManager.create(game);
-        this.sprite = game.add.tileSprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).x + this.anchorPixels.x, PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).y + this.anchorPixels.y, 24, 25, this.humanProperties.getSpriteKey());
-        this.animationManager.create(this.sprite);
-        this.sprite.anchor.set(0.5, 1.0);
-        ObjectSelector_1.ObjectSelector.makeSelectable([this.sprite], () => {
-            this.worldKnowledge.setSelectedHuman(this);
-        }, () => {
-            this.worldKnowledge.unselectHuman();
-        });
-        groups[Play_1.GROUP_OBJECTS_AND_HUMANS].add(this.sprite);
-        this.animationManager.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE, true, false);
-        this.closestPathFinder = new ClosestPathFinder_1.ClosestPathFinder(game, worldKnowledge);
-        this.stateManager.create(game, worldKnowledge, this.animationManager);
-        this.talkBubble.create(this.sprite, this.game, groups[Play_1.GROUP_OBJECTS_AND_HUMANS]);
-        this.thoughtBubble.create(this.sprite, this.game, groups[Play_1.GROUP_OBJECTS_AND_HUMANS]);
-        this.moodSprite.create(this.sprite, this.game, groups[Play_1.GROUP_INFOS]);
-        if (PATH_DEBUG || AbstractObject_1.SPRITE_DEBUG) {
-            this.debugGraphics = game.add.graphics(0, 0, groups[Play_1.GROUP_INTERFACE]);
-        }
-        this.worldKnowledge.addMoneyInWallet(this.humanProperties.getRealWage(), 3 * Phaser.Timer.SECOND);
-        this.game.time.events.loop(HumanProperties_1.DAY_DURATION, () => {
-            this.worldKnowledge.addMoneyInWallet(this.humanProperties.getRealWage(), 3 * Phaser.Timer.SECOND);
-        });
-    }
-    update() {
-        this.talkBubble.update();
-        this.thoughtBubble.update();
-        this.stateManager.updateState(this.game);
-        this.moodManager.update();
-        this.moodSprite.update(this.moodManager.getGeneralMood(), [
-            this.moodManager.getMood(HumanMoodManager_1.MOOD.HUNGER),
-            this.moodManager.getMood(HumanMoodManager_1.MOOD.SOCIAL),
-            this.moodManager.getMood(HumanMoodManager_1.MOOD.RELAXATION)
-        ]);
-        if (PATH_DEBUG) {
-            this.debugGraphics.clear();
-            this.debugGraphics.lineStyle(2, Pico8Colors_1.COLOR.LIGHT_GREEN);
-            if (this.path !== null && this.path.length > 0) {
-                this.debugGraphics.moveTo(this.sprite.position.x, this.sprite.position.y);
-                this.path.forEach((pathItem) => {
-                    this.debugGraphics.lineTo(PositionTransformer_1.PositionTransformer.getRealPosition(pathItem).x, PositionTransformer_1.PositionTransformer.getRealPosition(pathItem).y - PositionTransformer_1.CELL_HEIGHT / 2);
-                });
-            }
-        }
-        if (AbstractObject_1.SPRITE_DEBUG) {
-            this.debugGraphics.clear();
-            this.debugGraphics.lineStyle(1, Pico8Colors_1.COLOR.LIGHT_BLUE);
-            const realPosition = this.sprite.position;
-            this.debugGraphics.moveTo(realPosition.x - 1.5, realPosition.y + 0.5);
-            this.debugGraphics.lineTo(realPosition.x + 2.5, realPosition.y + 0.5);
-            this.debugGraphics.moveTo(realPosition.x + 0.5, realPosition.y - 1.5);
-            this.debugGraphics.lineTo(realPosition.x + 0.5, realPosition.y + 2.5);
-        }
-    }
-    goMeeting(meeting) {
-        return this.stateManager.goMeeting(this.game, meeting);
-    }
-    goSitMeeting(meeting) {
-        return this.stateManager.goSitMeeting(this.game, meeting);
-    }
-    moveTo(cell) {
-        const path = this.closestPathFinder.getPath(this.cell, cell);
-        if (path === null) {
-            this.path = [];
-            this.stateManager.reset(this.game);
-            return false;
-        }
-        this.path = path;
-        if (!this.moving) {
-            this.popPath();
-        }
-        return true;
-    }
-    moveToClosest(cell, entries = [Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT]) {
-        const path = this.closestPathFinder.getNeighborPath(this.cell, cell, entries);
-        if (path === null) {
-            this.path = [];
-            return false;
-        }
-        this.path = path;
-        if (!this.moving) {
-            this.popPath();
-        }
-        return true;
-    }
-    animateMove(direction) {
-        const isLeftLooking = Employee.isHumanLeftLooking(direction);
-        const isTopLooking = Employee.isHumanTopLooking(direction);
-        this.animationManager.loadAnimation(HumanAnimationManager_1.ANIMATION.WALK, isLeftLooking, isTopLooking);
-        this.moving = true;
-        this.game.add.tween(this.sprite.position).to({
-            x: PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).x + this.anchorPixels.x,
-            y: PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).y + this.anchorPixels.y
-        }, this.getWalkDuration(), 'Linear', true).onComplete.add(() => {
-            this.popPath();
-        }, this);
-    }
-    getWalkDuration() {
-        return MIN_WALK_CELL_DURATION + (MAX_WALK_CELL_DURATION - MIN_WALK_CELL_DURATION) * (1 - this.humanProperties.getSpeed());
-    }
-    popPath() {
-        this.moving = false;
-        if (this.path !== null && this.path.length > 0) {
-            const next = this.path.shift();
-            const direction = Direction_1.Direction.getNeighborDirection(this.cell, next);
-            if (!this.moving) {
-                this.cell = next;
-                this.anchorPixels.x = 0;
-                this.anchorPixels.y = GAP_FROM_BOTTOM;
-                this.animateMove(direction);
-            }
-        }
-        this.worldKnowledge.humanMoved();
-    }
-    getPosition() {
-        return this.cell;
-    }
-    isMoving() {
-        return this.moving;
-    }
-    interactWith(objectReferer, isLeft = null) {
-        const direction = Direction_1.Direction.getNeighborDirection(this.cell, objectReferer.getPosition());
-        const side = (isLeft !== null) ? isLeft : Employee.isHumanLeftLooking(direction);
-        // Employee has to gap 5px from the sofa to be sit properly, and 1px from the bottom.
-        this.anchorPixels.x = objectReferer.getPositionGap().x + (side ? -5 : 5);
-        this.anchorPixels.y = objectReferer.getPositionGap().y - 1;
-        this.cell = objectReferer.getPosition();
-        objectReferer.setUsed(this);
-        this.animateMove(direction);
-    }
-    static isHumanLeftLooking(direction) {
-        return ObjectOrientation_1.ObjectOrientation.isHorizontalMirror(direction);
-    }
-    static isHumanTopLooking(direction) {
-        return ObjectOrientation_1.ObjectOrientation.isVerticalMirror(direction);
-    }
-    goToFreeCell(objectReferer) {
-        objectReferer.setUnused();
-        const cells = [];
-        objectReferer.getEntries().forEach((direction) => {
-            const tryCell = Direction_1.Direction.getNeighbor(this.cell, direction);
-            if (this.worldKnowledge.isFree(tryCell)) {
-                cells.push(tryCell);
-            }
-        });
-        if (cells.length === 0) {
-            console.log('oops');
-            return;
-        }
-        this.path = [cells[Math.floor(Math.random() * cells.length)]];
-        if (!this.moving) {
-            this.popPath();
-        }
-    }
-    loadAnimation(animation, isLeftLooking = null, isTopLooking = null) {
-        this.animationManager.loadAnimation(animation, isLeftLooking, isTopLooking);
-    }
-    isSelected() {
-        return ObjectSelector_1.ObjectSelector.isSelected(this.sprite);
-    }
-    resetAStar(newNonEmptyCell = null) {
-        this.closestPathFinder.reset();
-        if (newNonEmptyCell && this.path !== null) {
-            // If human wants to go to a non-empty cell
-            const matchingPath = this.path.filter((cell) => {
-                return cell.x === newNonEmptyCell.x && cell.y === newNonEmptyCell.y;
-            });
-            if (matchingPath.length > 0) {
-                const goal = this.path[this.path.length - 1];
-                this.moveTo(goal);
-                return;
-            }
-        }
-    }
-    resetStateIfCellEmpty(newEmptyCell) {
-        if (this.cell.x == newEmptyCell.x && this.cell.y == newEmptyCell.y) {
-            this.stateManager.reset(this.game);
-        }
-    }
-    isFree() {
-        return [HumanStateManager_1.STATE.MOVE_RANDOM, HumanStateManager_1.STATE.FREEZE, HumanStateManager_1.STATE.SMOKE].indexOf(this.getStateType()) > -1;
-    }
-    getStateType() {
-        return this.stateManager.getStateType();
-    }
-    getState() {
-        return this.stateManager.getState();
-    }
-    showTalkBubble() {
-        this.talkBubble.show();
-    }
-    hideTalkBubble() {
-        this.talkBubble.hide();
-    }
-    updateMoodFromState() {
-        this.moodManager.updateFromState(this.getStateType());
-    }
-    getMood(mood = null) {
-        if (mood === null) {
-            return this.moodManager.getGeneralMood();
-        }
-        return this.moodManager.getMood(mood);
-    }
-    stopWalk() {
-        this.path = null;
-    }
-    getMaxRetries() {
-        return Math.ceil(MIN_RETRIES + (MAX_RETRIES - MIN_RETRIES) * this.humanProperties.getPerseverance());
-    }
-    getType() {
-        return this.humanProperties.getType();
-    }
-    getName() {
-        return this.humanProperties.getName();
-    }
-    showThoughtBubble(rageImage) {
-        this.thoughtBubble.showRage(rageImage);
-    }
-    hideThoughtBubble() {
-        this.thoughtBubble.hide();
-    }
-    getNextProbabilities() {
-        return this.stateManager.getNextProbabilities();
-    }
-    unselect() {
-        if (this.isSelected()) {
-            ObjectSelector_1.ObjectSelector.click(this.sprite, null, [this.sprite]);
-        }
-    }
-    getRealWage() {
-        return this.humanProperties.getRealWage();
-    }
-    getMoveTime() {
-        return this.path.length * this.getWalkDuration();
-    }
-    pause() {
-        this.animationManager.pause();
-    }
-    resume() {
-        this.animationManager.resume();
-    }
-}
-exports.Employee = Employee;
-
-
-/***/ }),
-/* 18 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const ObjectDescription_1 = __webpack_require__(56);
-const InteractivePoint_1 = __webpack_require__(55);
-const Direction_1 = __webpack_require__(7);
-const SpriteInfo_1 = __webpack_require__(60);
-const Price_1 = __webpack_require__(19);
-const PositionTransformer_1 = __webpack_require__(4);
-class ObjectDescriptionRegistry {
-    static getObjectDescription(name) {
-        if (this.objectDescriptions === null) {
-            this.generateObjectDescriptions();
-        }
-        for (let i = 0; i < this.objectDescriptions.length; i++) {
-            if (this.objectDescriptions[i].getName() === name) {
-                return this.objectDescriptions[i];
-            }
-        }
-        throw "Impossible to find info for " + name;
-    }
-    static generateObjectDescriptions() {
-        this.objectDescriptions = [];
-        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Dispenser', [new PIXI.Point(0, 0)], [
-            new SpriteInfo_1.SpriteInfo('dispenser', new PIXI.Point(-4, -4), 3)
-        ], [
-            new SpriteInfo_1.SpriteInfo('dispenser_reverse', new PIXI.Point(-4, -4), 0)
-        ], [
-            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT], new PIXI.Point(5, -3))
-        ], [
-            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP], new PIXI.Point(5, -PositionTransformer_1.CELL_HEIGHT + 3))
-        ], new Price_1.Price(70)));
-        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Sofa', [new PIXI.Point(0, 0)], [
-            new SpriteInfo_1.SpriteInfo('sofa', new PIXI.Point(0, -8), 3, new PIXI.Point(0, 0))
-        ], [], [
-            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.BOTTOM], new PIXI.Point(0, -7), new PIXI.Point(0, 0), null, false)
-        ], [], new Price_1.Price(10)));
-        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Desk', [new PIXI.Point(0, 0)], [
-            new SpriteInfo_1.SpriteInfo('chair', new PIXI.Point(-10, -8), 5),
-            new SpriteInfo_1.SpriteInfo('desk', new PIXI.Point(0, 0), 4)
-        ], [
-            new SpriteInfo_1.SpriteInfo('desk_reverse', new PIXI.Point(0, 0), 10, new PIXI.Point(0, 0)),
-            new SpriteInfo_1.SpriteInfo('chair_reverse', new PIXI.Point(-6, -4), 5, new PIXI.Point(0, 0)),
-        ], [
-            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT], new PIXI.Point(-10, -11)),
-        ], [
-            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.RIGHT], new PIXI.Point(-3, -8), new PIXI.Point(0, 0), false, true),
-        ], new Price_1.Price(20)));
-        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Table', [
-            new PIXI.Point(0, 0),
-            new PIXI.Point(1, 1),
-            new PIXI.Point(1, 0),
-            new PIXI.Point(0, 1)
-        ], [
-            new SpriteInfo_1.SpriteInfo('chair2', new PIXI.Point(-8, -9), 5, new PIXI.Point(1, 1)),
-            new SpriteInfo_1.SpriteInfo('table', new PIXI.Point(0, 0), 4, new PIXI.Point(1, 1)),
-            new SpriteInfo_1.SpriteInfo('chair2', new PIXI.Point(-8, -9), 5, new PIXI.Point(1, 0)),
-            new SpriteInfo_1.SpriteInfo('table', new PIXI.Point(0, 0), 4, new PIXI.Point(1, 0)),
-            new SpriteInfo_1.SpriteInfo('table_reverse', new PIXI.Point(0, 0), 10, new PIXI.Point(0, 1)),
-            new SpriteInfo_1.SpriteInfo('chair2_reverse', new PIXI.Point(6, -5), 5, new PIXI.Point(0, 1)),
-            new SpriteInfo_1.SpriteInfo('table_reverse', new PIXI.Point(0, 0), 10, new PIXI.Point(0, 0)),
-            new SpriteInfo_1.SpriteInfo('chair2_reverse', new PIXI.Point(6, -5), 5, new PIXI.Point(0, 0)),
-        ], [], [
-            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT], new PIXI.Point(-8, -11), new PIXI.Point(1, 1)),
-            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.LEFT], new PIXI.Point(-8, -11), new PIXI.Point(1, 0)),
-            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.RIGHT], new PIXI.Point(4, -7), new PIXI.Point(0, 1), true, true),
-            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.RIGHT], new PIXI.Point(4, -7), new PIXI.Point(0, 0), true, true),
-        ], [], new Price_1.Price(12)));
-        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Couch', [
-            new PIXI.Point(0, 0),
-            new PIXI.Point(0, 1),
-        ], [
-            new SpriteInfo_1.SpriteInfo('couch_part1', new PIXI.Point(10, 0), 12),
-            new SpriteInfo_1.SpriteInfo('couch_part2', new PIXI.Point(10 - PositionTransformer_1.CELL_WIDTH / 2, 10), 22, new PIXI.Point(0, 1))
-        ], [
-            new SpriteInfo_1.SpriteInfo('couch_reverse_part1', new PIXI.Point(-13, 0), 12),
-            new SpriteInfo_1.SpriteInfo('couch_reverse_part2', new PIXI.Point(-(13 - PositionTransformer_1.CELL_WIDTH / 2), 9), 22, new PIXI.Point(1, 0)),
-            new SpriteInfo_1.SpriteInfo('couch_reverse_cache', new PIXI.Point(-13, 0), 0),
-        ], [
-            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT], new PIXI.Point(0, -8), new PIXI.Point(0, 0)),
-            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT], new PIXI.Point(0, -8), new PIXI.Point(0, 1)),
-        ], [
-            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP], new PIXI.Point(-1, -8), new PIXI.Point(0, 0), false, true),
-            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP], new PIXI.Point(-1, -8), new PIXI.Point(1, 0), false, true),
-        ], new Price_1.Price(10)));
-        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Console', [
-            new PIXI.Point(0, 0),
-            new PIXI.Point(1, 1),
-            new PIXI.Point(1, 0),
-            new PIXI.Point(0, 1)
-        ], [
-            new SpriteInfo_1.SpriteInfo('couch_part1', new PIXI.Point(10 - PositionTransformer_1.CELL_WIDTH / 2, 0 - PositionTransformer_1.CELL_HEIGHT / 2), 12, new PIXI.Point(0, 0)),
-            new SpriteInfo_1.SpriteInfo('couch_part2', new PIXI.Point(10 - PositionTransformer_1.CELL_WIDTH / 2 - PositionTransformer_1.CELL_WIDTH / 2, 10 - PositionTransformer_1.CELL_HEIGHT / 2), 22, new PIXI.Point(0, 1)),
-            new SpriteInfo_1.SpriteInfo('tv', new PIXI.Point(16, -6), 0, new PIXI.Point(0, 0))
-        ], [
-            new SpriteInfo_1.SpriteInfo('tv_reverse', new PIXI.Point(-1, -13), 0, new PIXI.Point(0, 1)),
-            new SpriteInfo_1.SpriteInfo('couch_reverse_part1', new PIXI.Point(-13 - PositionTransformer_1.CELL_WIDTH / 2, PositionTransformer_1.CELL_HEIGHT / 2), 12, new PIXI.Point(0, 1)),
-            new SpriteInfo_1.SpriteInfo('couch_reverse_part2', new PIXI.Point(-(13 - PositionTransformer_1.CELL_WIDTH / 2) - PositionTransformer_1.CELL_WIDTH / 2, 9 + PositionTransformer_1.CELL_HEIGHT / 2), 22, new PIXI.Point(1, 1)),
-            new SpriteInfo_1.SpriteInfo('couch_reverse_cache', new PIXI.Point(-13, 0), 0, new PIXI.Point(0, 0)),
-        ], [
-            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.BOTTOM], new PIXI.Point(0 - PositionTransformer_1.CELL_WIDTH / 2, -8 - PositionTransformer_1.CELL_HEIGHT / 2), new PIXI.Point(0, 0)),
-            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.TOP], new PIXI.Point(0 - PositionTransformer_1.CELL_WIDTH / 2, -8 - PositionTransformer_1.CELL_HEIGHT / 2), new PIXI.Point(0, 1)),
-        ], [
-            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.RIGHT], new PIXI.Point(-1 - PositionTransformer_1.CELL_WIDTH / 2, -8 + PositionTransformer_1.CELL_HEIGHT / 2), new PIXI.Point(0, 1), false, true),
-            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT], new PIXI.Point(-1 - PositionTransformer_1.CELL_WIDTH / 2, -8 + PositionTransformer_1.CELL_HEIGHT / 2), new PIXI.Point(1, 1), false, true),
-        ], new Price_1.Price(10)));
-    }
-    static getSalableObjects() {
-        if (this.objectDescriptions === null) {
-            this.generateObjectDescriptions();
-        }
-        return this.objectDescriptions;
-    }
-}
-ObjectDescriptionRegistry.objectDescriptions = null;
-exports.ObjectDescriptionRegistry = ObjectDescriptionRegistry;
-
-
-/***/ }),
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-class Price {
-    constructor(value) {
-        this.value = value;
-    }
-    getStringValue() {
-        if (this.value >= 10000000) {
-            return Math.round(this.value / 100000) / 10 + ' m$';
-        }
-        if (this.value >= 10000) {
-            return Math.round(this.value / 100) / 10 + ' k$';
-        }
-        return Math.ceil(this.value).toString() + " $";
-    }
-    isGreaterThan(value) {
-        return this.value >= value.value;
-    }
-    add(value) {
-        this.value += value.value;
-    }
-    getValue() {
-        return this.value;
-    }
-}
-exports.Price = Price;
-
-
-/***/ }),
-/* 20 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
 const HumanRepository_1 = __webpack_require__(63);
 const Sofa_1 = __webpack_require__(59);
-const Employee_1 = __webpack_require__(17);
+const Employee_1 = __webpack_require__(18);
 const Desk_1 = __webpack_require__(53);
 const Dispenser_1 = __webpack_require__(54);
 const WallRepository_1 = __webpack_require__(64);
@@ -1888,16 +1364,15 @@ const MoodRegister_1 = __webpack_require__(48);
 const Table_1 = __webpack_require__(61);
 const LevelManager_1 = __webpack_require__(68);
 const HumanPropertiesFactory_1 = __webpack_require__(9);
-const Price_1 = __webpack_require__(19);
-const ObjectDescriptionRegistry_1 = __webpack_require__(18);
+const Price_1 = __webpack_require__(20);
+const ObjectDescriptionRegistry_1 = __webpack_require__(19);
 const SmoothValue_1 = __webpack_require__(15);
 const UserInterface_1 = __webpack_require__(6);
-const ObjectOrientation_1 = __webpack_require__(10);
 const Couch_1 = __webpack_require__(51);
 const EmployeeCountRegister_1 = __webpack_require__(47);
 const Console_1 = __webpack_require__(50);
-exports.GRID_WIDTH = 16;
-exports.GRID_HEIGHT = 16;
+exports.GRID_WIDTH = 37;
+exports.GRID_HEIGHT = 15;
 exports.DEBUG_WORLD = false;
 class WorldKnowledge {
     constructor() {
@@ -1909,40 +1384,10 @@ class WorldKnowledge {
             }
         }
         this.wallRepository = new WallRepository_1.WallRepository();
+        this.wallRepository.initialize();
         this.levelManager = new LevelManager_1.LevelManager();
         this.depot = new Depot_1.Depot();
         this.wallet = new SmoothValue_1.SmoothValue(1500);
-        if (exports.DEBUG_WORLD) {
-            this.wallRepository.addWall(new PIXI.Point(5, 5));
-            this.wallRepository.addWall(new PIXI.Point(6, 5));
-            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 5), this, ObjectOrientation_1.DIRECTION_LOOP[0]));
-            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 6), this, ObjectOrientation_1.DIRECTION_LOOP[0]));
-            this.objects.push(new Dispenser_1.Dispenser(new PIXI.Point(5, 4), this, ObjectOrientation_1.DIRECTION_LOOP[0]));
-        }
-        else {
-            for (let x = 0; x < exports.GRID_WIDTH; x++) {
-                this.wallRepository.addWall(new PIXI.Point(x, 0));
-                this.wallRepository.addWall(new PIXI.Point(x, exports.GRID_HEIGHT - 1));
-            }
-            for (let y = 1; y < (exports.GRID_HEIGHT - 1); y++) {
-                this.wallRepository.addWall(new PIXI.Point(0, y));
-                this.wallRepository.addWall(new PIXI.Point(exports.GRID_WIDTH - 1, y));
-            }
-            for (let x = 1; x < 3 - 1; x++) {
-                this.wallRepository.addWall(new PIXI.Point(x, exports.GRID_WIDTH / 2 + 1));
-            }
-            for (let x = 5; x < exports.GRID_WIDTH - 1; x++) {
-                this.wallRepository.addWall(new PIXI.Point(x, exports.GRID_WIDTH / 2 + 1));
-            }
-            [
-                new PIXI.Point(4, 3),
-                new PIXI.Point(4, 4),
-                new PIXI.Point(3, 4),
-                new PIXI.Point(3, 3),
-            ].forEach((cell) => {
-                this.wallRepository.addWall(cell);
-            });
-        }
         this.humanRepository = new HumanRepository_1.HumanRepository(this);
         this.moodRegister = new MoodRegister_1.MoodRegister(this.humanRepository);
         this.employeeCountRegister = new EmployeeCountRegister_1.EmployeeCountRegister(this.humanRepository);
@@ -2310,6 +1755,532 @@ exports.WorldKnowledge = WorldKnowledge;
 
 
 /***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const AbstractState_1 = __webpack_require__(10);
+const PositionTransformer_1 = __webpack_require__(4);
+const ThoughtBubble_1 = __webpack_require__(8);
+const RageState_1 = __webpack_require__(21);
+class MoveThenActAbstractState extends AbstractState_1.AbstractState {
+    constructor(human, worldKnowledge, tries = 0) {
+        super(human);
+        this.isHumanOnTheRightCell = false;
+        this.worldKnowledge = worldKnowledge;
+        this.tries = tries;
+        this.noPathFound = false;
+    }
+    start(game) {
+        if (!super.start(game)) {
+            return false;
+        }
+        if (!this.human.moveToClosest(this.objectReferer.getPosition(), this.objectReferer.getEntries())) {
+            this.noPathFound = true;
+            this.active = false;
+            this.stop();
+            return false;
+        }
+        this.startTimer(this.human.getMoveTime() + this.getActTime());
+        return true;
+    }
+    getNextState() {
+        if (!this.isHumanOnTheRightCell) {
+            if (!this.worldKnowledge.hasObject(this.objectReferer.getObject()) || this.objectReferer.isUsed()) {
+                return this.retry();
+            }
+        }
+        if (!this.isHumanOnTheRightCell && this.isNeighborPosition()) {
+            this.isHumanOnTheRightCell = true;
+            this.human.interactWith(this.objectReferer, this.objectReferer.getObject().forceLeftOrientation(this.objectReferer.getIdentifier()));
+            this.events.push(this.game.time.events.add(this.human.getWalkDuration(), () => {
+                this.act();
+            }));
+        }
+        return super.getNextState();
+    }
+    isNeighborPosition() {
+        return !this.human.isMoving() &&
+            PositionTransformer_1.PositionTransformer.isNeighbor(this.human.getPosition(), this.objectReferer.getPosition());
+    }
+    getRageImage() {
+        if (this.noPathFound) {
+            return ThoughtBubble_1.RAGE_IMAGE.PATH;
+        }
+        else {
+            return this.subGetRageImage();
+        }
+    }
+    retry() {
+        if (this.tries > this.human.getMaxRetries()) {
+            this.active = false;
+            this.human.stopWalk();
+            return new RageState_1.RageState(this.human, this);
+        }
+        else {
+            return this.getRetryState();
+        }
+    }
+    finish() {
+        this.human.goToFreeCell(this.objectReferer);
+        this.events.push(this.game.time.events.add(this.human.getWalkDuration() + 100, () => {
+            this.active = false;
+        }, this));
+    }
+}
+exports.MoveThenActAbstractState = MoveThenActAbstractState;
+
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const PositionTransformer_1 = __webpack_require__(4);
+const ClosestPathFinder_1 = __webpack_require__(46);
+const Direction_1 = __webpack_require__(7);
+const HumanAnimationManager_1 = __webpack_require__(5);
+const HumanStateManager_1 = __webpack_require__(1);
+const ObjectSelector_1 = __webpack_require__(27);
+const TalkBubble_1 = __webpack_require__(49);
+const HumanMoodManager_1 = __webpack_require__(22);
+const MoodSprite_1 = __webpack_require__(24);
+const Play_1 = __webpack_require__(0);
+const HumanProperties_1 = __webpack_require__(23);
+const ThoughtBubble_1 = __webpack_require__(8);
+const Pico8Colors_1 = __webpack_require__(2);
+const AbstractObject_1 = __webpack_require__(11);
+const ObjectOrientation_1 = __webpack_require__(12);
+const MAX_WALK_CELL_DURATION = 1500;
+const MIN_WALK_CELL_DURATION = 800;
+const MAX_RETRIES = 3;
+const MIN_RETRIES = 0;
+const GAP_FROM_BOTTOM = -8;
+const PATH_DEBUG = false;
+exports.HUMAN_SPRITE_VARIATIONS = ['human1', 'human2', 'human3'];
+exports.HUMAN_SPRITE_COLORS = ['green', 'pink', 'red'];
+class Employee {
+    constructor(cell, humanProperties) {
+        this.cell = cell;
+        this.moving = false;
+        this.path = [];
+        this.stateManager = new HumanStateManager_1.HumanStateManager(this);
+        this.anchorPixels = new PIXI.Point(0, GAP_FROM_BOTTOM);
+        this.animationManager = new HumanAnimationManager_1.HumanAnimationManager();
+        this.talkBubble = new TalkBubble_1.TalkBubble();
+        this.thoughtBubble = new ThoughtBubble_1.ThoughtBubble();
+        this.moodManager = new HumanMoodManager_1.HumanMoodManager();
+        this.moodSprite = new MoodSprite_1.MoodSprite();
+        this.humanProperties = humanProperties;
+    }
+    create(game, groups, worldKnowledge) {
+        this.game = game;
+        this.worldKnowledge = worldKnowledge;
+        this.moodManager.create(game);
+        this.sprite = game.add.tileSprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).x + this.anchorPixels.x, PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).y + this.anchorPixels.y, 24, 25, this.humanProperties.getSpriteKey());
+        this.animationManager.create(this.sprite);
+        this.sprite.anchor.set(0.5, 1.0);
+        ObjectSelector_1.ObjectSelector.makeSelectable([this.sprite], () => {
+            this.worldKnowledge.setSelectedHuman(this);
+        }, () => {
+            this.worldKnowledge.unselectHuman();
+        });
+        groups[Play_1.GROUP_OBJECTS_AND_HUMANS].add(this.sprite);
+        this.animationManager.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE, true, false);
+        this.closestPathFinder = new ClosestPathFinder_1.ClosestPathFinder(game, worldKnowledge);
+        this.stateManager.create(game, worldKnowledge, this.animationManager);
+        this.talkBubble.create(this.sprite, this.game, groups[Play_1.GROUP_OBJECTS_AND_HUMANS]);
+        this.thoughtBubble.create(this.sprite, this.game, groups[Play_1.GROUP_OBJECTS_AND_HUMANS]);
+        this.moodSprite.create(this.sprite, this.game, groups[Play_1.GROUP_INFOS]);
+        if (PATH_DEBUG || AbstractObject_1.SPRITE_DEBUG) {
+            this.debugGraphics = game.add.graphics(0, 0, groups[Play_1.GROUP_INTERFACE]);
+        }
+        this.worldKnowledge.addMoneyInWallet(this.humanProperties.getRealWage(), 3 * Phaser.Timer.SECOND);
+        this.game.time.events.loop(HumanProperties_1.DAY_DURATION, () => {
+            this.worldKnowledge.addMoneyInWallet(this.humanProperties.getRealWage(), 3 * Phaser.Timer.SECOND);
+        });
+    }
+    update() {
+        this.talkBubble.update();
+        this.thoughtBubble.update();
+        this.stateManager.updateState(this.game);
+        this.moodManager.update();
+        this.moodSprite.update(this.moodManager.getGeneralMood(), [
+            this.moodManager.getMood(HumanMoodManager_1.MOOD.HUNGER),
+            this.moodManager.getMood(HumanMoodManager_1.MOOD.SOCIAL),
+            this.moodManager.getMood(HumanMoodManager_1.MOOD.RELAXATION)
+        ]);
+        if (PATH_DEBUG) {
+            this.debugGraphics.clear();
+            this.debugGraphics.lineStyle(2, Pico8Colors_1.COLOR.LIGHT_GREEN);
+            if (this.path !== null && this.path.length > 0) {
+                this.debugGraphics.moveTo(this.sprite.position.x, this.sprite.position.y);
+                this.path.forEach((pathItem) => {
+                    this.debugGraphics.lineTo(PositionTransformer_1.PositionTransformer.getRealPosition(pathItem).x, PositionTransformer_1.PositionTransformer.getRealPosition(pathItem).y - PositionTransformer_1.CELL_HEIGHT / 2);
+                });
+            }
+        }
+        if (AbstractObject_1.SPRITE_DEBUG) {
+            this.debugGraphics.clear();
+            this.debugGraphics.lineStyle(1, Pico8Colors_1.COLOR.LIGHT_BLUE);
+            const realPosition = this.sprite.position;
+            this.debugGraphics.moveTo(realPosition.x - 1.5, realPosition.y + 0.5);
+            this.debugGraphics.lineTo(realPosition.x + 2.5, realPosition.y + 0.5);
+            this.debugGraphics.moveTo(realPosition.x + 0.5, realPosition.y - 1.5);
+            this.debugGraphics.lineTo(realPosition.x + 0.5, realPosition.y + 2.5);
+        }
+    }
+    goMeeting(meeting) {
+        return this.stateManager.goMeeting(this.game, meeting);
+    }
+    goSitMeeting(meeting) {
+        return this.stateManager.goSitMeeting(this.game, meeting);
+    }
+    moveTo(cell) {
+        const path = this.closestPathFinder.getPath(this.cell, cell);
+        if (path === null) {
+            this.path = [];
+            this.stateManager.reset(this.game);
+            return false;
+        }
+        this.path = path;
+        if (!this.moving) {
+            this.popPath();
+        }
+        return true;
+    }
+    moveToClosest(cell, entries = [Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT]) {
+        const path = this.closestPathFinder.getNeighborPath(this.cell, cell, entries);
+        if (path === null) {
+            this.path = [];
+            return false;
+        }
+        this.path = path;
+        if (!this.moving) {
+            this.popPath();
+        }
+        return true;
+    }
+    animateMove(direction) {
+        const isLeftLooking = Employee.isHumanLeftLooking(direction);
+        const isTopLooking = Employee.isHumanTopLooking(direction);
+        this.animationManager.loadAnimation(HumanAnimationManager_1.ANIMATION.WALK, isLeftLooking, isTopLooking);
+        this.moving = true;
+        this.game.add.tween(this.sprite.position).to({
+            x: PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).x + this.anchorPixels.x,
+            y: PositionTransformer_1.PositionTransformer.getRealPosition(this.cell).y + this.anchorPixels.y
+        }, this.getWalkDuration(), 'Linear', true).onComplete.add(() => {
+            this.popPath();
+        }, this);
+    }
+    getWalkDuration() {
+        return MIN_WALK_CELL_DURATION + (MAX_WALK_CELL_DURATION - MIN_WALK_CELL_DURATION) * (1 - this.humanProperties.getSpeed());
+    }
+    popPath() {
+        this.moving = false;
+        if (this.path !== null && this.path.length > 0) {
+            const next = this.path.shift();
+            const direction = Direction_1.Direction.getNeighborDirection(this.cell, next);
+            if (!this.moving) {
+                this.cell = next;
+                this.anchorPixels.x = 0;
+                this.anchorPixels.y = GAP_FROM_BOTTOM;
+                this.animateMove(direction);
+            }
+        }
+        this.worldKnowledge.humanMoved();
+    }
+    getPosition() {
+        return this.cell;
+    }
+    isMoving() {
+        return this.moving;
+    }
+    interactWith(objectReferer, isLeft = null) {
+        const direction = Direction_1.Direction.getNeighborDirection(this.cell, objectReferer.getPosition());
+        const side = (isLeft !== null) ? isLeft : Employee.isHumanLeftLooking(direction);
+        // Employee has to gap 5px from the sofa to be sit properly, and 1px from the bottom.
+        this.anchorPixels.x = objectReferer.getPositionGap().x + (side ? -5 : 5);
+        this.anchorPixels.y = objectReferer.getPositionGap().y - 1;
+        this.cell = objectReferer.getPosition();
+        objectReferer.setUsed(this);
+        this.animateMove(direction);
+    }
+    static isHumanLeftLooking(direction) {
+        return ObjectOrientation_1.ObjectOrientation.isHorizontalMirror(direction);
+    }
+    static isHumanTopLooking(direction) {
+        return ObjectOrientation_1.ObjectOrientation.isVerticalMirror(direction);
+    }
+    goToFreeCell(objectReferer) {
+        objectReferer.setUnused();
+        const cells = [];
+        objectReferer.getEntries().forEach((direction) => {
+            const tryCell = Direction_1.Direction.getNeighbor(this.cell, direction);
+            if (this.worldKnowledge.isFree(tryCell)) {
+                cells.push(tryCell);
+            }
+        });
+        if (cells.length === 0) {
+            console.log('oops');
+            return;
+        }
+        this.path = [cells[Math.floor(Math.random() * cells.length)]];
+        if (!this.moving) {
+            this.popPath();
+        }
+    }
+    loadAnimation(animation, isLeftLooking = null, isTopLooking = null) {
+        this.animationManager.loadAnimation(animation, isLeftLooking, isTopLooking);
+    }
+    isSelected() {
+        return ObjectSelector_1.ObjectSelector.isSelected(this.sprite);
+    }
+    resetAStar(newNonEmptyCell = null) {
+        this.closestPathFinder.reset();
+        if (newNonEmptyCell && this.path !== null) {
+            // If human wants to go to a non-empty cell
+            const matchingPath = this.path.filter((cell) => {
+                return cell.x === newNonEmptyCell.x && cell.y === newNonEmptyCell.y;
+            });
+            if (matchingPath.length > 0) {
+                const goal = this.path[this.path.length - 1];
+                this.moveTo(goal);
+                return;
+            }
+        }
+    }
+    resetStateIfCellEmpty(newEmptyCell) {
+        if (this.cell.x == newEmptyCell.x && this.cell.y == newEmptyCell.y) {
+            this.stateManager.reset(this.game);
+        }
+    }
+    isFree() {
+        return [HumanStateManager_1.STATE.MOVE_RANDOM, HumanStateManager_1.STATE.FREEZE, HumanStateManager_1.STATE.SMOKE].indexOf(this.getStateType()) > -1;
+    }
+    getStateType() {
+        return this.stateManager.getStateType();
+    }
+    getState() {
+        return this.stateManager.getState();
+    }
+    showTalkBubble() {
+        this.talkBubble.show();
+    }
+    hideTalkBubble() {
+        this.talkBubble.hide();
+    }
+    updateMoodFromState() {
+        this.moodManager.updateFromState(this.getStateType());
+    }
+    getMood(mood = null) {
+        if (mood === null) {
+            return this.moodManager.getGeneralMood();
+        }
+        return this.moodManager.getMood(mood);
+    }
+    stopWalk() {
+        this.path = null;
+    }
+    getMaxRetries() {
+        return Math.ceil(MIN_RETRIES + (MAX_RETRIES - MIN_RETRIES) * this.humanProperties.getPerseverance());
+    }
+    getType() {
+        return this.humanProperties.getType();
+    }
+    getName() {
+        return this.humanProperties.getName();
+    }
+    showThoughtBubble(rageImage) {
+        this.thoughtBubble.showRage(rageImage);
+    }
+    hideThoughtBubble() {
+        this.thoughtBubble.hide();
+    }
+    getNextProbabilities() {
+        return this.stateManager.getNextProbabilities();
+    }
+    unselect() {
+        if (this.isSelected()) {
+            ObjectSelector_1.ObjectSelector.click(this.sprite, null, [this.sprite]);
+        }
+    }
+    getRealWage() {
+        return this.humanProperties.getRealWage();
+    }
+    getMoveTime() {
+        return this.path.length * this.getWalkDuration();
+    }
+    pause() {
+        this.animationManager.pause();
+    }
+    resume() {
+        this.animationManager.resume();
+    }
+}
+exports.Employee = Employee;
+
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const ObjectDescription_1 = __webpack_require__(56);
+const InteractivePoint_1 = __webpack_require__(55);
+const Direction_1 = __webpack_require__(7);
+const SpriteInfo_1 = __webpack_require__(60);
+const Price_1 = __webpack_require__(20);
+const PositionTransformer_1 = __webpack_require__(4);
+class ObjectDescriptionRegistry {
+    static getObjectDescription(name) {
+        if (this.objectDescriptions === null) {
+            this.generateObjectDescriptions();
+        }
+        for (let i = 0; i < this.objectDescriptions.length; i++) {
+            if (this.objectDescriptions[i].getName() === name) {
+                return this.objectDescriptions[i];
+            }
+        }
+        throw "Impossible to find info for " + name;
+    }
+    static generateObjectDescriptions() {
+        this.objectDescriptions = [];
+        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Dispenser', [new PIXI.Point(0, 0)], [
+            new SpriteInfo_1.SpriteInfo('dispenser', new PIXI.Point(-4, -4), 3)
+        ], [
+            new SpriteInfo_1.SpriteInfo('dispenser_reverse', new PIXI.Point(-4, -4), 0)
+        ], [
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT], new PIXI.Point(5, -3))
+        ], [
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP], new PIXI.Point(5, -PositionTransformer_1.CELL_HEIGHT + 3))
+        ], new Price_1.Price(70)));
+        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Sofa', [new PIXI.Point(0, 0)], [
+            new SpriteInfo_1.SpriteInfo('sofa', new PIXI.Point(0, -8), 3, new PIXI.Point(0, 0))
+        ], [], [
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.BOTTOM], new PIXI.Point(0, -7), new PIXI.Point(0, 0), null, false)
+        ], [], new Price_1.Price(10)));
+        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Desk', [new PIXI.Point(0, 0)], [
+            new SpriteInfo_1.SpriteInfo('chair', new PIXI.Point(-10, -8), 5),
+            new SpriteInfo_1.SpriteInfo('desk', new PIXI.Point(0, 0), 4)
+        ], [
+            new SpriteInfo_1.SpriteInfo('desk_reverse', new PIXI.Point(0, 0), 10, new PIXI.Point(0, 0)),
+            new SpriteInfo_1.SpriteInfo('chair_reverse', new PIXI.Point(-6, -4), 5, new PIXI.Point(0, 0)),
+        ], [
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT], new PIXI.Point(-10, -11)),
+        ], [
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.RIGHT], new PIXI.Point(-3, -8), new PIXI.Point(0, 0), false, true),
+        ], new Price_1.Price(20)));
+        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Table', [
+            new PIXI.Point(0, 0),
+            new PIXI.Point(1, 1),
+            new PIXI.Point(1, 0),
+            new PIXI.Point(0, 1)
+        ], [
+            new SpriteInfo_1.SpriteInfo('chair2', new PIXI.Point(-8, -9), 5, new PIXI.Point(1, 1)),
+            new SpriteInfo_1.SpriteInfo('table', new PIXI.Point(0, 0), 4, new PIXI.Point(1, 1)),
+            new SpriteInfo_1.SpriteInfo('chair2', new PIXI.Point(-8, -9), 5, new PIXI.Point(1, 0)),
+            new SpriteInfo_1.SpriteInfo('table', new PIXI.Point(0, 0), 4, new PIXI.Point(1, 0)),
+            new SpriteInfo_1.SpriteInfo('table_reverse', new PIXI.Point(0, 0), 10, new PIXI.Point(0, 1)),
+            new SpriteInfo_1.SpriteInfo('chair2_reverse', new PIXI.Point(6, -5), 5, new PIXI.Point(0, 1)),
+            new SpriteInfo_1.SpriteInfo('table_reverse', new PIXI.Point(0, 0), 10, new PIXI.Point(0, 0)),
+            new SpriteInfo_1.SpriteInfo('chair2_reverse', new PIXI.Point(6, -5), 5, new PIXI.Point(0, 0)),
+        ], [], [
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT], new PIXI.Point(-8, -11), new PIXI.Point(1, 1)),
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.LEFT], new PIXI.Point(-8, -11), new PIXI.Point(1, 0)),
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.RIGHT], new PIXI.Point(4, -7), new PIXI.Point(0, 1), true, true),
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.RIGHT], new PIXI.Point(4, -7), new PIXI.Point(0, 0), true, true),
+        ], [], new Price_1.Price(12)));
+        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Couch', [
+            new PIXI.Point(0, 0),
+            new PIXI.Point(0, 1),
+        ], [
+            new SpriteInfo_1.SpriteInfo('couch_part1', new PIXI.Point(10, 0), 12),
+            new SpriteInfo_1.SpriteInfo('couch_part2', new PIXI.Point(10 - PositionTransformer_1.CELL_WIDTH / 2, 10), 22, new PIXI.Point(0, 1))
+        ], [
+            new SpriteInfo_1.SpriteInfo('couch_reverse_part1', new PIXI.Point(-13, 0), 12),
+            new SpriteInfo_1.SpriteInfo('couch_reverse_part2', new PIXI.Point(-(13 - PositionTransformer_1.CELL_WIDTH / 2), 9), 22, new PIXI.Point(1, 0)),
+            new SpriteInfo_1.SpriteInfo('couch_reverse_cache', new PIXI.Point(-13, 0), 0),
+        ], [
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT], new PIXI.Point(0, -8), new PIXI.Point(0, 0)),
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT], new PIXI.Point(0, -8), new PIXI.Point(0, 1)),
+        ], [
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP], new PIXI.Point(-1, -8), new PIXI.Point(0, 0), false, true),
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP], new PIXI.Point(-1, -8), new PIXI.Point(1, 0), false, true),
+        ], new Price_1.Price(10)));
+        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Console', [
+            new PIXI.Point(0, 0),
+            new PIXI.Point(1, 1),
+            new PIXI.Point(1, 0),
+            new PIXI.Point(0, 1)
+        ], [
+            new SpriteInfo_1.SpriteInfo('couch_part1', new PIXI.Point(10 - PositionTransformer_1.CELL_WIDTH / 2, 0 - PositionTransformer_1.CELL_HEIGHT / 2), 12, new PIXI.Point(0, 0)),
+            new SpriteInfo_1.SpriteInfo('couch_part2', new PIXI.Point(10 - PositionTransformer_1.CELL_WIDTH / 2 - PositionTransformer_1.CELL_WIDTH / 2, 10 - PositionTransformer_1.CELL_HEIGHT / 2), 22, new PIXI.Point(0, 1)),
+            new SpriteInfo_1.SpriteInfo('tv', new PIXI.Point(16, -6), 0, new PIXI.Point(0, 0))
+        ], [
+            new SpriteInfo_1.SpriteInfo('tv_reverse', new PIXI.Point(-1, -13), 0, new PIXI.Point(0, 1)),
+            new SpriteInfo_1.SpriteInfo('couch_reverse_part1', new PIXI.Point(-13 - PositionTransformer_1.CELL_WIDTH / 2, PositionTransformer_1.CELL_HEIGHT / 2), 12, new PIXI.Point(0, 1)),
+            new SpriteInfo_1.SpriteInfo('couch_reverse_part2', new PIXI.Point(-(13 - PositionTransformer_1.CELL_WIDTH / 2) - PositionTransformer_1.CELL_WIDTH / 2, 9 + PositionTransformer_1.CELL_HEIGHT / 2), 22, new PIXI.Point(1, 1)),
+            new SpriteInfo_1.SpriteInfo('couch_reverse_cache', new PIXI.Point(-13, 0), 0, new PIXI.Point(0, 0)),
+        ], [
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.BOTTOM], new PIXI.Point(0 - PositionTransformer_1.CELL_WIDTH / 2, -8 - PositionTransformer_1.CELL_HEIGHT / 2), new PIXI.Point(0, 0)),
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.TOP], new PIXI.Point(0 - PositionTransformer_1.CELL_WIDTH / 2, -8 - PositionTransformer_1.CELL_HEIGHT / 2), new PIXI.Point(0, 1)),
+        ], [
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.RIGHT], new PIXI.Point(-1 - PositionTransformer_1.CELL_WIDTH / 2, -8 + PositionTransformer_1.CELL_HEIGHT / 2), new PIXI.Point(0, 1), false, true),
+            new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT], new PIXI.Point(-1 - PositionTransformer_1.CELL_WIDTH / 2, -8 + PositionTransformer_1.CELL_HEIGHT / 2), new PIXI.Point(1, 1), false, true),
+        ], new Price_1.Price(10)));
+    }
+    static getSalableObjects() {
+        if (this.objectDescriptions === null) {
+            this.generateObjectDescriptions();
+        }
+        return this.objectDescriptions;
+    }
+}
+ObjectDescriptionRegistry.objectDescriptions = null;
+exports.ObjectDescriptionRegistry = ObjectDescriptionRegistry;
+
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+class Price {
+    constructor(value) {
+        this.value = value;
+    }
+    getStringValue() {
+        if (this.value >= 10000000) {
+            return Math.round(this.value / 100000) / 10 + ' m$';
+        }
+        if (this.value >= 10000) {
+            return Math.round(this.value / 100) / 10 + ' k$';
+        }
+        return Math.ceil(this.value).toString() + " $";
+    }
+    isGreaterThan(value) {
+        return this.value >= value.value;
+    }
+    add(value) {
+        this.value += value.value;
+    }
+    getValue() {
+        return this.value;
+    }
+}
+exports.Price = Price;
+
+
+/***/ }),
 /* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2318,7 +2289,7 @@ exports.WorldKnowledge = WorldKnowledge;
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanStateManager_1 = __webpack_require__(1);
 const HumanAnimationManager_1 = __webpack_require__(5);
-const AbstractState_1 = __webpack_require__(11);
+const AbstractState_1 = __webpack_require__(10);
 class RageState extends AbstractState_1.AbstractState {
     constructor(human, sourceState) {
         super(human);
@@ -2445,7 +2416,7 @@ exports.HumanMoodManager = HumanMoodManager;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanPropertiesFactory_1 = __webpack_require__(9);
-const Price_1 = __webpack_require__(19);
+const Price_1 = __webpack_require__(20);
 const MAX_WAGE = 50;
 const MIN_WAGE = 10;
 exports.DAY_DURATION = 60 * Phaser.Timer.SECOND;
@@ -2800,13 +2771,13 @@ exports.Gauge = Gauge;
 Object.defineProperty(exports, "__esModule", { value: true });
 const UserInterface_1 = __webpack_require__(6);
 const app_1 = __webpack_require__(3);
-const ObjectDescriptionRegistry_1 = __webpack_require__(18);
+const ObjectDescriptionRegistry_1 = __webpack_require__(19);
 const ObjectPhantom_1 = __webpack_require__(57);
 const Play_1 = __webpack_require__(0);
 const TextStyle_1 = __webpack_require__(13);
 const PositionTransformer_1 = __webpack_require__(4);
 const Pico8Colors_1 = __webpack_require__(2);
-const ObjectOrientation_1 = __webpack_require__(10);
+const ObjectOrientation_1 = __webpack_require__(12);
 exports.OBJECT_SELLER_CELL_SIZE = 41;
 const CIRCLE_GAP = 7;
 class ObjectSeller {
@@ -3139,7 +3110,7 @@ exports.UserInfoPanel = UserInfoPanel;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const PositionTransformer_1 = __webpack_require__(4);
-const WorldKnowledge_1 = __webpack_require__(20);
+const WorldKnowledge_1 = __webpack_require__(16);
 class Cell {
     constructor(point) {
         this.position = point;
@@ -3184,7 +3155,7 @@ exports.default = Boot;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Employee_1 = __webpack_require__(17);
+const Employee_1 = __webpack_require__(18);
 const ObjectSelector_1 = __webpack_require__(27);
 class Preload extends Phaser.State {
     preload() {
@@ -3262,7 +3233,7 @@ exports.default = Preload;
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanStateManager_1 = __webpack_require__(1);
 const HumanAnimationManager_1 = __webpack_require__(5);
-const MoveThenActAbstractState_1 = __webpack_require__(16);
+const MoveThenActAbstractState_1 = __webpack_require__(17);
 const ThoughtBubble_1 = __webpack_require__(8);
 class CoffeeState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
     start(game) {
@@ -3305,7 +3276,7 @@ exports.CoffeeState = CoffeeState;
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanAnimationManager_1 = __webpack_require__(5);
 const HumanStateManager_1 = __webpack_require__(1);
-const AbstractState_1 = __webpack_require__(11);
+const AbstractState_1 = __webpack_require__(10);
 class FreezeState extends AbstractState_1.AbstractState {
     start(game) {
         super.start(game);
@@ -3404,7 +3375,7 @@ exports.Meeting = Meeting;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanStateManager_1 = __webpack_require__(1);
-const AbstractState_1 = __webpack_require__(11);
+const AbstractState_1 = __webpack_require__(10);
 const ThoughtBubble_1 = __webpack_require__(8);
 class MoveRandomState extends AbstractState_1.AbstractState {
     constructor(human, worldKnowledge) {
@@ -3445,7 +3416,7 @@ exports.MoveRandomState = MoveRandomState;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const MoveThenActAbstractState_1 = __webpack_require__(16);
+const MoveThenActAbstractState_1 = __webpack_require__(17);
 const ThoughtBubble_1 = __webpack_require__(8);
 const HumanStateManager_1 = __webpack_require__(1);
 const HumanAnimationManager_1 = __webpack_require__(5);
@@ -3503,7 +3474,7 @@ exports.SitPlay = SitPlay;
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanAnimationManager_1 = __webpack_require__(5);
 const HumanStateManager_1 = __webpack_require__(1);
-const MoveThenActAbstractState_1 = __webpack_require__(16);
+const MoveThenActAbstractState_1 = __webpack_require__(17);
 const ThoughtBubble_1 = __webpack_require__(8);
 class SitState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
     start(game) {
@@ -3552,7 +3523,7 @@ exports.SitState = SitState;
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanAnimationManager_1 = __webpack_require__(5);
 const HumanStateManager_1 = __webpack_require__(1);
-const AbstractState_1 = __webpack_require__(11);
+const AbstractState_1 = __webpack_require__(10);
 const TableMeeting_1 = __webpack_require__(43);
 const PositionTransformer_1 = __webpack_require__(4);
 const RageState_1 = __webpack_require__(21);
@@ -3675,7 +3646,7 @@ exports.SitTalkState = SitTalkState;
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanAnimationManager_1 = __webpack_require__(5);
 const HumanStateManager_1 = __webpack_require__(1);
-const AbstractState_1 = __webpack_require__(11);
+const AbstractState_1 = __webpack_require__(10);
 class SmokeState extends AbstractState_1.AbstractState {
     getRageImage() {
         debugger;
@@ -3781,7 +3752,7 @@ const HumanAnimationManager_1 = __webpack_require__(5);
 const Meeting_1 = __webpack_require__(37);
 const Direction_1 = __webpack_require__(7);
 const HumanStateManager_1 = __webpack_require__(1);
-const AbstractState_1 = __webpack_require__(11);
+const AbstractState_1 = __webpack_require__(10);
 const ThoughtBubble_1 = __webpack_require__(8);
 class TalkState extends AbstractState_1.AbstractState {
     constructor(human, anotherHuman, worldKnowledge, meeting = null) {
@@ -3867,7 +3838,7 @@ exports.TalkState = TalkState;
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanAnimationManager_1 = __webpack_require__(5);
 const HumanStateManager_1 = __webpack_require__(1);
-const MoveThenActAbstractState_1 = __webpack_require__(16);
+const MoveThenActAbstractState_1 = __webpack_require__(17);
 const ThoughtBubble_1 = __webpack_require__(8);
 const SECOND_MIN = 15 * Phaser.Timer.SECOND;
 const SECOND_MAX = 45 * Phaser.Timer.SECOND;
@@ -4137,7 +4108,7 @@ exports.TalkBubble = TalkBubble;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const AbstractObject_1 = __webpack_require__(12);
+const AbstractObject_1 = __webpack_require__(11);
 const Direction_1 = __webpack_require__(7);
 const HumanAnimationManager_1 = __webpack_require__(5);
 class Console extends AbstractObject_1.AbstractObject {
@@ -4192,7 +4163,7 @@ exports.Console = Console;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const AbstractObject_1 = __webpack_require__(12);
+const AbstractObject_1 = __webpack_require__(11);
 const ObjectDeleter_1 = __webpack_require__(14);
 const Play_1 = __webpack_require__(0);
 class Couch extends AbstractObject_1.AbstractObject {
@@ -4245,7 +4216,7 @@ exports.Depot = Depot;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = __webpack_require__(0);
-const AbstractObject_1 = __webpack_require__(12);
+const AbstractObject_1 = __webpack_require__(11);
 const ObjectDeleter_1 = __webpack_require__(14);
 class Desk extends AbstractObject_1.AbstractObject {
     create(game, groups) {
@@ -4263,7 +4234,7 @@ exports.Desk = Desk;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const AbstractObject_1 = __webpack_require__(12);
+const AbstractObject_1 = __webpack_require__(11);
 const ObjectDeleter_1 = __webpack_require__(14);
 const Play_1 = __webpack_require__(0);
 class Dispenser extends AbstractObject_1.AbstractObject {
@@ -4283,7 +4254,7 @@ exports.Dispenser = Dispenser;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Direction_1 = __webpack_require__(7);
-const ObjectOrientation_1 = __webpack_require__(10);
+const ObjectOrientation_1 = __webpack_require__(12);
 class InteractivePoint {
     constructor(entryPoints, gap = new PIXI.Point(0, 0), cellOffset = new PIXI.Point(0, 0), leftLooking = false, topLooking = false) {
         this.entryPoints = entryPoints;
@@ -4351,7 +4322,7 @@ exports.InteractivePoint = InteractivePoint;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const ObjectOrientation_1 = __webpack_require__(10);
+const ObjectOrientation_1 = __webpack_require__(12);
 class ObjectDescription {
     constructor(name, occupiedCells, bottomOrientedSpriteInfos, topOrientedSpriteInfos, bottomInteractivePoints, topInteractivePoints, price) {
         this.name = name;
@@ -4432,13 +4403,13 @@ exports.ObjectDescription = ObjectDescription;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const ObjectDescriptionRegistry_1 = __webpack_require__(18);
+const ObjectDescriptionRegistry_1 = __webpack_require__(19);
 const PositionTransformer_1 = __webpack_require__(4);
 const ObjectDeleter_1 = __webpack_require__(14);
 const Direction_1 = __webpack_require__(7);
 const Play_1 = __webpack_require__(0);
 const Pico8Colors_1 = __webpack_require__(2);
-const ObjectOrientation_1 = __webpack_require__(10);
+const ObjectOrientation_1 = __webpack_require__(12);
 const ARROW_SIZE = 0.9;
 const GAP = 4;
 const SPRITE_OPACITY = 0.7;
@@ -4714,7 +4685,7 @@ exports.ObjectReferer = ObjectReferer;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const AbstractObject_1 = __webpack_require__(12);
+const AbstractObject_1 = __webpack_require__(11);
 const ObjectDeleter_1 = __webpack_require__(14);
 const Play_1 = __webpack_require__(0);
 class Sofa extends AbstractObject_1.AbstractObject {
@@ -4737,7 +4708,7 @@ exports.Sofa = Sofa;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const PositionTransformer_1 = __webpack_require__(4);
-const ObjectOrientation_1 = __webpack_require__(10);
+const ObjectOrientation_1 = __webpack_require__(12);
 class SpriteInfo {
     /**
      * Create a SpriteInfo
@@ -4796,7 +4767,7 @@ exports.SpriteInfo = SpriteInfo;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Play_1 = __webpack_require__(0);
-const AbstractObject_1 = __webpack_require__(12);
+const AbstractObject_1 = __webpack_require__(11);
 const ObjectDeleter_1 = __webpack_require__(14);
 class Table extends AbstractObject_1.AbstractObject {
     create(game, groups) {
@@ -4851,7 +4822,7 @@ exports.Wall = Wall;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Employee_1 = __webpack_require__(17);
+const Employee_1 = __webpack_require__(18);
 const HumanPropertiesFactory_1 = __webpack_require__(9);
 class HumanRepository {
     constructor(worldKnowledge) {
@@ -4888,6 +4859,7 @@ exports.HumanRepository = HumanRepository;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Wall_1 = __webpack_require__(62);
+const WorldKnowledge_1 = __webpack_require__(16);
 class WallRepository {
     constructor() {
         this.walls = [];
@@ -4913,6 +4885,37 @@ class WallRepository {
     }
     getWalls() {
         return this.walls;
+    }
+    initialize() {
+        const walls = "" +
+            "  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  \n" +
+            "  X      X             X   X      X  \n" +
+            "  X            X       XX XX      X  \n" +
+            "  X      XXXXXXX                  X  \n" +
+            "  X      X     XXXXXXXXXXXXX      X  \n" +
+            "  X      X     X           X      X  \n" +
+            "  X      X     X           X      X  \n" +
+            "  X      X     X                  X  \n" +
+            "XXXXXX XXX                 XXX XXXXXX\n" +
+            "X X            X                    X\n" +
+            "X X      X     X           X        X\n" +
+            "X X      XXXXXXXXXXXXXXXXXXX        X\n" +
+            "X X                                 X\n" +
+            "X        X                 X        X\n" +
+            "XXXXXXXXXX                 XXXXXXXXXX";
+        const lines = walls.split("\n");
+        for (let y = 0; y < WorldKnowledge_1.GRID_HEIGHT; y++) {
+            let line = lines[lines.length - 1 - y];
+            if (line === undefined) {
+                line = Array(lines[0].length).join(' ');
+            }
+            for (let x = 0; x < WorldKnowledge_1.GRID_WIDTH; x++) {
+                const cell = line[line.length - 1 - x];
+                if (cell === 'X') {
+                    this.addWall(new PIXI.Point(x, y));
+                }
+            }
+        }
     }
 }
 exports.WallRepository = WallRepository;
@@ -5324,7 +5327,7 @@ exports.LevelDisplayer = LevelDisplayer;
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanPropertiesFactory_1 = __webpack_require__(9);
 const SmoothValue_1 = __webpack_require__(15);
-const Price_1 = __webpack_require__(19);
+const Price_1 = __webpack_require__(20);
 const DEVELOPER_RATIO = 500;
 const MARKETING_RATIO = 5;
 const SALE_RATIO = 10;

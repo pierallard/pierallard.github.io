@@ -19,12 +19,11 @@ const Price_1 = require("./objects/Price");
 const ObjectDescriptionRegistry_1 = require("./objects/ObjectDescriptionRegistry");
 const SmoothValue_1 = require("./SmoothValue");
 const UserInterface_1 = require("./user_interface/UserInterface");
-const ObjectOrientation_1 = require("./objects/ObjectOrientation");
 const Couch_1 = require("./objects/Couch");
 const EmployeeCountRegister_1 = require("./human_stuff/EmployeeCountRegister");
 const Console_1 = require("./objects/Console");
-exports.GRID_WIDTH = 16;
-exports.GRID_HEIGHT = 16;
+exports.GRID_WIDTH = 37;
+exports.GRID_HEIGHT = 15;
 exports.DEBUG_WORLD = false;
 class WorldKnowledge {
     constructor() {
@@ -36,40 +35,10 @@ class WorldKnowledge {
             }
         }
         this.wallRepository = new WallRepository_1.WallRepository();
+        this.wallRepository.initialize();
         this.levelManager = new LevelManager_1.LevelManager();
         this.depot = new Depot_1.Depot();
         this.wallet = new SmoothValue_1.SmoothValue(1500);
-        if (exports.DEBUG_WORLD) {
-            this.wallRepository.addWall(new PIXI.Point(5, 5));
-            this.wallRepository.addWall(new PIXI.Point(6, 5));
-            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 5), this, ObjectOrientation_1.DIRECTION_LOOP[0]));
-            this.objects.push(new Desk_1.Desk(new PIXI.Point(4, 6), this, ObjectOrientation_1.DIRECTION_LOOP[0]));
-            this.objects.push(new Dispenser_1.Dispenser(new PIXI.Point(5, 4), this, ObjectOrientation_1.DIRECTION_LOOP[0]));
-        }
-        else {
-            for (let x = 0; x < exports.GRID_WIDTH; x++) {
-                this.wallRepository.addWall(new PIXI.Point(x, 0));
-                this.wallRepository.addWall(new PIXI.Point(x, exports.GRID_HEIGHT - 1));
-            }
-            for (let y = 1; y < (exports.GRID_HEIGHT - 1); y++) {
-                this.wallRepository.addWall(new PIXI.Point(0, y));
-                this.wallRepository.addWall(new PIXI.Point(exports.GRID_WIDTH - 1, y));
-            }
-            for (let x = 1; x < 3 - 1; x++) {
-                this.wallRepository.addWall(new PIXI.Point(x, exports.GRID_WIDTH / 2 + 1));
-            }
-            for (let x = 5; x < exports.GRID_WIDTH - 1; x++) {
-                this.wallRepository.addWall(new PIXI.Point(x, exports.GRID_WIDTH / 2 + 1));
-            }
-            [
-                new PIXI.Point(4, 3),
-                new PIXI.Point(4, 4),
-                new PIXI.Point(3, 4),
-                new PIXI.Point(3, 3),
-            ].forEach((cell) => {
-                this.wallRepository.addWall(cell);
-            });
-        }
         this.humanRepository = new HumanRepository_1.HumanRepository(this);
         this.moodRegister = new MoodRegister_1.MoodRegister(this.humanRepository);
         this.employeeCountRegister = new EmployeeCountRegister_1.EmployeeCountRegister(this.humanRepository);

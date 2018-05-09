@@ -41,9 +41,9 @@ class UserInterface {
         const interfaceGroup = groups[Play_1.GROUP_INTERFACE];
         this.backgroundGraphics = game.add.graphics(app_1.CAMERA_WIDTH_PIXELS - exports.INTERFACE_WIDTH, 0, interfaceGroup);
         this.backgroundGraphics.beginFill(Pico8Colors_1.COLOR.BLACK);
-        this.backgroundGraphics.drawRect(-0.5, 0, exports.INTERFACE_WIDTH, exports.TOP_GAP_2);
+        this.backgroundGraphics.drawRect(-0.5, 0, exports.INTERFACE_WIDTH + 0.5, exports.TOP_GAP_2);
         this.backgroundGraphics.beginFill(Pico8Colors_1.COLOR.DARK_BLUE);
-        this.backgroundGraphics.drawRect(-0.5, exports.TOP_GAP_2, exports.INTERFACE_WIDTH, app_1.CAMERA_HEIGHT_PIXELS - exports.TOP_GAP_2);
+        this.backgroundGraphics.drawRect(-0.5, exports.TOP_GAP_2, exports.INTERFACE_WIDTH + 0.5, app_1.CAMERA_HEIGHT_PIXELS - exports.TOP_GAP_2);
         interfaceGroup.add(this.backgroundGraphics);
         this.objectSeller.create(game, groups);
         this.humanEmployer.create(game, groups);

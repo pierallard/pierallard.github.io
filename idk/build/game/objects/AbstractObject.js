@@ -13,8 +13,13 @@ class AbstractObject {
         this.worldKnowledge = worldKnowledge;
         this.usedIdentifiers = [];
     }
+    getDescription() {
+        let name = this.constructor.name;
+        name = name.split(/(?=[A-Z])/).join(' ');
+        return ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getObjectDescription(name);
+    }
     create(game, groups) {
-        const infos = ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getObjectDescription(this.constructor.name);
+        const infos = this.getDescription();
         this.sprites = [];
         infos.getSpriteInfos(this.orientation).forEach((spriteInfo) => {
             const sprite = game.add.sprite(spriteInfo.getRealPosition(this.position, this.orientation).x, spriteInfo.getRealPosition(this.position, this.orientation).y, spriteInfo.getSpriteKey());
@@ -44,10 +49,10 @@ class AbstractObject {
         return interactivePointDescription.getInteractionPosition(this.orientation);
     }
     getEntries(objectNumber) {
-        return ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getObjectDescription(this.constructor.name).getInteractivePointEntryPoints(this.orientation, objectNumber);
+        return this.getDescription().getInteractivePointEntryPoints(this.orientation, objectNumber);
     }
     getPositions() {
-        return ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getObjectDescription(this.constructor.name).getUniqueCellOffsets(this.orientation).map((gap) => {
+        return this.getDescription().getUniqueCellOffsets(this.orientation).map((gap) => {
             return new PIXI.Point(this.position.x + gap.x, this.position.y + gap.y);
         });
     }
@@ -65,15 +70,15 @@ class AbstractObject {
         }
     }
     forceLeftOrientation(interactivePointIdentifier) {
-        const infos = ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getObjectDescription(this.constructor.name);
+        const infos = this.getDescription();
         return infos.getInteractivePoints(this.orientation)[interactivePointIdentifier].isHumanLeftLooking(this.orientation);
     }
     forceTopOrientation(interactivePointIdentifier) {
-        const infos = ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getObjectDescription(this.constructor.name);
+        const infos = this.getDescription();
         return infos.getInteractivePoints(this.orientation)[interactivePointIdentifier].isHumanTopLooking();
     }
     getCellPositionSubObject(interactivePointIdentifier) {
-        const infos = ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getObjectDescription(this.constructor.name);
+        const infos = this.getDescription();
         return new PIXI.Point(this.position.x + infos.getInteractivePointCellOffset(this.orientation, interactivePointIdentifier).x, this.position.y + infos.getInteractivePointCellOffset(this.orientation, interactivePointIdentifier).y);
     }
     isUsed(interactivePointIdentifier) {
@@ -97,7 +102,7 @@ class AbstractObject {
     }
     getUnusedReferers() {
         let result = [];
-        const description = ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getObjectDescription(this.constructor.name);
+        const description = this.getDescription();
         for (let i = 0; i < description.getInteractivePoints(this.orientation).length; i++) {
             if (!this.isUsed(i)) {
                 result.push(new ObjectReferer_1.ObjectReferer(this, i));

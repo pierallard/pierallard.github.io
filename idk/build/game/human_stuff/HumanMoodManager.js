@@ -27,11 +27,11 @@ class HumanMoodManager {
     }
     create(game) {
         this.game = game;
-        this.moods[MOOD.RELAXATION].create(game);
-        this.moods[MOOD.HUNGER].create(game);
-        this.moods[MOOD.SOCIAL].create(game);
     }
     update() {
+        this.moods[MOOD.RELAXATION].update();
+        this.moods[MOOD.HUNGER].update();
+        this.moods[MOOD.SOCIAL].update();
         if (this.hasToBeUpdated) {
             let moodUpdate = {};
             moodUpdate[MOOD.RELAXATION] = LOSS;

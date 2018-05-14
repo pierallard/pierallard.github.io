@@ -30,6 +30,7 @@ class Preload extends Phaser.State {
         });
         this.game.load.spritesheet('casedefault', 'assets/casedefault.png', 40, 19);
         this.game.load.spritesheet('woodcell', 'assets/woodcell.png', 40, 19);
+        this.game.load.spritesheet('case_floortile', 'assets/case_floortile.png', 40, 19);
         this.game.load.spritesheet('chair', 'assets/chair.png', 40, 40);
         this.game.load.spritesheet('chair_reverse', 'assets/chair_reverse.png', 40, 40);
         this.game.load.spritesheet('chair_selected', 'assets/chair_selected.png', 40, 40);
@@ -40,7 +41,7 @@ class Preload extends Phaser.State {
         this.game.load.spritesheet('desk', 'assets/desk.png', 40, 40);
         this.game.load.spritesheet('desk_reverse', 'assets/desk_reverse.png', 40, 40);
         this.game.load.spritesheet('desk_selected', 'assets/desk_selected.png', 40, 40);
-        this.game.load.spritesheet('wall', 'assets/wall.png', 40, 37, 16);
+        this.game.load.spritesheet('wall', 'assets/wall.png', 40, 40);
         this.game.load.spritesheet('sofa', 'assets/sofa.png', 8, 6);
         this.game.load.spritesheet('dispenser', 'assets/dispenser.png', 26, 35);
         this.game.load.spritesheet('dispenser_reverse', 'assets/dispenser_reverse.png', 26, 35);
@@ -61,6 +62,7 @@ class Preload extends Phaser.State {
         this.game.load.spritesheet('star', 'assets/star.png', 9, 9);
         this.game.load.spritesheet('tv_reverse', 'assets/tv_reverse.png', 24, 35);
         this.game.load.spritesheet('tv', 'assets/tv.png', 24, 35);
+        this.game.load.spritesheet('info', 'assets/info.png', 12, 12);
     }
     loadFonts() {
         this.game.load.bitmapFont('retro_computer', 'assets/font/font.png', 'assets/font/font.ftn');

@@ -12,16 +12,18 @@ const Play_1 = require("./game_state/Play");
 const Depot_1 = require("./objects/Depot");
 const Direction_1 = require("./Direction");
 const MoodRegister_1 = require("./human_stuff/MoodRegister");
-const Table_1 = require("./objects/Table");
+const MeetingTable_1 = require("./objects/MeetingTable");
 const LevelManager_1 = require("./user_interface/LevelManager");
 const HumanPropertiesFactory_1 = require("./human_stuff/HumanPropertiesFactory");
 const Price_1 = require("./objects/Price");
-const ObjectDescriptionRegistry_1 = require("./objects/ObjectDescriptionRegistry");
 const SmoothValue_1 = require("./SmoothValue");
 const UserInterface_1 = require("./user_interface/UserInterface");
 const Couch_1 = require("./objects/Couch");
 const EmployeeCountRegister_1 = require("./human_stuff/EmployeeCountRegister");
 const Console_1 = require("./objects/Console");
+const Floor_1 = require("./Floor");
+const Infobox_1 = require("./user_interface/Infobox");
+const ObjectDescriptionRegistry_1 = require("./objects/ObjectDescriptionRegistry");
 exports.GRID_WIDTH = 37;
 exports.GRID_HEIGHT = 15;
 exports.DEBUG_WORLD = false;
@@ -29,16 +31,77 @@ class WorldKnowledge {
     constructor() {
         this.cells = [];
         this.objects = [];
-        for (let y = 0; y < exports.GRID_HEIGHT; y++) {
-            for (let x = 0; x < exports.GRID_WIDTH; x++) {
-                this.cells.push(new Cell_1.Cell(new PIXI.Point(x, y)));
-            }
-        }
+        this.floors = [];
         this.wallRepository = new WallRepository_1.WallRepository();
-        this.wallRepository.initialize();
         this.levelManager = new LevelManager_1.LevelManager();
         this.depot = new Depot_1.Depot();
         this.wallet = new SmoothValue_1.SmoothValue(1500);
+        const walls = "" +
+            "  XXXWXXXXXWXXXXXXXXXXXXXWXXXXXWXXX  \n" +
+            "  X      X     D       X   X      X  \n" +
+            "  W      D     X       XXDXX      W  \n" +
+            "  X      XXXXXXX       D   D      X  \n" +
+            "  X      X     XXXDXXXXXXXXX      X  \n" +
+            "  X      X     X           X      X  \n" +
+            "  W      X     X           X      W  \n" +
+            "  X      X     X           D      X  \n" +
+            "XXXXXXDXXX     D           XXXDXXXXXX\n" +
+            "X X      D     X           D        X\n" +
+            "X X      X     X           X        X\n" +
+            "X X      XXXWXXXXXDXXXXXWXXX        X\n" +
+            "X X      D                 D        X\n" +
+            "X D      X                 X        X\n" +
+            "XXXWXXXWXX                 XXWXXXWXXX";
+        const floors = "" +
+            "  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  \n" +
+            "  X,,,,,,,,,,,,,,,,,,,,,...........  \n" +
+            "  X,,,,,,,,,,,,,,,,,,,,,...........  \n" +
+            "  X,,,,,,,,,,,,,,,,,,,,,...........  \n" +
+            "  X,,,,,,,.....,,,,,,,,,...........  \n" +
+            "  X,,,,,,,.........................  \n" +
+            "  X,,,,,,,.........................  \n" +
+            "  X,,,,,,,.........................  \n" +
+            "XXX,,,,,,,.........................XX\n" +
+            "X....................................\n" +
+            "X....................................\n" +
+            "X....................................\n" +
+            "X.........,,,,,,,,,,,,,,,,,,.........\n" +
+            "X.........,,,,,,,,,,,,,,,,,,.........\n" +
+            "X.........,,,,,,,,,,,,,,,,,,.........";
+        const wallLines = walls.split("\n");
+        const floorLines = floors.split("\n");
+        for (let y = 0; y < exports.GRID_HEIGHT; y++) {
+            let wallLine = wallLines[wallLines.length - 1 - y];
+            let floorLine = floorLines[floorLines.length - 1 - y];
+            if (wallLine === undefined) {
+                wallLine = Array(wallLines[0].length).join(' ');
+            }
+            if (floorLine === undefined) {
+                floorLine = Array(wallLines[0].length).join(' ');
+            }
+            for (let x = 0; x < exports.GRID_WIDTH; x++) {
+                const wallCell = wallLine[wallLine.length - 1 - x];
+                const floorCell = floorLine[floorLine.length - 1 - x];
+                if (floorCell !== ' ') {
+                    this.cells.push(new Cell_1.Cell(new PIXI.Point(x, y)));
+                }
+                if (floorCell === '.') {
+                    this.floors.push(new Floor_1.Floor(new PIXI.Point(x, y), 'woodcell'));
+                }
+                else if (floorCell === ',') {
+                    this.floors.push(new Floor_1.Floor(new PIXI.Point(x, y), 'case_floortile'));
+                }
+                if (wallCell === 'X') {
+                    this.wallRepository.addWall(new PIXI.Point(x, y));
+                }
+                else if (wallCell === 'W') {
+                    this.wallRepository.addWindow(new PIXI.Point(x, y));
+                }
+                else if (wallCell === 'D') {
+                    this.wallRepository.addDoor(new PIXI.Point(x, y));
+                }
+            }
+        }
         this.humanRepository = new HumanRepository_1.HumanRepository(this);
         this.moodRegister = new MoodRegister_1.MoodRegister(this.humanRepository);
         this.employeeCountRegister = new EmployeeCountRegister_1.EmployeeCountRegister(this.humanRepository);
@@ -46,12 +109,13 @@ class WorldKnowledge {
     create(game, groups) {
         this.game = game;
         this.groups = groups;
-        this.wallet.create(game);
-        this.levelManager.create(game);
-        const floor = groups[Play_1.GROUP_FLOOR];
+        const floorGroup = groups[Play_1.GROUP_FLOOR];
         const noname = groups[Play_1.GROUP_OBJECTS_AND_HUMANS];
+        this.floors.forEach((floors) => {
+            floors.create(game, floorGroup);
+        });
         this.cells.forEach((cell) => {
-            cell.create(game, floor);
+            cell.create(game, floorGroup);
         });
         this.objects.forEach((object) => {
             object.create(game, groups);
@@ -62,9 +126,11 @@ class WorldKnowledge {
         this.employeeCountRegister.create(game);
     }
     update() {
+        this.wallet.update();
         this.humanRepository.update();
         if (this.levelManager.update()) {
             this.addMoneyInWallet(this.levelManager.getEarnedMoney());
+            this.displayLevelInfoBox();
         }
     }
     humanMoved() {
@@ -186,7 +252,7 @@ class WorldKnowledge {
                 }
             }
         }
-        if (this.wallRepository.hasWall(point.x, point.y)) {
+        if (this.wallRepository.hasWall(point.x, point.y, false)) {
             return false;
         }
         return true;
@@ -274,7 +340,7 @@ class WorldKnowledge {
         });
         for (let o = 0; o < this.objects.length; o++) {
             const object = this.objects[o];
-            const objectInfo = ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getObjectDescription(object.constructor.name);
+            const objectInfo = object.getDescription();
             const interactivePoints = objectInfo.getInteractivePoints(object.getOrientation());
             for (let i = 0; i < interactivePoints.length; i++) {
                 const cellOffset = interactivePoints[i].getCellOffset(object.getOrientation());
@@ -316,8 +382,8 @@ class WorldKnowledge {
             case 'Dispenser':
                 object = new Dispenser_1.Dispenser(position, this, orientation);
                 break;
-            case 'Table':
-                object = new Table_1.Table(position, this, orientation);
+            case 'Meeting Table':
+                object = new MeetingTable_1.MeetingTable(position, this, orientation);
                 break;
             case 'Couch':
                 object = new Couch_1.Couch(position, this, orientation);
@@ -391,15 +457,56 @@ class WorldKnowledge {
     getLastEmployeesCount() {
         return this.employeeCountRegister.getLastCounts();
     }
-    pause() {
-        this.humanRepository.humans.forEach((human) => {
-            human.pause();
-        });
+    // pause() {
+    //     this.humanRepository.humans.forEach((human) => {
+    //         human.pause();
+    //     });
+    // }
+    //
+    // resume() {
+    //     this.humanRepository.humans.forEach((human) => {
+    //         human.resume();
+    //     });
+    // }
+    getSelectedHumanSprite() {
+        for (let i = 0; i < this.humanRepository.humans.length; i++) {
+            if (this.humanRepository.humans[i].isSelected()) {
+                return this.humanRepository.humans[i].getSprite();
+            }
+        }
+        return null;
     }
-    resume() {
-        this.humanRepository.humans.forEach((human) => {
-            human.resume();
+    selectFirstHuman() {
+        this.humanRepository.humans[0].select();
+    }
+    displayLevelInfoBox() {
+        let strings = [
+            '- ' + this.levelManager.getGoal(HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER) + ' lines to code',
+            '- ' + this.levelManager.getGoal(HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE) + ' licences to sell',
+        ];
+        if (this.levelManager.getGoal(HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING) > 0) {
+            strings.push('- ' + this.levelManager.getGoal(HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING) + ' campaigns to to');
+        }
+        let availables = [];
+        if (this.getLevel() === 2) {
+            availables.push('- Sales employees');
+        }
+        if (this.getLevel() === 3) {
+            availables.push('- Marketing employees');
+        }
+        ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getSalableObjects(this.getLevel()).forEach((objectDescription) => {
+            if (objectDescription.getMinLevel() === this.getLevel()) {
+                availables.push('- ' + objectDescription.getName());
+            }
         });
+        const infoBox = new Infobox_1.InfoBox('Next level!', [
+            'Congratulations! You reached the level ' + this.getLevel() + '!',
+            'Next goals:'
+        ].concat(strings).concat([
+            '',
+            'Now available:'
+        ]).concat(availables), 'Oh yeah!');
+        infoBox.create(this.game, this.groups);
     }
 }
 exports.WorldKnowledge = WorldKnowledge;

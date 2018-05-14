@@ -7,9 +7,12 @@ class Cell {
         this.position = point;
     }
     create(game, group) {
-        this.sprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y, WorldKnowledge_1.DEBUG_WORLD ? 'casedefault' : 'woodcell');
-        this.sprite.anchor.setTo(0.5, 1);
-        group.add(this.sprite);
+        if (WorldKnowledge_1.DEBUG_WORLD) {
+            this.sprite = game.add.sprite(PositionTransformer_1.PositionTransformer.getRealPosition(this.position).x, PositionTransformer_1.PositionTransformer.getRealPosition(this.position).y, 'casedefault');
+            this.sprite.anchor.setTo(0.5, 1);
+            this.sprite.alpha = 0.5;
+            group.add(this.sprite);
+        }
     }
     getPosition() {
         return this.position;

@@ -7,7 +7,7 @@ const DEVELOPER_RATIO = 500;
 const MARKETING_RATIO = 5;
 const SALE_RATIO = 10;
 const STARTING_LEVEL = 1;
-const GLOBAL_PROGRESS_EARN = 7.5;
+const GLOBAL_PROGRESS_EARN = 7;
 class LevelManager {
     constructor() {
         this.level = STARTING_LEVEL;
@@ -19,11 +19,6 @@ class LevelManager {
         this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER] = new SmoothValue_1.SmoothValue(0);
         this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING] = new SmoothValue_1.SmoothValue(0);
         this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE] = new SmoothValue_1.SmoothValue(0);
-    }
-    create(game) {
-        this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER].create(game);
-        this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING].create(game);
-        this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE].create(game);
     }
     getLevelProgress(type) {
         return Math.min((this.levels[type].getValue() - this.starts[type]) / (this.getGoal(type) - this.starts[type]), 1);
@@ -47,6 +42,9 @@ class LevelManager {
         this.levels[type].add(realValue, time);
     }
     update() {
+        this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER].update();
+        this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING].update();
+        this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE].update();
         if (this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER].getValue() >= this.getGoal(HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER) &&
             this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING].getValue() >= this.getGoal(HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING) &&
             this.levels[HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE].getValue() >= this.getGoal(HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE)) {

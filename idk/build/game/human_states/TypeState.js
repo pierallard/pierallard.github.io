@@ -5,7 +5,7 @@ const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
 const MoveThenActAbstractState_1 = require("./MoveThenActAbstractState");
 const ThoughtBubble_1 = require("../human_stuff/ThoughtBubble");
 const SECOND_MIN = 15 * Phaser.Timer.SECOND;
-const SECOND_MAX = 45 * Phaser.Timer.SECOND;
+const SECOND_MAX = 40 * Phaser.Timer.SECOND;
 class TypeState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
     start(game) {
         this.objectReferer = this.worldKnowledge.getClosestReferer(['Desk'], 1, this.human.getPosition());

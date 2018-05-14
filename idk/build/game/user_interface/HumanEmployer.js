@@ -9,6 +9,7 @@ const TextStyle_1 = require("../TextStyle");
 const Pico8Colors_1 = require("../Pico8Colors");
 const ColoredGauge_1 = require("./ColoredGauge");
 const Tooltip_1 = require("./Tooltip");
+const UserInfoPanel_1 = require("./UserInfoPanel");
 const STARS = 5;
 const MAX_APPLICANTS = 6;
 class HumanEmployer {
@@ -120,7 +121,7 @@ class ApplicantButton {
         this.sprite.input.useHandCursor = true;
         this.sprite.events.onInputDown.add(this.click, this, 0);
         this.name = game.add.text(left + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE + 3, top, this.humanProperties.getName(), TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
-        this.typeText = game.add.text(left + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE + 3, top + 8, this.humanProperties.getStrType(), TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.typeText = game.add.text(left + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE + 3, top + UserInfoPanel_1.SMALL_GAP_BETWEEN_LINES, this.humanProperties.getStrType(), TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
         this.remainingGauge.create(game, groups, new PIXI.Point(left, top + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE - 5 - 0.5));
         this.remainingGauge.setValue(1);
         game.add.tween(this).to({

@@ -9,7 +9,8 @@ const PieChart_1 = require("./PieChart");
 const HumanStateManager_1 = require("../human_stuff/HumanStateManager");
 const ColoredGauge_1 = require("./ColoredGauge");
 const GRAPH_GAP = 2;
-exports.GAP_BETWEEN_LINES = 10;
+exports.SMALL_GAP_BETWEEN_LINES = 7;
+exports.MEDIUM_GAP_BETWEEN_LINES = 10;
 const GAUGE_GAP = 100;
 class UserInfoPanel {
     constructor(worldKnowledge) {
@@ -24,15 +25,15 @@ class UserInfoPanel {
     create(game, groups) {
         const left = app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GRAPH_GAP;
         this.employeeName = game.add.text(left, UserInterface_1.TOP_GAP, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
-        this.moodRelaxationText = game.add.text(left, UserInterface_1.TOP_GAP + exports.GAP_BETWEEN_LINES, 'Relax', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
-        this.moodHungerText = game.add.text(left, UserInterface_1.TOP_GAP + 2 * exports.GAP_BETWEEN_LINES, 'Hunger', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
-        this.moodSocialText = game.add.text(left, UserInterface_1.TOP_GAP + 3 * exports.GAP_BETWEEN_LINES, 'Social', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
-        this.currentState = game.add.text(left, UserInterface_1.TOP_GAP + 4 * exports.GAP_BETWEEN_LINES, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
-        this.wage = game.add.text(left, UserInterface_1.TOP_GAP + 5 * exports.GAP_BETWEEN_LINES, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.moodRelaxationText = game.add.text(left, UserInterface_1.TOP_GAP + exports.MEDIUM_GAP_BETWEEN_LINES, 'Relax', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.moodHungerText = game.add.text(left, UserInterface_1.TOP_GAP + 2 * exports.MEDIUM_GAP_BETWEEN_LINES, 'Hunger', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.moodSocialText = game.add.text(left, UserInterface_1.TOP_GAP + 3 * exports.MEDIUM_GAP_BETWEEN_LINES, 'Social', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.currentState = game.add.text(left, UserInterface_1.TOP_GAP + 4 * exports.MEDIUM_GAP_BETWEEN_LINES, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.wage = game.add.text(left, UserInterface_1.TOP_GAP + 5 * exports.MEDIUM_GAP_BETWEEN_LINES, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
         this.pieChart.create(game, groups);
-        this.moodRelaxationGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + exports.GAP_BETWEEN_LINES + 3.5));
-        this.moodHungerGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + 2 * exports.GAP_BETWEEN_LINES + 3.5));
-        this.moodSocialGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + 3 * exports.GAP_BETWEEN_LINES + 3.5));
+        this.moodRelaxationGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + exports.MEDIUM_GAP_BETWEEN_LINES + 3.5));
+        this.moodHungerGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + 2 * exports.MEDIUM_GAP_BETWEEN_LINES + 3.5));
+        this.moodSocialGauge.create(game, groups, new PIXI.Point(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GAUGE_GAP, UserInterface_1.TOP_GAP + 3 * exports.MEDIUM_GAP_BETWEEN_LINES + 3.5));
     }
     update() {
         if (this.human) {

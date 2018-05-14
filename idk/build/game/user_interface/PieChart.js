@@ -41,6 +41,9 @@ class PieChart {
     update() {
         if (this.human) {
             if (this.shouldRefreshData) {
+                this.data.forEach((part) => {
+                    part.update();
+                });
                 this.refreshData();
             }
             if (this.shouldRefreshPieChart) {
@@ -83,7 +86,6 @@ class PieChart {
             }
             if (!found) {
                 const pieChartPart = new PieChartPart(state, probabilities[state], PieChart.getColor(state), HumanStateManager_1.HumanStateManager.getStr(state));
-                pieChartPart.create(this.game);
                 this.data.push(pieChartPart);
             }
         });
@@ -143,8 +145,8 @@ class PieChartPart {
         this.color = color;
         this.text = text;
     }
-    create(game) {
-        this.value.create(game);
+    update() {
+        this.value.update();
     }
     getValue() {
         return this.value.getValue();

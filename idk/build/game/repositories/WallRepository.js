@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const Wall_1 = require("../objects/Wall");
-const WorldKnowledge_1 = require("../WorldKnowledge");
+const Window_1 = require("../objects/Window");
+const Door_1 = require("../objects/Door");
 class WallRepository {
     constructor() {
         this.walls = [];
@@ -22,42 +23,22 @@ class WallRepository {
         }
         return null;
     }
-    hasWall(x, y) {
-        return this.getWall(x, y) !== null;
+    hasWall(x, y, includeDoor = true) {
+        if (includeDoor) {
+            return this.getWall(x, y) !== null;
+        }
+        else {
+            return this.getWall(x, y) !== null && this.getWall(x, y).constructor.name !== 'Door';
+        }
     }
     getWalls() {
         return this.walls;
     }
-    initialize() {
-        const walls = "" +
-            "  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  \n" +
-            "  X      X             X   X      X  \n" +
-            "  X            X       XX XX      X  \n" +
-            "  X      XXXXXXX                  X  \n" +
-            "  X      X     XXXXXXXXXXXXX      X  \n" +
-            "  X      X     X           X      X  \n" +
-            "  X      X     X           X      X  \n" +
-            "  X      X     X                  X  \n" +
-            "XXXXXX XXX                 XXX XXXXXX\n" +
-            "X X            X                    X\n" +
-            "X X      X     X           X        X\n" +
-            "X X      XXXXXXXXXXXXXXXXXXX        X\n" +
-            "X X                                 X\n" +
-            "X        X                 X        X\n" +
-            "XXXXXXXXXX                 XXXXXXXXXX";
-        const lines = walls.split("\n");
-        for (let y = 0; y < WorldKnowledge_1.GRID_HEIGHT; y++) {
-            let line = lines[lines.length - 1 - y];
-            if (line === undefined) {
-                line = Array(lines[0].length).join(' ');
-            }
-            for (let x = 0; x < WorldKnowledge_1.GRID_WIDTH; x++) {
-                const cell = line[line.length - 1 - x];
-                if (cell === 'X') {
-                    this.addWall(new PIXI.Point(x, y));
-                }
-            }
-        }
+    addWindow(cell) {
+        this.walls.push(new Window_1.Window(cell));
+    }
+    addDoor(cell) {
+        this.walls.push(new Door_1.Door(cell));
     }
 }
 exports.WallRepository = WallRepository;

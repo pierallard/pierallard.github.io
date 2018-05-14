@@ -19,9 +19,9 @@ class InfoPanel {
         const left = app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH + GRAPH_GAP;
         const top = UserInterface_1.TOP_GAP + 100;
         this.softwarePrice = game.add.text(left, UserInterface_1.TOP_GAP, 'Software Price: ', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
-        this.developerCount = game.add.text(left, UserInterface_1.TOP_GAP + UserInfoPanel_1.GAP_BETWEEN_LINES, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
-        this.salesCount = game.add.text(left, UserInterface_1.TOP_GAP + UserInfoPanel_1.GAP_BETWEEN_LINES * 2, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
-        this.marketingCount = game.add.text(left, UserInterface_1.TOP_GAP + UserInfoPanel_1.GAP_BETWEEN_LINES * 3, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.developerCount = game.add.text(left, UserInterface_1.TOP_GAP + UserInfoPanel_1.MEDIUM_GAP_BETWEEN_LINES, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.salesCount = game.add.text(left, UserInterface_1.TOP_GAP + UserInfoPanel_1.MEDIUM_GAP_BETWEEN_LINES * 2, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.marketingCount = game.add.text(left, UserInterface_1.TOP_GAP + UserInfoPanel_1.MEDIUM_GAP_BETWEEN_LINES * 3, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
         this.moods = game.add.graphics(left, top, groups[Play_1.GROUP_INTERFACE]);
         this.employees = game.add.graphics(left, top + 100, groups[Play_1.GROUP_INTERFACE]);
     }

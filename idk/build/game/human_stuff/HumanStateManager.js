@@ -65,7 +65,7 @@ class HumanStateManager {
                     this.state = new TalkState_1.TalkState(this.human, this.worldKnowledge.getAnotherFreeHuman(this.human), this.worldKnowledge);
                     break;
                 case STATE.SIT_TALK:
-                    this.state = new SitTalkState_1.SitTalkState(this.human, this.worldKnowledge.getClosestReferer(['Table'], 4, this.human.getPosition()).getObject(), this.worldKnowledge.getAnotherFreeHumans(this.human, 3), this.worldKnowledge);
+                    this.state = new SitTalkState_1.SitTalkState(this.human, this.worldKnowledge.getClosestReferer(['Meeting Table'], 4, this.human.getPosition()).getObject(), this.worldKnowledge.getAnotherFreeHumans(this.human, 3), this.worldKnowledge);
                     break;
                 case STATE.SIT_PLAY:
                     this.state = new SitPlay_1.SitPlay(this.human, this.worldKnowledge);
@@ -104,7 +104,7 @@ class HumanStateManager {
     }
     getNextProbabilities() {
         const states = {};
-        if (this.worldKnowledge.getClosestReferer(['Table'], 4) !== null &&
+        if (this.worldKnowledge.getClosestReferer(['Meeting Table'], 4) !== null &&
             this.worldKnowledge.getAnotherFreeHumans(this.human, 3).length === 3) {
             states[STATE.SIT_TALK] = this.getProbability(STATE.SIT_TALK);
         }

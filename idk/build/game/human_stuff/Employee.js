@@ -200,6 +200,9 @@ class Employee {
     isSelected() {
         return ObjectSelector_1.ObjectSelector.isSelected(this.sprite);
     }
+    getSprite() {
+        return this.sprite;
+    }
     resetAStar(newNonEmptyCell = null) {
         this.closestPathFinder.reset();
         if (newNonEmptyCell && this.path !== null) {
@@ -275,11 +278,15 @@ class Employee {
     getMoveTime() {
         return this.path.length * this.getWalkDuration();
     }
-    pause() {
-        this.animationManager.pause();
-    }
-    resume() {
-        this.animationManager.resume();
+    // pause() {
+    //     this.animationManager.pause();
+    // }
+    //
+    // resume() {
+    //     this.animationManager.resume();
+    // }
+    select() {
+        ObjectSelector_1.ObjectSelector.click(this.sprite, null, [this.sprite]);
     }
 }
 exports.Employee = Employee;

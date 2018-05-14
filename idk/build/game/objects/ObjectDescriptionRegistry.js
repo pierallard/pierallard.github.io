@@ -16,11 +16,12 @@ class ObjectDescriptionRegistry {
                 return this.objectDescriptions[i];
             }
         }
+        debugger;
         throw "Impossible to find info for " + name;
     }
     static generateObjectDescriptions() {
         this.objectDescriptions = [];
-        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Dispenser', [new PIXI.Point(0, 0)], [
+        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Dispenser', 1, [new PIXI.Point(0, 0)], [
             new SpriteInfo_1.SpriteInfo('dispenser', new PIXI.Point(-4, -4), 3)
         ], [
             new SpriteInfo_1.SpriteInfo('dispenser_reverse', new PIXI.Point(-4, -4), 0)
@@ -29,12 +30,12 @@ class ObjectDescriptionRegistry {
         ], [
             new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP], new PIXI.Point(5, -PositionTransformer_1.CELL_HEIGHT + 3))
         ], new Price_1.Price(70)));
-        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Sofa', [new PIXI.Point(0, 0)], [
+        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Sofa', 1, [new PIXI.Point(0, 0)], [
             new SpriteInfo_1.SpriteInfo('sofa', new PIXI.Point(0, -8), 3, new PIXI.Point(0, 0))
         ], [], [
             new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.RIGHT, Direction_1.DIRECTION.BOTTOM], new PIXI.Point(0, -7), new PIXI.Point(0, 0), null, false)
         ], [], new Price_1.Price(10)));
-        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Desk', [new PIXI.Point(0, 0)], [
+        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Desk', 1, [new PIXI.Point(0, 0)], [
             new SpriteInfo_1.SpriteInfo('chair', new PIXI.Point(-10, -8), 5),
             new SpriteInfo_1.SpriteInfo('desk', new PIXI.Point(0, 0), 4)
         ], [
@@ -45,7 +46,7 @@ class ObjectDescriptionRegistry {
         ], [
             new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.LEFT, Direction_1.DIRECTION.RIGHT], new PIXI.Point(-3, -8), new PIXI.Point(0, 0), false, true),
         ], new Price_1.Price(20)));
-        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Table', [
+        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Meeting Table', 3, [
             new PIXI.Point(0, 0),
             new PIXI.Point(1, 1),
             new PIXI.Point(1, 0),
@@ -65,7 +66,7 @@ class ObjectDescriptionRegistry {
             new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.RIGHT], new PIXI.Point(4, -7), new PIXI.Point(0, 1), true, true),
             new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.BOTTOM, Direction_1.DIRECTION.RIGHT], new PIXI.Point(4, -7), new PIXI.Point(0, 0), true, true),
         ], [], new Price_1.Price(12)));
-        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Couch', [
+        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Couch', 2, [
             new PIXI.Point(0, 0),
             new PIXI.Point(0, 1),
         ], [
@@ -82,7 +83,7 @@ class ObjectDescriptionRegistry {
             new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP], new PIXI.Point(-1, -8), new PIXI.Point(0, 0), false, true),
             new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP], new PIXI.Point(-1, -8), new PIXI.Point(1, 0), false, true),
         ], new Price_1.Price(10)));
-        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Console', [
+        this.objectDescriptions.push(new ObjectDescription_1.ObjectDescription('Console', 4, [
             new PIXI.Point(0, 0),
             new PIXI.Point(1, 1),
             new PIXI.Point(1, 0),
@@ -104,11 +105,13 @@ class ObjectDescriptionRegistry {
             new InteractivePoint_1.InteractivePoint([Direction_1.DIRECTION.TOP, Direction_1.DIRECTION.LEFT], new PIXI.Point(-1 - PositionTransformer_1.CELL_WIDTH / 2, -8 + PositionTransformer_1.CELL_HEIGHT / 2), new PIXI.Point(1, 1), false, true),
         ], new Price_1.Price(10)));
     }
-    static getSalableObjects() {
+    static getSalableObjects(level) {
         if (this.objectDescriptions === null) {
             this.generateObjectDescriptions();
         }
-        return this.objectDescriptions;
+        return this.objectDescriptions.filter((objectDescription) => {
+            return objectDescription.getMinLevel() <= level;
+        });
     }
 }
 ObjectDescriptionRegistry.objectDescriptions = null;

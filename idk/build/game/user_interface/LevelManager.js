@@ -3,9 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const HumanPropertiesFactory_1 = require("../human_stuff/HumanPropertiesFactory");
 const SmoothValue_1 = require("../SmoothValue");
 const Price_1 = require("../objects/Price");
-const DEVELOPER_RATIO = 500;
-const MARKETING_RATIO = 5;
-const SALE_RATIO = 10;
+exports.DEVELOPER_RATIO = 500;
+exports.MARKETING_RATIO = 5;
+exports.SALE_RATIO = 10;
 const STARTING_LEVEL = 1;
 const GLOBAL_PROGRESS_EARN = 7;
 class LevelManager {
@@ -30,13 +30,13 @@ class LevelManager {
         let realValue = 0;
         switch (type) {
             case HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER:
-                realValue = value * DEVELOPER_RATIO / GLOBAL_PROGRESS_EARN;
+                realValue = value * exports.DEVELOPER_RATIO / GLOBAL_PROGRESS_EARN;
                 break;
             case HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING:
-                realValue = value * MARKETING_RATIO / GLOBAL_PROGRESS_EARN;
+                realValue = value * exports.MARKETING_RATIO / GLOBAL_PROGRESS_EARN;
                 break;
             case HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE:
-                realValue = value * SALE_RATIO / GLOBAL_PROGRESS_EARN;
+                realValue = value * exports.SALE_RATIO / GLOBAL_PROGRESS_EARN;
                 break;
         }
         this.levels[type].add(realValue, time);
@@ -67,9 +67,9 @@ class LevelManager {
             return 0;
         }
         switch (type) {
-            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER: return DEVELOPER_RATIO * Math.pow(2, this.level - 1);
-            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE: return SALE_RATIO * Math.pow(2, this.level - 2);
-            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING: return MARKETING_RATIO * Math.pow(2, this.level - 3);
+            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.DEVELOPER: return exports.DEVELOPER_RATIO * Math.pow(2, this.level - 1);
+            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE: return exports.SALE_RATIO * Math.pow(2, this.level - 2);
+            case HumanPropertiesFactory_1.EMPLOYEE_TYPE.MARKETING: return exports.MARKETING_RATIO * Math.pow(2, this.level - 3);
         }
     }
     getEarnedMoney() {

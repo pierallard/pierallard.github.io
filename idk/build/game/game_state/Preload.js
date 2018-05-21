@@ -29,6 +29,7 @@ class Preload extends Phaser.State {
             });
         });
         this.game.load.spritesheet('casedefault', 'assets/casedefault.png', 40, 19);
+        this.game.load.spritesheet('ambiance', 'assets/ambiance.png', 40, 19);
         this.game.load.spritesheet('woodcell', 'assets/woodcell.png', 40, 19);
         this.game.load.spritesheet('case_floortile', 'assets/case_floortile.png', 40, 19);
         this.game.load.spritesheet('chair', 'assets/chair.png', 40, 40);
@@ -51,7 +52,7 @@ class Preload extends Phaser.State {
         this.game.load.spritesheet('bubble_images', 'assets/bubble_images.png', 9, 7);
         this.game.load.spritesheet('bubble_images_angry', 'assets/bubble_images_angry.png', 9, 7);
         this.game.load.spritesheet('forbidden', 'assets/forbidden.png', 12, 12);
-        this.game.load.spritesheet('buy_button', 'assets/buy_button.png', 10, 10);
+        this.game.load.spritesheet('buy_button', 'assets/buy_button.png', 14, 14);
         this.game.load.spritesheet('interfacetabs', 'assets/interfacetabs.png', 28, 12);
         this.game.load.spritesheet('couch_part1', 'assets/couch_part1.png', 60, 39);
         this.game.load.spritesheet('couch_part2', 'assets/couch_part2.png', 60, 39);
@@ -63,6 +64,12 @@ class Preload extends Phaser.State {
         this.game.load.spritesheet('tv_reverse', 'assets/tv_reverse.png', 24, 35);
         this.game.load.spritesheet('tv', 'assets/tv.png', 24, 35);
         this.game.load.spritesheet('info', 'assets/info.png', 12, 12);
+        this.game.load.spritesheet('lamp', 'assets/lamp.png', 40, 50);
+        this.game.load.spritesheet('lamp_reverse', 'assets/lamp_reverse.png', 40, 50);
+        this.game.load.spritesheet('printer', 'assets/printer.png', 40, 35);
+        this.game.load.spritesheet('printer_reverse', 'assets/printer_reverse.png', 40, 35);
+        this.game.load.spritesheet('check', 'assets/check.png', 5, 5);
+        this.game.load.spritesheet('bonzai', 'assets/bonzai.png', 40, 40);
     }
     loadFonts() {
         this.game.load.bitmapFont('retro_computer', 'assets/font/font.png', 'assets/font/font.ftn');

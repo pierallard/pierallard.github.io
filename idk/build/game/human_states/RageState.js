@@ -20,7 +20,6 @@ class RageState extends AbstractState_1.AbstractState {
             }
             this.human.updateMoodFromState();
             const time = HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.RAGE) + 3 * Phaser.Timer.SECOND;
-            this.startTimer(time);
             this.human.showThoughtBubble(this.sourceState.getRageImage());
             this.events.push(this.game.time.events.add(HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.RAGE), () => {
                 this.human.hideThoughtBubble();
@@ -32,6 +31,9 @@ class RageState extends AbstractState_1.AbstractState {
         }
         return super.getNextState();
     }
+    getDescription() {
+        return "Can't do what he wants!";
+    }
     getState() {
         return HumanStateManager_1.STATE.RAGE;
     }
@@ -40,6 +42,10 @@ class RageState extends AbstractState_1.AbstractState {
     }
     getSourceState() {
         return this.sourceState;
+    }
+    stop() {
+        this.human.hideThoughtBubble();
+        super.stop();
     }
 }
 exports.RageState = RageState;

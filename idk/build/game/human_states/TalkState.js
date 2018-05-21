@@ -38,6 +38,19 @@ class TalkState extends AbstractState_1.AbstractState {
         }
         return super.getNextState();
     }
+    getDescription() {
+        if (!this.meetingStarted) {
+            if (this.human.isMoving()) {
+                return 'is looking for a place to talk';
+            }
+            else {
+                return 'is waiting for somebody to talk';
+            }
+        }
+        else {
+            return 'is talking';
+        }
+    }
     switchAnimation(animation) {
         const direction = Direction_1.Direction.getNeighborDirection(this.human.getPosition(), this.meeting.getAnotherHuman(this.human).getPosition());
         if (animation === HumanAnimationManager_1.ANIMATION.TALK) {
@@ -51,6 +64,9 @@ class TalkState extends AbstractState_1.AbstractState {
     }
     start(game) {
         super.start(game);
+        if (this.anotherHuman === null && this.meeting === null) {
+            return false;
+        }
         if (this.meeting === null) {
             this.meeting = new Meeting_1.Meeting([this.human, this.anotherHuman], Phaser.Math.random(8, 20) * Phaser.Timer.SECOND, this.worldKnowledge);
             if (!this.anotherHuman.goMeeting(this.meeting)) {
@@ -75,7 +91,7 @@ class TalkState extends AbstractState_1.AbstractState {
         return animation === HumanAnimationManager_1.ANIMATION.TALK ? HumanAnimationManager_1.ANIMATION.FREEZE : HumanAnimationManager_1.ANIMATION.TALK;
     }
     getRageImage() {
-        return ThoughtBubble_1.RAGE_IMAGE.PATH;
+        return ThoughtBubble_1.RAGE_IMAGE.HUMAN;
     }
 }
 exports.TalkState = TalkState;

@@ -11,6 +11,9 @@ class MoveRandomState extends AbstractState_1.AbstractState {
             this.goal = worldKnowledge.getRandomCell();
         }
     }
+    getDescription() {
+        return 'Stretching his legs';
+    }
     getNextState() {
         return (this.active && this.human.getPosition().x !== this.goal.x ||
             this.human.getPosition().y !== this.goal.y ||
@@ -19,7 +22,6 @@ class MoveRandomState extends AbstractState_1.AbstractState {
     start(game) {
         super.start(game);
         if (!this.human.moveTo(this.goal)) {
-            this.startTimer(this.human.getMoveTime());
             this.stop();
             return false;
         }

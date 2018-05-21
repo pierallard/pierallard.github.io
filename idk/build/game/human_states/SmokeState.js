@@ -11,7 +11,6 @@ class SmokeState extends AbstractState_1.AbstractState {
     start(game) {
         super.start(game);
         const time = Phaser.Math.random(1, 3) * HumanAnimationManager_1.HumanAnimationManager.getAnimationTime(HumanAnimationManager_1.ANIMATION.SMOKE);
-        this.startTimer(time);
         game.time.events.add(time, () => {
             this.active = false;
         }, this);
@@ -21,6 +20,9 @@ class SmokeState extends AbstractState_1.AbstractState {
     }
     getState() {
         return HumanStateManager_1.STATE.SMOKE;
+    }
+    getDescription() {
+        return 'is smoking';
     }
 }
 exports.SmokeState = SmokeState;

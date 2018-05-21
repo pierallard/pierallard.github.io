@@ -17,6 +17,8 @@ const AbstractObject_1 = require("../objects/AbstractObject");
 const ObjectOrientation_1 = require("../objects/ObjectOrientation");
 const MAX_WALK_CELL_DURATION = 1500;
 const MIN_WALK_CELL_DURATION = 800;
+const XP_MIN = 0.5;
+const XP_MAX = 1.5;
 const MAX_RETRIES = 3;
 const MIN_RETRIES = 0;
 const GAP_FROM_BOTTOM = -8;
@@ -223,7 +225,7 @@ class Employee {
         }
     }
     isFree() {
-        return [HumanStateManager_1.STATE.MOVE_RANDOM, HumanStateManager_1.STATE.FREEZE, HumanStateManager_1.STATE.SMOKE].indexOf(this.getStateType()) > -1;
+        return [HumanStateManager_1.STATE.MOVE_RANDOM, HumanStateManager_1.STATE.FREEZE, HumanStateManager_1.STATE.SMOKE, HumanStateManager_1.STATE.RAGE].indexOf(this.getStateType()) > -1;
     }
     getStateType() {
         return this.stateManager.getStateType();
@@ -287,6 +289,9 @@ class Employee {
     // }
     select() {
         ObjectSelector_1.ObjectSelector.click(this.sprite, null, [this.sprite]);
+    }
+    getExperienceRatio() {
+        return ((XP_MAX - XP_MIN) * this.humanProperties.getExperience() + XP_MIN);
     }
 }
 exports.Employee = Employee;

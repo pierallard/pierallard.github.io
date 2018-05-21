@@ -5,6 +5,7 @@ const ObjectDescriptionRegistry_1 = require("./ObjectDescriptionRegistry");
 const ObjectReferer_1 = require("./ObjectReferer");
 const ObjectOrientation_1 = require("./ObjectOrientation");
 const Pico8Colors_1 = require("../Pico8Colors");
+const ObjectDeleter_1 = require("./ObjectDeleter");
 exports.SPRITE_DEBUG = false;
 class AbstractObject {
     constructor(point, worldKnowledge, orientation) {
@@ -30,6 +31,7 @@ class AbstractObject {
             this.sprites.push(sprite);
             groups[Play_1.GROUP_OBJECTS_AND_HUMANS].add(sprite);
         });
+        ObjectDeleter_1.ObjectDeleter.makeDeletable(this, game, groups[Play_1.GROUP_INFOS]);
         if (exports.SPRITE_DEBUG) {
             this.debugGraphics = game.add.graphics(0, 0, groups[Play_1.GROUP_INTERFACE]);
             infos.getSpriteInfos(this.orientation).forEach((spriteInfo) => {

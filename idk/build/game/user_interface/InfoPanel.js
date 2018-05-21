@@ -22,13 +22,32 @@ class InfoPanel {
         this.developerCount = game.add.text(left, UserInterface_1.TOP_GAP + UserInfoPanel_1.MEDIUM_GAP_BETWEEN_LINES, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
         this.salesCount = game.add.text(left, UserInterface_1.TOP_GAP + UserInfoPanel_1.MEDIUM_GAP_BETWEEN_LINES * 2, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
         this.marketingCount = game.add.text(left, UserInterface_1.TOP_GAP + UserInfoPanel_1.MEDIUM_GAP_BETWEEN_LINES * 3, '', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
+        this.check = game.add.sprite(left, UserInterface_1.TOP_GAP + UserInfoPanel_1.MEDIUM_GAP_BETWEEN_LINES * 4 + 3, 'check', 0, groups[Play_1.GROUP_INTERFACE]);
+        this.ambiance = game.add.text(left + 7, UserInterface_1.TOP_GAP + UserInfoPanel_1.MEDIUM_GAP_BETWEEN_LINES * 4, 'Ambiance', TextStyle_1.TEXT_STYLE, groups[Play_1.GROUP_INTERFACE]);
         this.moods = game.add.graphics(left, top, groups[Play_1.GROUP_INTERFACE]);
         this.employees = game.add.graphics(left, top + 100, groups[Play_1.GROUP_INTERFACE]);
+        this.check.anchor.set(0, 0);
+        this.check.inputEnabled = true;
+        this.check.input.pixelPerfectOver = true;
+        this.check.input.pixelPerfectClick = true;
+        this.check.input.useHandCursor = true;
+        this.check.events.onInputDown.add(this.toggleAmbiance, this);
+    }
+    toggleAmbiance() {
+        if (this.worldKnowledge.getAmbianceDisplayed()) {
+            this.check.loadTexture('check', 0);
+        }
+        else {
+            this.check.loadTexture('check', 1);
+        }
+        this.worldKnowledge.setAmbianceDisplayed(!this.worldKnowledge.getAmbianceDisplayed());
     }
     update() {
         if (this.visible) {
-            const lastMoods = this.worldKnowledge.getLastMoods();
-            InfoPanel.drawChart(this.moods, [lastMoods], 1, [null]);
+            //const lastMoods = this.worldKnowledge.getLastMoods();
+            //InfoPanel.drawChart(this.moods, [lastMoods], 1, [null]);
+            const lastLevels = this.worldKnowledge.getLastEmployeesLevel();
+            InfoPanel.drawChart(this.moods, lastLevels, null, [Pico8Colors_1.COLOR.LIGHT_GREEN, Pico8Colors_1.COLOR.RED, Pico8Colors_1.COLOR.ROSE]);
             const lastEmployees = this.worldKnowledge.getLastEmployeesCount();
             InfoPanel.drawChart(this.employees, lastEmployees, null, [Pico8Colors_1.COLOR.LIGHT_GREEN, Pico8Colors_1.COLOR.RED, Pico8Colors_1.COLOR.ROSE]);
             this.softwarePrice.setText('Software Price: ' + this.worldKnowledge.getSoftwarePrice().getStringValue());
@@ -45,6 +64,8 @@ class InfoPanel {
             this.developerCount.position.x -= UserInterface_1.INTERFACE_WIDTH;
             this.salesCount.position.x -= UserInterface_1.INTERFACE_WIDTH;
             this.marketingCount.position.x -= UserInterface_1.INTERFACE_WIDTH;
+            this.check.position.x -= UserInterface_1.INTERFACE_WIDTH;
+            this.ambiance.position.x -= UserInterface_1.INTERFACE_WIDTH;
         }
         this.visible = true;
     }
@@ -56,16 +77,14 @@ class InfoPanel {
             this.developerCount.position.x += UserInterface_1.INTERFACE_WIDTH;
             this.salesCount.position.x += UserInterface_1.INTERFACE_WIDTH;
             this.marketingCount.position.x += UserInterface_1.INTERFACE_WIDTH;
+            this.check.position.x += UserInterface_1.INTERFACE_WIDTH;
+            this.ambiance.position.x += UserInterface_1.INTERFACE_WIDTH;
         }
         this.visible = false;
     }
     static drawChart(graphics, valuesSet, max = null, colors = []) {
         const graphWidth = UserInterface_1.INTERFACE_WIDTH - 2 * GRAPH_GAP;
         graphics.clear();
-        graphics.lineStyle(1, Pico8Colors_1.COLOR.WHITE);
-        graphics.moveTo(0, 0);
-        graphics.lineTo(0, HEIGHT);
-        graphics.lineTo(graphWidth, HEIGHT);
         graphics.lineStyle(1, Pico8Colors_1.COLOR.DARK_GREY);
         for (let i = 0; i < 10; i++) {
             graphics.moveTo(1, i * HEIGHT / 10);
@@ -90,6 +109,10 @@ class InfoPanel {
                 }
             }
         }
+        graphics.lineStyle(1, Pico8Colors_1.COLOR.WHITE);
+        graphics.moveTo(0, 0);
+        graphics.lineTo(0, HEIGHT);
+        graphics.lineTo(graphWidth, HEIGHT);
     }
     static getMaxFromValuesSet(valuesSet) {
         let result = 0;

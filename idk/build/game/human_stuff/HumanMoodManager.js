@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const HumanStateManager_1 = require("./HumanStateManager");
 const SmoothValue_1 = require("../SmoothValue");
-const LOSS = -0.05;
+const LOSS = -0.025;
 const DEFAULT = 0.8;
 const TIME_BETWEEN_LOSS = 10000;
 var MOOD;

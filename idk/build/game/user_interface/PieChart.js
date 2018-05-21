@@ -29,7 +29,7 @@ class PieChart {
     }
     create(game, groups) {
         this.game = game;
-        this.graphics = game.add.graphics(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH / 2, 180, groups[Play_1.GROUP_INTERFACE]);
+        this.graphics = game.add.graphics(app_1.CAMERA_WIDTH_PIXELS - UserInterface_1.INTERFACE_WIDTH / 2, 200, groups[Play_1.GROUP_INTERFACE]);
         this.drawPieChart();
         this.tooltip.setInput(this, [this.graphics]);
         groups[Play_1.GROUP_INTERFACE].add(this.graphics);

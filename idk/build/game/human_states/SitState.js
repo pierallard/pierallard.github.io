@@ -32,6 +32,14 @@ class SitState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
     getState() {
         return HumanStateManager_1.STATE.SIT;
     }
+    getDescription() {
+        if (!this.isHumanOnTheRightCell) {
+            return super.getDescription();
+        }
+        else {
+            return 'is resting';
+        }
+    }
     subGetRageImage() {
         return ThoughtBubble_1.RAGE_IMAGE.SLEEP;
     }

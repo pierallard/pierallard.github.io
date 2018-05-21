@@ -17,8 +17,7 @@ class SitPlay extends MoveThenActAbstractState_1.MoveThenActAbstractState {
         return HumanStateManager_1.STATE.SIT_PLAY;
     }
     subGetRageImage() {
-        // TODO Set another image!
-        return ThoughtBubble_1.RAGE_IMAGE.SLEEP;
+        return ThoughtBubble_1.RAGE_IMAGE.CONSOLE;
     }
     act() {
         this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.SIT_DOWN, this.objectReferer.getObject().forceLeftOrientation(this.objectReferer.getIdentifier()), this.objectReferer.getObject().forceTopOrientation(this.objectReferer.getIdentifier()));
@@ -35,6 +34,14 @@ class SitPlay extends MoveThenActAbstractState_1.MoveThenActAbstractState {
                 }, this));
             }, this));
         }, this));
+    }
+    getDescription() {
+        if (!this.isHumanOnTheRightCell) {
+            return super.getDescription();
+        }
+        else {
+            return 'is playing';
+        }
     }
     getRetryState() {
         return new SitPlay(this.human, this.worldKnowledge, this.tries + 1);

@@ -24,11 +24,16 @@ const Console_1 = require("./objects/Console");
 const Floor_1 = require("./Floor");
 const Infobox_1 = require("./user_interface/Infobox");
 const ObjectDescriptionRegistry_1 = require("./objects/ObjectDescriptionRegistry");
+const EmployeeLevelRegister_1 = require("./human_stuff/EmployeeLevelRegister");
+const Lamp_1 = require("./objects/Lamp");
+const Printer_1 = require("./objects/Printer");
+const Bonzai_1 = require("./objects/Bonzai");
 exports.GRID_WIDTH = 37;
 exports.GRID_HEIGHT = 15;
 exports.DEBUG_WORLD = false;
 class WorldKnowledge {
     constructor() {
+        this.displayAmbiance = false;
         this.cells = [];
         this.objects = [];
         this.floors = [];
@@ -36,6 +41,7 @@ class WorldKnowledge {
         this.levelManager = new LevelManager_1.LevelManager();
         this.depot = new Depot_1.Depot();
         this.wallet = new SmoothValue_1.SmoothValue(1500);
+        this.infoboxes = [];
         const walls = "" +
             "  XXXWXXXXXWXXXXXXXXXXXXXWXXXXXWXXX  \n" +
             "  X      X     D       X   X      X  \n" +
@@ -83,7 +89,7 @@ class WorldKnowledge {
                 const wallCell = wallLine[wallLine.length - 1 - x];
                 const floorCell = floorLine[floorLine.length - 1 - x];
                 if (floorCell !== ' ') {
-                    this.cells.push(new Cell_1.Cell(new PIXI.Point(x, y)));
+                    this.cells.push(new Cell_1.Cell(this, new PIXI.Point(x, y)));
                 }
                 if (floorCell === '.') {
                     this.floors.push(new Floor_1.Floor(new PIXI.Point(x, y), 'woodcell'));
@@ -105,6 +111,7 @@ class WorldKnowledge {
         this.humanRepository = new HumanRepository_1.HumanRepository(this);
         this.moodRegister = new MoodRegister_1.MoodRegister(this.humanRepository);
         this.employeeCountRegister = new EmployeeCountRegister_1.EmployeeCountRegister(this.humanRepository);
+        this.levelRegister = new EmployeeLevelRegister_1.EmployeeLevelRegister(this.levelManager);
     }
     create(game, groups) {
         this.game = game;
@@ -115,7 +122,7 @@ class WorldKnowledge {
             floors.create(game, floorGroup);
         });
         this.cells.forEach((cell) => {
-            cell.create(game, floorGroup);
+            cell.create(game, groups);
         });
         this.objects.forEach((object) => {
             object.create(game, groups);
@@ -124,6 +131,7 @@ class WorldKnowledge {
         this.humanRepository.create(game, groups, this);
         this.moodRegister.create(game);
         this.employeeCountRegister.create(game);
+        this.levelRegister.create(game);
     }
     update() {
         this.wallet.update();
@@ -131,6 +139,18 @@ class WorldKnowledge {
         if (this.levelManager.update()) {
             this.addMoneyInWallet(this.levelManager.getEarnedMoney());
             this.displayLevelInfoBox();
+        }
+        this.cells.forEach((cell) => {
+            cell.update();
+        });
+        for (let i = 0; i < this.infoboxes.length; i++) {
+            if (this.infoboxes[i].isVisible()) {
+                this.infoboxes[i].update();
+            }
+            else {
+                this.infoboxes.splice(i, 1);
+                i--;
+            }
         }
     }
     humanMoved() {
@@ -391,6 +411,15 @@ class WorldKnowledge {
             case 'Console':
                 object = new Console_1.Console(position, this, orientation);
                 break;
+            case 'Lamp':
+                object = new Lamp_1.Lamp(position, this, orientation);
+                break;
+            case 'Printer':
+                object = new Printer_1.Printer(position, this, orientation);
+                break;
+            case 'Bonzai':
+                object = new Bonzai_1.Bonzai(position, this, orientation);
+                break;
             default: throw 'Unknown object ' + name;
         }
         this.objects.push(object);
@@ -411,9 +440,9 @@ class WorldKnowledge {
     getLevelProgress(type) {
         return this.levelManager.getLevelProgress(type);
     }
-    addProgress(type, value, time) {
-        this.levelManager.addLevelProgress(type, value, time);
-        if (type === HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE) {
+    addProgress(employee, value, time) {
+        this.levelManager.addLevelProgress(employee.getType(), value, time);
+        if (employee.getType() === HumanPropertiesFactory_1.EMPLOYEE_TYPE.SALE) {
             this.addMoneyInWallet(new Price_1.Price(value * this.levelManager.getSoftwarePrice().getValue()), time);
         }
     }
@@ -457,6 +486,9 @@ class WorldKnowledge {
     getLastEmployeesCount() {
         return this.employeeCountRegister.getLastCounts();
     }
+    getLastEmployeesLevel() {
+        return this.levelRegister.getLastCounts();
+    }
     // pause() {
     //     this.humanRepository.humans.forEach((human) => {
     //         human.pause();
@@ -499,14 +531,57 @@ class WorldKnowledge {
                 availables.push('- ' + objectDescription.getName());
             }
         });
-        const infoBox = new Infobox_1.InfoBox('Next level!', [
+        let text = [
             'Congratulations! You reached the level ' + this.getLevel() + '!',
             'Next goals:'
-        ].concat(strings).concat([
-            '',
-            'Now available:'
-        ]).concat(availables), 'Oh yeah!');
+        ].concat(strings);
+        if (availables.length > 0) {
+            text = text.concat([
+                '',
+                'Now available:'
+            ]).concat(availables);
+        }
+        const infoBox = new Infobox_1.InfoBox('Next level!', text, 'Oh yeah!');
         infoBox.create(this.game, this.groups);
+        this.infoboxes.push(infoBox);
+    }
+    getHumanCount() {
+        return this.humanRepository.humans.length;
+    }
+    getAmbiance(cell) {
+        let result = 1;
+        this.objects.forEach((object) => {
+            let ambiance = object.getDescription().getAmbiance();
+            if (ambiance) {
+                let distance = Math.sqrt((cell.x - object.getOrigin().x) * (cell.x - object.getOrigin().x) +
+                    (cell.y - object.getOrigin().y) * (cell.y - object.getOrigin().y));
+                let maxDistance = object.getDescription().getRadius();
+                if (distance < maxDistance) {
+                    result += ambiance * (maxDistance - distance) / maxDistance;
+                }
+            }
+        });
+        return Math.min(2, Math.max(0, result));
+    }
+    getAmbianceDisplayed() {
+        return this.displayAmbiance;
+    }
+    setAmbianceDisplayed(value) {
+        this.displayAmbiance = value;
+    }
+    initializeInfoBox() {
+        const infobox = new Infobox_1.InfoBox('Welcome!', [
+            'Welcome to Office Tycoon!',
+            '',
+            'You are in charge of the recruitment to run',
+            'your business.',
+            'Complete your goals for each level and you will',
+            'gain new people, new objects for your employees!',
+            'Be careful of the health of your employees, the',
+            'better they are, the better they work.'
+        ], 'OK, let\'s go!');
+        infobox.create(this.game, this.groups);
+        this.infoboxes.push(infobox);
     }
 }
 exports.WorldKnowledge = WorldKnowledge;

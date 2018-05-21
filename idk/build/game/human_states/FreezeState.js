@@ -8,11 +8,13 @@ class FreezeState extends AbstractState_1.AbstractState {
         super.start(game);
         this.human.loadAnimation(HumanAnimationManager_1.ANIMATION.FREEZE);
         const time = Phaser.Math.random(1, 2) * Phaser.Timer.SECOND;
-        this.startTimer(time);
         this.event = game.time.events.add(time, () => {
             this.active = false;
         }, this);
         return true;
+    }
+    getDescription() {
+        return 'Do nothing.';
     }
     getState() {
         return HumanStateManager_1.STATE.FREEZE;

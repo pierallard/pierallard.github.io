@@ -5,7 +5,6 @@ class AbstractState {
         this.events = [];
         this.active = false;
         this.human = human;
-        this.remainingTime = null;
     }
     getNextState() {
         return this.active ? this : null;
@@ -20,15 +19,6 @@ class AbstractState {
             this.game.time.events.remove(event);
         });
         this.active = false;
-    }
-    startTimer(value) {
-        this.remainingTime = value;
-        this.game.time.events.loop(Phaser.Timer.SECOND, () => {
-            this.remainingTime = Math.max(this.remainingTime - Phaser.Timer.SECOND, 0);
-        }, this);
-    }
-    getRemainingSeconds() {
-        return Math.round(this.remainingTime / Phaser.Timer.SECOND);
     }
 }
 exports.AbstractState = AbstractState;

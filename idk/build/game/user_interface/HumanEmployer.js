@@ -132,8 +132,8 @@ class ApplicantButton {
         }).setInput(this, this.drawStars(game, 'coin', this.humanProperties.getWage(), left + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE + 2, top + 18, groups[Play_1.GROUP_INTERFACE]))
             .create(game, groups));
         this.tooltips.push(new Tooltip_1.Tooltip(() => {
-            return 'Exp: ' + Math.round(this.humanProperties.getQuality() * 100) + '%';
-        }).setInput(this, this.drawStars(game, 'star', this.humanProperties.getQuality(), left + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE + 55, top + 18, groups[Play_1.GROUP_INTERFACE]))
+            return 'Exp: ' + Math.round(this.humanProperties.getExperience() * 100) + '%';
+        }).setInput(this, this.drawStars(game, 'star', this.humanProperties.getExperience(), left + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE + 55, top + 18, groups[Play_1.GROUP_INTERFACE]))
             .create(game, groups));
         this.tooltips.push(new Tooltip_1.Tooltip(() => {
             return 'Speed: ' + Math.round(this.humanProperties.getSpeed() * 100) + '%';
@@ -143,6 +143,12 @@ class ApplicantButton {
             return 'Perseverance: ' + Math.round(this.humanProperties.getPerseverance() * 100) + '%';
         }).setInput(this, this.drawStars(game, 'star', this.humanProperties.getPerseverance(), left + ObjectSeller_1.OBJECT_SELLER_CELL_SIZE + 55, top + 28, groups[Play_1.GROUP_INTERFACE]))
             .create(game, groups));
+        this.cancelButton = game.add.sprite(app_1.CAMERA_WIDTH_PIXELS - 16, top, 'buy_button', 3, groups[Play_1.GROUP_INTERFACE]);
+        this.cancelButton.inputEnabled = true;
+        this.cancelButton.input.pixelPerfectOver = true;
+        this.cancelButton.input.pixelPerfectClick = true;
+        this.cancelButton.input.useHandCursor = true;
+        this.cancelButton.events.onInputDown.add(this.cancel, this, 0);
     }
     hide() {
         this.sprite.position.x += UserInterface_1.INTERFACE_WIDTH;
@@ -150,6 +156,7 @@ class ApplicantButton {
         this.typeText.position.x += UserInterface_1.INTERFACE_WIDTH;
         this.square.position.x += UserInterface_1.INTERFACE_WIDTH + 10;
         this.remainingGauge.hide();
+        this.cancelButton.position.x += UserInterface_1.INTERFACE_WIDTH;
         this.stars.forEach((star) => {
             star.position.x += UserInterface_1.INTERFACE_WIDTH;
         });
@@ -159,6 +166,7 @@ class ApplicantButton {
         this.name.position.x -= UserInterface_1.INTERFACE_WIDTH;
         this.typeText.position.x -= UserInterface_1.INTERFACE_WIDTH;
         this.square.position.x -= UserInterface_1.INTERFACE_WIDTH + 10;
+        this.cancelButton.position.x -= UserInterface_1.INTERFACE_WIDTH;
         this.remainingGauge.show();
         this.stars.forEach((star) => {
             star.position.x -= UserInterface_1.INTERFACE_WIDTH;
@@ -167,6 +175,10 @@ class ApplicantButton {
     click() {
         this.destroy();
         this.humanEmployer.employ(this);
+    }
+    cancel() {
+        this.destroy();
+        this.humanEmployer.cancel(this);
     }
     getHumanProperties() {
         return this.humanProperties;
@@ -189,8 +201,12 @@ class ApplicantButton {
         this.typeText.destroy(true);
         this.square.destroy(true);
         this.remainingGauge.destroy(true);
+        this.cancelButton.destroy(true);
         this.stars.forEach((star) => {
             star.destroy(true);
+        });
+        this.tooltips.forEach((tooltip) => {
+            tooltip.destroy();
         });
     }
     drawStars(game, key, value, left, top, group) {

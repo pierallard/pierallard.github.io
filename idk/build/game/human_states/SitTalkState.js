@@ -18,6 +18,19 @@ class SitTalkState extends AbstractState_1.AbstractState {
         this.isHumanOnTheRightCell = false;
         this.isHumanSit = false;
     }
+    getDescription() {
+        if (!this.isHumanOnTheRightCell) {
+            return 'Looking for a meeting table';
+        }
+        else {
+            if (this.meetingStarted) {
+                return 'is in a meeting';
+            }
+            else {
+                return 'is waiting for his colleagues';
+            }
+        }
+    }
     getNextState() {
         if (!this.worldKnowledge.hasObject(this.table)) {
             this.active = false;
@@ -110,7 +123,7 @@ class SitTalkState extends AbstractState_1.AbstractState {
         return animation === HumanAnimationManager_1.ANIMATION.SIT_TALK ? HumanAnimationManager_1.ANIMATION.SIT_FREEZE : HumanAnimationManager_1.ANIMATION.SIT_TALK;
     }
     getRageImage() {
-        return ThoughtBubble_1.RAGE_IMAGE.PATH;
+        return ThoughtBubble_1.RAGE_IMAGE.TABLE;
     }
 }
 exports.SitTalkState = SitTalkState;

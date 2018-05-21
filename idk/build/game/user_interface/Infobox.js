@@ -15,6 +15,8 @@ class InfoBox {
         this.elements = [];
     }
     create(game, groups) {
+        this.escapeKey = game.input.keyboard.addKey(Phaser.Keyboard.ESC);
+        this.visible = true;
         const closableElements = [];
         const internalWidth = this.getMaxLength() * LETTER_WIDTH;
         const internalHeight = LETTER_HEIGHT * this.textLines.length + 12 + 12;
@@ -73,7 +75,13 @@ class InfoBox {
             sprite.events.onInputDown.add(this.close, this);
         });
     }
+    update() {
+        if (this.escapeKey.isDown) {
+            this.close();
+        }
+    }
     close() {
+        this.visible = false;
         this.elements.forEach((element) => {
             element.destroy(true);
         });
@@ -83,6 +91,9 @@ class InfoBox {
         return this.textLines.concat(this.title).concat(this.buttonText).reduce((prev, str) => {
             return Math.max(prev, str.length);
         }, 0);
+    }
+    isVisible() {
+        return this.visible;
     }
 }
 exports.InfoBox = InfoBox;

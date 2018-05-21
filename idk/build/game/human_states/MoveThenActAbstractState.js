@@ -22,7 +22,6 @@ class MoveThenActAbstractState extends AbstractState_1.AbstractState {
             this.stop();
             return false;
         }
-        this.startTimer(this.human.getMoveTime() + this.getActTime());
         return true;
     }
     getNextState() {
@@ -39,6 +38,9 @@ class MoveThenActAbstractState extends AbstractState_1.AbstractState {
             }));
         }
         return super.getNextState();
+    }
+    getDescription() {
+        return 'Looking for ' + this.objectReferer.getObject().getDescription().getName();
     }
     isNeighborPosition() {
         return !this.human.isMoving() &&

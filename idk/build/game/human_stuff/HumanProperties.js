@@ -11,7 +11,7 @@ class HumanProperties {
         this.type = type;
         this.name = name;
         this.speed = speed;
-        this.quality = quality;
+        this.experience = quality;
         this.perseverance = perseverance;
         this.wage = this.computeWage();
     }
@@ -44,11 +44,11 @@ class HumanProperties {
     getWage() {
         return this.wage;
     }
-    getQuality() {
-        return this.quality;
+    getExperience() {
+        return this.experience;
     }
     computeWage() {
-        return (this.speed + this.perseverance + 2 * this.quality) / 4;
+        return (this.speed + this.perseverance + 2 * this.experience) / 4;
     }
     getRealWage() {
         return new Price_1.Price(-(MIN_WAGE + this.wage * (MAX_WAGE - MIN_WAGE)));

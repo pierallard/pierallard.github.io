@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const ObjectOrientation_1 = require("./ObjectOrientation");
 class ObjectDescription {
-    constructor(name, minLevel, occupiedCells, bottomOrientedSpriteInfos, topOrientedSpriteInfos, bottomInteractivePoints, topInteractivePoints, price) {
+    constructor(name, minLevel, occupiedCells, bottomOrientedSpriteInfos, topOrientedSpriteInfos, bottomInteractivePoints, topInteractivePoints, price, ambiance = null, radius = 1) {
         this.name = name;
         this.minLevel = minLevel;
         this.occupiedCells = occupiedCells;
@@ -11,6 +11,8 @@ class ObjectDescription {
         this.bottomInteractivePoints = bottomInteractivePoints;
         this.topInteractivePoints = topInteractivePoints;
         this.price = price;
+        this.ambiance = ambiance;
+        this.radius = radius;
     }
     getName() {
         return this.name;
@@ -73,6 +75,12 @@ class ObjectDescription {
     }
     getMinLevel() {
         return this.minLevel;
+    }
+    getRadius() {
+        return this.radius;
+    }
+    getAmbiance() {
+        return this.ambiance;
     }
 }
 exports.ObjectDescription = ObjectDescription;

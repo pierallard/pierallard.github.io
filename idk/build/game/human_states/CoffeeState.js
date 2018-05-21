@@ -26,6 +26,14 @@ class CoffeeState extends MoveThenActAbstractState_1.MoveThenActAbstractState {
     getState() {
         return HumanStateManager_1.STATE.COFFEE;
     }
+    getDescription() {
+        if (!this.isHumanOnTheRightCell) {
+            return super.getDescription();
+        }
+        else {
+            return 'Takes a coffee';
+        }
+    }
     subGetRageImage() {
         return ThoughtBubble_1.RAGE_IMAGE.COFFEE;
     }

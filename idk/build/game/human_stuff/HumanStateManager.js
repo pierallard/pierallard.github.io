@@ -11,6 +11,7 @@ const HumanMoodManager_1 = require("./HumanMoodManager");
 const SitTalkState_1 = require("../human_states/SitTalkState");
 const RageState_1 = require("../human_states/RageState");
 const SitPlay_1 = require("../human_states/SitPlay");
+const ObjectDescriptionRegistry_1 = require("../objects/ObjectDescriptionRegistry");
 const LIMIT = 0.8;
 var STATE;
 (function (STATE) {
@@ -75,10 +76,7 @@ class HumanStateManager {
                     this.state = new FreezeState_1.FreezeState(this.human);
             }
         }
-        if (this.state.start(game)) {
-            // OK !
-        }
-        else {
+        if (!this.state.start(game)) {
             console.log('State ' + this.state.constructor.name + ' failed to start. Rage!');
             this.state = new RageState_1.RageState(this.human, this.state);
             this.state.start(game);
@@ -108,7 +106,7 @@ class HumanStateManager {
             this.worldKnowledge.getAnotherFreeHumans(this.human, 3).length === 3) {
             states[STATE.SIT_TALK] = this.getProbability(STATE.SIT_TALK);
         }
-        if (this.worldKnowledge.getAnotherFreeHuman(this.human) !== null) {
+        if (this.worldKnowledge.getHumanCount() > 1) {
             states[STATE.TALK] = this.getProbability(STATE.TALK);
         }
         states[STATE.TYPE] = this.getProbability(STATE.TYPE);
@@ -117,7 +115,9 @@ class HumanStateManager {
         states[STATE.FREEZE] = this.getProbability(STATE.FREEZE);
         states[STATE.MOVE_RANDOM] = this.getProbability(STATE.MOVE_RANDOM);
         states[STATE.SMOKE] = this.getProbability(STATE.SMOKE);
-        states[STATE.SIT_PLAY] = this.getProbability(STATE.SIT_PLAY);
+        if (this.worldKnowledge.getLevel() >= ObjectDescriptionRegistry_1.ObjectDescriptionRegistry.getObjectDescription('Meeting Table').getMinLevel()) {
+            states[STATE.SIT_PLAY] = this.getProbability(STATE.SIT_PLAY);
+        }
         return states;
     }
     getProbability(state) {
@@ -189,13 +189,13 @@ class HumanStateManager {
                 break;
             case STATE.COFFEE:
                 result[HumanMoodManager_1.MOOD.HUNGER] = 0.5;
-                result[HumanMoodManager_1.MOOD.RELAXATION] = -0.1;
+                result[HumanMoodManager_1.MOOD.RELAXATION] = -0.05;
                 break;
             case STATE.SIT_TALK:
                 result[HumanMoodManager_1.MOOD.SOCIAL] = 0.6;
                 break;
             case STATE.RAGE:
-                result[HumanMoodManager_1.MOOD.RELAXATION] = -0.15;
+                result[HumanMoodManager_1.MOOD.RELAXATION] = -0.1;
                 break;
             case STATE.SIT_PLAY:
                 result[HumanMoodManager_1.MOOD.RELAXATION] = 0.4;

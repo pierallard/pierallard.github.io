@@ -4,14 +4,15 @@ const WorldKnowledge_1 = require("../WorldKnowledge");
 const app_1 = require("../../app");
 const UserInterface_1 = require("../user_interface/UserInterface");
 const PositionTransformer_1 = require("../PositionTransformer");
-const Infobox_1 = require("../user_interface/Infobox");
 exports.GROUP_FLOOR = 'floor';
+exports.GROUP_AMBIANCE = 'ambiance';
 exports.GROUP_OBJECTS_AND_HUMANS = 'objects_and_humans';
 exports.GROUP_INFOS = 'infos';
 exports.GROUP_INTERFACE = 'interface';
 exports.GROUP_TOOLTIP = 'tooltip';
 exports.CAMERA_GAP = 2;
 class Play extends Phaser.State {
+    // private pauseKey: Phaser.Key;
     // private isPaused: boolean;
     constructor() {
         super();
@@ -25,6 +26,7 @@ class Play extends Phaser.State {
         this.game.stage.backgroundColor = "#494947";
         this.groups = {};
         this.groups[exports.GROUP_FLOOR] = this.game.add.group();
+        this.groups[exports.GROUP_AMBIANCE] = this.game.add.group();
         this.groups[exports.GROUP_OBJECTS_AND_HUMANS] = this.game.add.group();
         this.groups[exports.GROUP_INFOS] = this.game.add.group();
         this.groups[exports.GROUP_INTERFACE] = this.game.add.group();
@@ -40,19 +42,13 @@ class Play extends Phaser.State {
         this.downKey = this.game.input.keyboard.addKey(Phaser.Keyboard.DOWN);
         this.leftKey = this.game.input.keyboard.addKey(Phaser.Keyboard.LEFT);
         this.rightKey = this.game.input.keyboard.addKey(Phaser.Keyboard.RIGHT);
-        this.pauseKey = this.game.input.keyboard.addKey(Phaser.Keyboard.P);
+        this.zKey = this.game.input.keyboard.addKey(Phaser.Keyboard.Z);
+        this.sKey = this.game.input.keyboard.addKey(Phaser.Keyboard.S);
+        this.qKey = this.game.input.keyboard.addKey(Phaser.Keyboard.Q);
+        this.dKey = this.game.input.keyboard.addKey(Phaser.Keyboard.D);
+        // this.pauseKey = this.game.input.keyboard.addKey(Phaser.Keyboard.P);
         // const text = this.game.add.bitmapText(CAMERA_WIDTH_PIXELS - INTERFACE_WIDTH + 60, 2, 'retro_computer','Bitmap Fonts!',7, this.groups[GROUP_INTERFACE]);
-        const infobox = new Infobox_1.InfoBox('Welcome!', [
-            'Welcome to Office Tycoon!',
-            '',
-            'You are in charge of the recruitment to run',
-            'your business.',
-            'Complete your goals for each level and you will',
-            'gain new people, new objects for your employees!',
-            'Be careful of the health of your employees, the',
-            'better they are, the better they work.'
-        ], 'OK, let\'s go!');
-        infobox.create(this.game, this.groups);
+        this.worldKnowledge.initializeInfoBox();
         this.worldKnowledge.selectFirstHuman();
     }
     update(game) {
@@ -74,16 +70,16 @@ class Play extends Phaser.State {
         //         this.game.tweens.pauseAll();
         //     }
         // }
-        if (this.upKey.isDown) {
+        if (this.upKey.isDown || this.zKey.isDown) {
             this.game.camera.setPosition(this.game.camera.position.x, this.game.camera.position.y - exports.CAMERA_GAP);
         }
-        else if (this.downKey.isDown) {
+        else if (this.downKey.isDown || this.sKey.isDown) {
             this.game.camera.setPosition(this.game.camera.position.x, this.game.camera.position.y + exports.CAMERA_GAP);
         }
-        if (this.leftKey.isDown) {
+        if (this.leftKey.isDown || this.qKey.isDown) {
             this.game.camera.setPosition(this.game.camera.position.x - exports.CAMERA_GAP, this.game.camera.position.y);
         }
-        else if (this.rightKey.isDown) {
+        else if (this.rightKey.isDown || this.dKey.isDown) {
             this.game.camera.setPosition(this.game.camera.position.x + exports.CAMERA_GAP, this.game.camera.position.y);
         }
         const selected = this.worldKnowledge.getSelectedHumanSprite();

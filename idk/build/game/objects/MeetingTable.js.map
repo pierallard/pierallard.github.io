@@ -1,1 +1,1 @@
-{"version":3,"file":"MeetingTable.js","sourceRoot":"","sources":["../../../src/game/objects/MeetingTable.ts"],"names":[],"mappings":";;AACA,6CAA+C;AAC/C,qDAAgD;AAChD,mDAA8C;AAG9C,kBAA0B,SAAQ,+BAAc;IAC5C,MAAM,CAAC,IAAiB,EAAE,MAAwC;QAC9D,KAAK,CAAC,MAAM,CAAC,IAAI,EAAE,MAAM,CAAC,CAAC;QAE3B,6BAAa,CAAC,aAAa,CAAC,IAAI,EAAE,IAAI,EAAE,MAAM,CAAC,kBAAW,CAAC,CAAC,CAAC;IACjE,CAAC;CACJ;AAND,oCAMC"}
+{"version":3,"file":"MeetingTable.js","sourceRoot":"","sources":["../../../src/game/objects/MeetingTable.ts"],"names":[],"mappings":";;AAEA,qDAAgD;AAIhD,kBAA0B,SAAQ,+BAAc;CAC/C;AADD,oCACC"}
